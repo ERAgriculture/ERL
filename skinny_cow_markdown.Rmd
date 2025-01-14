@@ -3,12 +3,12 @@ title: "ERA Livestock Data Exploration"
 author: "Namita Joshi"
 date: "`r Sys.Date()`"
 output:
-  rmarkdown::html_document:
-    toc: true                # Enables the table of contents
-    toc_float: true          # Makes the TOC a floating sidebar
-    code_folding: hide       # Hides code by default
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
     includes:
-      after_body: hypothes.html  # This points to the custom HTML file
+      after_body: hypothes.html
 vignette: >
   %\VignetteIndexEntry{ERA Livestock Data Exploration}
   %\VignetteEncoding{UTF-8}
@@ -16,6 +16,7 @@ vignette: >
 comments:
   utterances:
     repo: ERAgriculture/livestock_diet
+runtime: shiny
 ---
 
 ```{r setup, include = FALSE}
