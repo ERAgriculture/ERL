@@ -28,6 +28,20 @@ knitr::opts_chunk$set(
   warning = FALSE
 )
 ```
+
+```{r packages,include=F,eval=T,echo=F}
+if (!requireNamespace("pacman", quietly = TRUE)) {
+  install.packages("pacman")
+}
+pacman::p_load(
+  ERAg, ERAgON, sf, knitr, rnaturalearth, rnaturalearthdata, 
+  ggplot2, viridis, shiny, dplyr, treemap, treemapify, plotly, data.table,
+  s3fs, arrow, devtools, gh, htmlwidgets
+)
+
+```
+
+
 This vignette will guide you through the livestock-related data available within the Evidence for Resilient Agriculture (ERA) dataset. The dataset serves as a critical resource for understanding agricultural resilience, specifically focusing on livestock systems and their adaptation to climate change.
 
 We will cover the following:
@@ -64,8 +78,6 @@ Below in a snippet of the search terms used for the livestock extraction:
 
 
 ```{r search-terms, echo=FALSE, message=FALSE}
-library(knitr)
-library(dplyr)
 
 # Create a data frame to hold search terms
 search_terms <- data.frame(
@@ -131,25 +143,24 @@ There are 9 sections to this workbook:
 3) ExpD = Experimental design, captures information about the number of study replicates, plot sizes, etc.															
 4) Practices= These include the following:
 
-System and Housing structures
+-Time periods
 
-Time periods
+-Breed: Capturing information on whether the breed used in the experiment is improved or indegenous. 
 
-Herd or Group structures
+-Diets: This is broken into 3 tables; Ingredients fed to the animals, Nutritional content of each ingredient and the digestibility of those ingredients.
 
-Diets: This is broken into 3 tabs; Indgredient feed to the animals, Nutritional content of each ingredient and the digestibility of those ingredients. 
+-Chemicals, Vaccines, Medicines that were given to the animals during the experiment 
 
-Pasture: In experiments where animals were allowed to graze in the pastures, details of grass species are collected.
+![Image 1: Data extraction table for ingredients fed to the animals](https://raw.githubusercontent.com/ERAgriculture/livestock_diet/main/images/extraction%20schema%203.png)
 
-Grazing: This includes the amount of time animals were allowed to graze, and whether there were any fertilizer or tillage treatments to the grazing land.
+![Image 2: Data extraction table for nutritional content of each ingredient or diets](https://raw.githubusercontent.com/ERAgriculture/livestock_diet/main/images/extraction%20schema%204.png)
 
-Chemicals, Vaccines, Medicines that were given to the animals during the experiment 
+![Image 3: Data extraction table for digestibility of the ingredients or diets](https://raw.githubusercontent.com/ERAgriculture/livestock_diet/main/images/extraction%20schema%205.png)
+
 
 5) Make.Trt = create & name treatments by combining the experimental practices entered in the practice tabs.	
 
 6) EnterData = Captures values and associated errors for the experimental treatments, products, outcomes and times specified in the previous tabs. Do not start data entry until you've completed all the previous tabs.	
-
-![Data Extraction tabs in Excel](https://raw.githubusercontent.com/ERAgriculture/livestock_diet/main/images/extraction%20schema%203.png)
 
 
 
@@ -164,6 +175,7 @@ Link to the ontology: https://doi.org/10.7910/dvn/75e7hv
 
 
 # Exploring the data
+
 
 ## Importing the data
 
@@ -197,34 +209,68 @@ s3<-s3fs::S3FileSystem$new(anonymous	=	T)
 		Tables<-	miceadds::load.Rdata2(file=basename(save_path),path=dirname(save_path))
 ```
 
-
-```{r packages,include=F,eval=T,echo=F}
-require(ERAg)
-require(ERAgON)
-require(sf)
-require(rnaturalearth)
-require(rnaturalearthdata)
-require(ggplot2)
-require(viridis)
-require(shiny)
-require(dplyr)
-require(treemap)
-require(treemapify)
-require(plotly)
-
-```
-
 ## Subsetting the ERA Compiled data
 
 The Evidence for Resilient Agriculture (ERA) dataset provides a comprehensive analysis of the impacts of technology adoption on 87 key indicators spanning productivity, resilience, and climate change mitigation. This dataset integrates data from both agronomy and livestock studies, with a focus on creating control-versus-treatment comparisons to enable robust meta-analysis.
 
-To extract insights specific to livestock, it is necessary to subset the dataset to isolate livestock-related studies, as follows (Unhide the code):
+To extract insights specific to livestock, it is necessary to subset the dataset to isolate livestock-related studies, as follows (unhide the code):
 
-```{r ERA Subset, echo=T, message=F}
+```{r ERA Subset,echo=T, message=F}
 # Subset data
 livestock_data<-ERA.Compiled[!is.na(Date)]
 # Subset to fewer themes to simplify plot
 livestock_data<-livestock_data[Product.Type %in% c("Animal")]
+```
+
+## Understanding the descriptions of major ERA concepts
+Practice codes 
+```{r ERA Practice descriptions, echo=T, message=F}
+# Filter the data
+filtered_data_prac <- ERAg::PracticeCodes %>%
+  filter(Theme == "Animals")
+
+# Display the filtered data in a scrollable table
+DT::datatable(
+  filtered_data_prac,
+  options = list(
+    scrollY = "400px",    # Set vertical scroll height
+    scrollX = TRUE,       # Enable horizontal scrolling
+    pageLength = 10,      # Display 10 rows per page
+    fixedHeader = FALSE   # Disable fixed headers
+  )
+)
+```
+
+Outcome Codes
+```{r ERA Outcome descriptions, echo=T, message=F}
+DT::datatable(
+  head(ERAg::OutcomeCodes),  # Display the first few rows of PracticeCodes
+  options = list(
+    scrollY = "400px",    # Set vertical scroll height
+    scrollX = TRUE,       # Enable horizontal scrolling
+    pageLength = 10,      # Display 10 rows per page
+    fixedHeader = FALSE   # Disable fixed headers
+  )
+)
+```
+
+Products
+```{r ERA EU descriptions, echo=T, message=F}
+# Filter the data
+filtered_data_eu <- ERAg::EUCodes %>%
+  filter(Product.Type == "Animal")
+
+# Display the filtered data in a scrollable table
+DT::datatable(
+  filtered_data_eu,
+  options = list(
+    scrollY = "400px",    # Set vertical scroll height
+    scrollX = TRUE,       # Enable horizontal scrolling
+    pageLength = 10,      # Display 10 rows per page
+    fixedHeader = FALSE   # Disable fixed headers
+  )
+)
+
 ```
 
 
@@ -474,12 +520,38 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 ```
 
-## Digestibility and nutrition
 
-To explore the diet items and associated nutrition and digestibility of these items, we need to use the metadata of ERA, and not ERA.Compiled. Unhide the code below and adjust the script with variables you may be interested in.
+# Use Case: Understanding the impact of tree fodders on feed intake and weight gain
+The objective of this analysis is to systematically analyze and explore the impact of livestock feeding practices, particularly tree fodder addition and substitution, on key outcomes (e.g., weight gain, feed intake).
+To achieve this, we will follow these steps:
 
-```{r exploring the diet ingredients, nutrition, digestibility tables, echo=TRUE}
-  # First we need to get the detailed dataset containing the management information that relates to the experiment, this is in the Atlas S3 Bucket
+**1. Loading Required Libraries and Functions as shown earlier in this vignette. This will require the most recent version of the data, which will come from the S3 bucket**
+
+
+**2.Data Cleaning and Filtering**
+
+*2.1 Sub-setting the data to specific livestock (e.g., cattle, sheep, goats) and practices involving tree fodder addition or substitution.*
+
+*2.2 Harmonizing Units: Converts weight units (e.g., kg to g per individual per day) for consistent analysis.*
+
+*2.3 Exploring Practices and Outcomes: Summarizes data availability at the sub-practice and practice levels*
+
+
+**3. Linking Observations to Metadata: The script links experimental data with metadata to understand: The specific diet fed to animals, nutritional composition and digestibility of the diet, Key fields in the metadata that describe treatments and practices.**
+
+**4. Feed Intake and Weight Gain Analysis**
+
+*4.1 Merging Feed Intake and Weight Gain Data: Merges data sets on feed intake and weight gain to analyze their relationship for specific livestock (e.g., cattle, sheep, goats)*
+
+*4.2 Identifying Outliers: Uses the Interquartile Range (IQR) method to identify and remove outliers in weight gain data.*
+
+PLEASE UNHIDE THE CODES TO VIEW. You can use these to tailor to your own needs 
+
+## 1. Loading and saving the data
+
+This section retrieves the most recent version of the livestock dataset from an S3 bucket. It lists the available files, downloads the required .RData file, and loads it into R using miceadds::load.Rdata2. The objective is to prepare the dataset (livestock_metadata) for analysis.
+```{r Loading the new version of ERA, message=F,echo=T,collapse=FALSE}
+# First we need to get the detailed dataset containing the management information that relates to the experiment, this is in the Atlas S3 Bucket
   s3<-s3fs::S3FileSystem$new(anonymous = T)
   era_s3<-"s3://digital-atlas/era"
   
@@ -496,7 +568,145 @@ To explore the diet items and associated nutrition and digestibility of these it
   }
   
   livestock_metadata<- miceadds::load.Rdata2(file=basename(save_path),path=dirname(save_path))
-  names(livestock_metadata)
+```
+
+## 2. Data cleaning and subsetting
+
+### 2.1 Subsetting the data
+
+section focuses on filtering the dataset to a specific scope for analysis. It begins by identifying subpractices related to "Feed Addition" and "Feed Substitution" within the "Animals" theme, specifically those involving agroforestry. The data is then narrowed to livestock types of interest, such as cattle, goats, and sheep, and further refined to focus on key productivity outcomes, including "Meat Yield," "Weight Gain," and "Milk Yield." The latest version of the dataset, stored as a .parquet file in the S3 bucket, is downloaded and processed using the same subsetting logic. Confounding practices, such as "Concentrates" and "Feed Crop," are excluded to improve data quality. 
+```{r subsetting the new version of ERA,  message=F,echo=T,collapse=FALSE}
+focal_pracs<-PracticeCodes[Practice %in% c("Feed Addition","Feed Substitution") 
+                            & grepl("Agrofor",Subpractice),Code]
+
+data<-ERA.Compiled[grepl(paste(focal_pracs,collapse = "|"),plist)]
+
+  # 1.2) Subset to cattle and small ruminants #####
+  focal_prods<-c("Cattle","Goat","Sheep")
+  
+  data<-data[Product.Simple %in% focal_prods]
+  
+  # 1.3) Subset to outcomes of interest  #####
+  focal_out<-c("Meat Yield","Weight Gain","Milk Yield")
+  
+  data<-data[Out.SubInd %in% focal_out]
+  
+
+# List the files in the s3 bucket
+files<-s3$dir_ls(file.path(era_s3,"data"))
+# This should be the most recent version of the data era_compiled-v1.0_2018-v1.1_2020-skinny_cow_2022_YYYY_MM_DD.parquet
+files<-tail(grep("parquet",grep("era_compiled",files,value=T),value=T),1)
+
+# Set a save location for the dataset (amend to something more suitable for your needs)
+save_path<-file.path(getwd(),basename(files))
+
+if(!file.exists(save_path)){
+  s3$file_download(files,save_path,overwrite = T)
+}
+
+ERA.Compiled_new<-arrow::read_parquet(save_path)
+data_new<-ERA.Compiled_new[Version=="skinny_cow_2022" & grepl(paste(focal_pracs,collapse = "|"),plist)]
+
+# Remove confounding subpractices
+data_new<-data_new[!grepl("Concentrates|Feed Crop|Breed|Feed NonCrop",SubPrName)]
+
+# The newer dataset on the s3 should be superior to old dataset so let's use it
+data<-data_new
+
+# Remove mechanical processing (this is just going to be chopping tree forages, probably not of interest)
+  data[,SubPrName:=gsub("-Feed Mech Process|-Grazing Cut & Carry","",SubPrName)]
+  
+# Looking at any practices than involve tree fodder addition or substitution
+  data<-data[,tree_fodder_add:=F][grepl("Feed AgFor (Add)",SubPrName,fixed=T),tree_fodder_add:=T]
+  data<-data[,tree_fodder_sub:=F][grepl("Feed AgFor (Sub)",SubPrName,fixed=T),tree_fodder_sub:=T]
+
+```
+
+### 2.2 Harmonizing units
+
+Unit harmonization is essential when studying livestock papers to ensure consistency and comparability across diverse datasets. In livestock research, data on outcomes like feed intake or weight gain are often reported in various units, such as kilograms (kg), grams per individual per day (g/individual/day), or other measurement standards. Without harmonization, direct comparisons or meta-analyses become challenging, as the variability in units can introduce bias or inaccuracies in the interpretation of results. By standardizing units, such as converting weight data from kg to g/day or normalizing by the duration of the study, researchers can create a uniform dataset. This allows for meaningful cross-study comparisons, improved statistical analysis, and clearer insights into the impacts of specific practices on livestock productivity, such as weight gain or feed efficiency.
+```{r}
+# 3.2) Harmonize units #####
+  data[Units=="kg" & !is.na(Duration),c("MeanT","MeanC","Units"):=.(round(1000*MeanT/(365*Duration),2),round(1000*MeanC/(365*Duration),2),"g/individual/day")
+              ][Units=="kg/individual/day",c("MeanT","MeanC","Units"):=.(round(1000*MeanT,2),round(1000*MeanC,2),"g/individual/day")]
+```
+
+### 2.3 Exploring the subsetted data
+
+After subsetting the data, you can explore the number of remaining papers that are within your research focus. The following table The table provides insights into the data coverage for different livestock practices, products, and outcomes. For example, "Feed Addition" applied to "Goat" for "Weight Gain" is reported in 15 studies with 48 observations from 6 countries. This information can help identify well-studied areas and data gaps in livestock research
+
+```{r presenting the remaining papers based on prac, message=F, echo=F}
+  # Practice Level
+  prac<- data[,.(no_studies=length(unique(Code)),
+          no_observations=.N,
+          no_countries=length(unique(Country))),by=.(PrName,Product.Simple,Out.SubInd)
+       ][order(no_studies,decreasing=T)]
+  
+  DT::datatable(
+  prac,
+  options = list(
+    scrollY = "400px",  # Set vertical scroll height
+    scrollX = TRUE,     # Enable horizontal scrolling
+    pageLength = 20,    # Initial number of rows displayed
+    fixedHeader = FALSE  # Keep column headers fixed while scrolling
+  )
+)
+
+
+```
+
+We can choose to explore the data in future detail. The table below shows the studies that looked at the impact of  adding tree fodders to diets of cattle goat and sheep.
+
+```{r presenting the remaining papers based on addition papers, message=F, echo=F}
+# Addition
+  tree_add<- data[tree_fodder_add==T,.(no_studies=length(unique(Code)),
+          no_observations=.N,
+          no_countries=length(unique(Country))),by=.(Product.Simple,Out.SubInd)
+  ][order(no_studies,decreasing=T)]
+
+  DT::datatable(
+  tree_add,
+  options = list(
+    scrollY = "400px",  # Set vertical scroll height
+    scrollX = TRUE,     # Enable horizontal scrolling
+    pageLength = 20,    # Initial number of rows displayed
+    fixedHeader = FALSE  # Keep column headers fixed while scrolling
+  )
+)
+
+```
+
+
+The table below shows the studies that looked at the impact of substitution of other ingredient types with tree fodders to diets of cattle goat and sheep.
+```{rpresenting the remaining papers based on sub papers, message=F, echo=F}
+  # Substitution
+  tree_sub<- data[tree_fodder_sub==T,.(no_studies=length(unique(Code)),
+                            no_observations=.N,
+                            no_countries=length(unique(Country))),by=.(Product.Simple,Out.SubInd)
+  ][order(no_studies,decreasing=T)]
+
+DT::datatable(
+  tree_sub,
+  options = list(
+    scrollY = "400px",  # Set vertical scroll height
+    scrollX = TRUE,     # Enable horizontal scrolling
+    pageLength = 20,    # Initial number of rows displayed
+    fixedHeader = FALSE  # Keep column headers fixed while scrolling
+  )
+)
+```
+
+## 3. Linking observations to the metadata
+As mentioned in the methods section, each table in the extraction excel template creates a seperate table in the data structure. Therefore, when using the metadata (which are the original seperate tables) we need to merge the tables that we are interested in. 
+
+![Image 4: Data structure of diets](https://raw.githubusercontent.com/ERAgriculture/livestock_diet/main/images/extraction%20schema%201.png)
+
+![Image 5: Data structure of diet ingredients](https://raw.githubusercontent.com/ERAgriculture/livestock_diet/main/images/extraction%20schema%202.png)
+
+Below are the individual tables for diets, nutrition and digestibility. We will then explore how to merge information from the different tables. To understand what the field are in each table download the follow excel sheet and navigate to the era_fields tab https://github.com/peetmate/era_codes/raw/main/era_master_sheet.xlsx"
+
+
+```{r exploring the diet ingredients, nutrition, digestibility tables, echo=TRUE}
   
   # 4.2) Explore  metadata #####
   # This table is a high level description of the diet
@@ -512,44 +722,166 @@ To explore the diet items and associated nutrition and digestibility of these it
   head(diet_digestibility)
   
 ```
-### Diet ingredients table
+
+#### Diet ingredients table
 
 ```{r summary of diet ingredients, echo=T}
   #	Display	the	summary	table	of	diets
 DT::datatable(
-		diet_ingredients,
-		options	=	list(
-				scrollY	=	"400px",		#	Set	vertical	scroll	height
-				pageLength	=	20					#	Initial	number	of	rows	displayed
-		)
+  diet_ingredients,
+  options = list(
+    scrollY = "400px",  # Set vertical scroll height
+    scrollX = TRUE,     # Enable horizontal scrolling
+    pageLength = 20,    # Initial number of rows displayed
+    fixedHeader = FALSE  # Keep column headers fixed while scrolling
+  )
 )
 ```
 
-### Diet nutrition table
+#### Diet nutrition table
 
 ```{r, summary of diet nutrition, echo=TRUE}
 
 DT::datatable(
   diet_nutrition,
   options = list(
-    scrollY = "400px", 
-    pageLength = 10,  # Show only 10 rows per page
-    lengthMenu = c(10, 20, 50, 100)  # Allow user to choose the number of rows displayed
+    scrollY = "400px",  # Set vertical scroll height
+    scrollX = TRUE,     # Enable horizontal scrolling
+    pageLength = 20,    # Initial number of rows displayed
+    fixedHeader = FALSE  # Keep column headers fixed while scrolling
   )
 )
 
-
 ```
 
-### Here is a summary of the diet digestibility table
+#### Diet digestibility table
 
 ```{r, summary of diet digestibility, echo=TRUE}
   #	Display	the	summary	table	of	diets
 DT::datatable(
-		diet_digestibility,
-		options	=	list(
-				scrollY	=	"400px",		#	Set	vertical	scroll	height
-				pageLength	=	20					#	Initial	number	of	rows	displayed
-		)
+  diet_digestibility,
+  options = list(
+    scrollY = "400px",  # Set vertical scroll height
+    scrollX = TRUE,     # Enable horizontal scrolling
+    pageLength = 20,    # Initial number of rows displayed
+    fixedHeader = FALSE  # Keep column headers fixed while scrolling
+  )
 )
 ```
+
+### 3.1 Combining feed intake and weight gain outcomes 
+
+This script (unhide) integrates feed intake and weight gain data for livestock to analyze the relationship between feed types, including tree species, and animal performance. 
+
+It starts by filtering the feed intake data to include only entire diets with non-missing values. Tree species associated with feed intake are then merged into the dataset.
+
+Similarly, weight gain data for non-fish species is filtered, standardized by converting weight measurements into kilograms per day, and calculating the final weight (end weight) after a given period. The script then merges the feed intake data with the weight gain data using common identifiers. 
+
+This results in a unified dataset that combines feed intake (including tree species) with corresponding weight gain metrics for livestock, enabling detailed analysis of the impacts of different feed practices on animal growth.
+```{r feed intake and weight gain, echo=TRUE}
+# 4.5) Feed Intake and Weight Gain with Tree Species #####
+
+# Filter Feed Intake data to include only entire diets and remove NA values
+feed_intake <- livestock_metadata$Data.Out[
+  Out.Subind == "Feed Intake" & is_entire_diet == TRUE & !is.na(ED.Intake.Item), 
+  .(B.Code, T.Name, A.Level.Name, Out.Subind, ED.Intake.Item, ED.Mean.T, Out.Unit)
+]
+
+
+# Select only relevant columns for feed trees and rename
+feed_trees <- data %>% 
+  select(Code, T.Descrip, Tree.Feed) %>% 
+  rename(`A.Level.Name` = T.Descrip, `B.Code` = Code)
+
+# Merge feed intake with tree species data
+feed_intake_trees <- merge(
+  feed_intake,
+  feed_trees,
+  by = c("B.Code", "A.Level.Name"),
+  all.x = TRUE  # Left join to retain all feed intake rows
+)
+
+# Filter Weight Gain data and remove fish-related entries
+WG <- livestock_metadata$Data.Out[
+  Out.Subind == "Weight Gain" & P.Product != "Fish", 
+  .(B.Code, P.Product, T.Name, A.Level.Name, Out.WG.Start, Out.WG.Unit, Out.WG.Days, ED.Mean.T, Out.Unit)
+]
+
+# Define units to standardize and convert Weight Gain data
+units_per_day <- c(
+      "g/day", "g", "g/individual/day", "g/head/day", "g/day/individual", 
+      "g/d/individual", "g/individual/d", "g/indivividual/day", "g/individual", 
+      "g/ndividual/day", "g/dindividual/day", "g/individual.day", "g /individual/day"
+    )
+    
+# Convert ED.Mean.T to kilograms/day only for specific units
+    WG[, ED.Mean.T_kg := ifelse(
+      Out.Unit %in% units_per_day,               # Check if Out.Unit is in the list
+      round(ED.Mean.T / 1000, 3),                   # Convert grams/day to kilograms/day and round
+      round(ED.Mean.T, 3)                           # Retain as is if not in the list
+    )]
+    
+    # Convert Out.WG.Start to kilograms if Out.WG.Unit indicates grams
+    WG[, Out.WG.Start_kg := ifelse(
+      grepl("^g$", Out.WG.Unit, ignore.case = TRUE), # Match exact "g"
+      Out.WG.Start / 1000,                          # Convert grams to kilograms
+      Out.WG.Start                                   # Retain if already in kilograms
+    )]
+    
+    # Calculate Out.WG.End
+    WG[, Out.WG.End := ifelse(
+      Out.Unit %in% units_per_day,                  # Daily gain units
+      round(Out.WG.Start_kg + (ED.Mean.T_kg * Out.WG.Days), 3),
+      ifelse(                                       # Non-daily gain units
+        grepl("^(g|kg|Kg)$", Out.Unit, ignore.case = TRUE),
+        round(Out.WG.Start_kg + ED.Mean.T_kg, 3),
+        NA                                          # Set to NA for other units
+      )
+    )]
+ #Merge with feed intake. 
+    # Rename columns in WG and feed intake datasets
+    WG <- WG %>%
+      rename(
+        `Weight Gain` = ED.Mean.T,
+        `Weight Gain Unit` = Out.Unit,
+        `Weight Gain_kg` = ED.Mean.T_kg
+      )
+    
+    feed_intake_trees <- feed_intake_trees %>%
+      rename(
+        `Feed Intake` = ED.Mean.T,
+        `Feed Intake Unit` = Out.Unit,
+      )
+    
+    # Perform an inner join on the common columns
+    intake_WG <- merge(
+      WG, feed_intake_trees,
+      by = c("B.Code", "T.Name", "A.Level.Name"),
+      all = FALSE # Inner join: retain only matching rows
+    )
+    
+  #	Display	the	summary	table	of	diets
+DT::datatable(
+  intake_WG,
+  options = list(
+    scrollY = "400px",  # Set vertical scroll height
+    scrollX = TRUE,     # Enable horizontal scrolling
+    pageLength = 20,    # Initial number of rows displayed
+    fixedHeader = FALSE  # Keep column headers fixed while scrolling
+  )
+)
+
+    
+```
+
+### 3.2 Adding nutrion information
+
+```{r adding nutrition, echo=TRUE}
+intake_WG <- intake_WG %>%
+  rename(`Intake item`= ED.Intake.Item)
+
+nutrition <- data %>% 
+  select(Code, T.Descrip, Tree.Feed) %>% 
+  rename(`A.Level.Name` = T.Descrip, `B.Code` = Code)
+```
+
