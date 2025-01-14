@@ -15,8 +15,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 comments:
   utterances:
-    repo: CIAT/ERA_dev
-runtime: shiny
+    repo: ERAgriculture/livestock_diet
 ---
 
 ```{r setup, include = FALSE}
@@ -147,9 +146,10 @@ Chemicals, Vaccines, Medicines that were given to the animals during the experim
 
 5) Make.Trt = create & name treatments by combining the experimental practices entered in the practice tabs.	
 
-8) EnterData = Captures values and associated errors for the experimental treatments, products, outcomes and times specified in the previous tabs. Do not start data entry until you've completed all the previous tabs.	
+6) EnterData = Captures values and associated errors for the experimental treatments, products, outcomes and times specified in the previous tabs. Do not start data entry until you've completed all the previous tabs.	
 
-![Data Extraction tabs in Excel]("ERA_dev\R\misc\extraction schema 3.png")
+![Data Extraction tabs in Excel](https://raw.githubusercontent.com/ERAgriculture/livestock_diet/main/images/extraction%20schema%203.png)
+
 
 
 Data extractors went through an intensive 3 week training that included video tutorials and practical examples of extracting data with the livestock template. 
