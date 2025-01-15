@@ -601,7 +601,7 @@ files<-s3$dir_ls(file.path(era_s3,"data"))
 files<-tail(grep("parquet",grep("era_compiled",files,value=T),value=T),1)
 
 # Set a save location for the dataset (amend to something more suitable for your needs)
-save_path<-file.path(getwd(),basename(files))
+save_path<-file.path(getwd(),dl_dir,basename(files))
 
 if(!file.exists(save_path)){
   s3$file_download(files,save_path,overwrite = T)
