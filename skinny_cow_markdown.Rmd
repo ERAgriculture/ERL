@@ -23,7 +23,7 @@ runtime: shiny
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  echo = FALSE,
+  echo = TRUE,  # Temporarily set to TRUE for debugging
   message = FALSE,
   warning = FALSE
 )
@@ -191,22 +191,23 @@ The data can be downloading using the following code:
 #download	most	recent	version	of	the	data	
 
 #	Set	up	connection	to	S3	bucket
-s3<-s3fs::S3FileSystem$new(anonymous	=	T)
-		era_s3<-"s3://digital-atlas/era"
-		
-		#	List	the	files	in	the	s3	bucket
-		files<-s3$dir_ls(file.path(era_s3,"data"))
-		#	This	is	the	most	recent	version	of	the	datas3://digital-atlas/era/data/industrious_elephant_2023-YYYY-MM-DD.RData
-		files<-tail(grep(".RData",grep("skinny_cow_2022",files,value=T),value=T),1)
-		
-		#	Set	a	save	location	for	the	dataset	(amend	to	something	more	suitable	for	your	needs)
-		save_path<-file.path(getwd(),basename(files))
-		
-		if(!file.exists(save_path)){
-		  s3$file_download(files,save_path,overwrite	=	T)
-		}
-		
-		Tables<-	miceadds::load.Rdata2(file=basename(save_path),path=dirname(save_path))
+  dl_dir<-"downloaded_data"
+  s3<-s3fs::S3FileSystem$new(anonymous = T)
+  era_s3<-"s3://digital-atlas/era"
+  
+  # List the files in the s3 bucket
+  files<-s3$dir_ls(file.path(era_s3,"data"))
+  # This is the most recent version of the datas3://digital-atlas/era/data/skinny_cow_2022-YYYY-MM-DD.RData (substitute most recent date into filepath)
+  files<-tail(grep(".RData",grep("skinny_cow_2022",files,value=T),value=T),1)
+  
+  # Set a save location for the dataset (amend to something more suitable for your needs)
+  save_path<-file.path(getwd(),dl_dir,basename(files))
+  
+  if(!file.exists(save_path)){
+    s3$file_download(files,save_path,overwrite = T)
+  }
+  
+  livestock_metadata<- miceadds::load.Rdata2(file=basename(save_path),path=dirname(save_path))
 ```
 
 ## Subsetting the ERA Compiled data
@@ -539,11 +540,11 @@ To achieve this, we will follow these steps:
 
 **3. Linking Observations to Metadata: The script links experimental data with metadata to understand: The specific diet fed to animals, nutritional composition and digestibility of the diet, Key fields in the metadata that describe treatments and practices.**
 
-**4. Feed Intake and Weight Gain Analysis**
+**4. Plotting simple figures**
 
-*4.1 Merging Feed Intake and Weight Gain Data: Merges data sets on feed intake and weight gain to analyze their relationship for specific livestock (e.g., cattle, sheep, goats)*
+*4.1  Plotting weight gain distribution with outliers*
 
-*4.2 Identifying Outliers: Uses the Interquartile Range (IQR) method to identify and remove outliers in weight gain data.*
+*4.2 Plotting weight gain distribution without outliers*
 
 PLEASE UNHIDE THE CODES TO VIEW. You can use these to tailor to your own needs 
 
@@ -552,6 +553,8 @@ PLEASE UNHIDE THE CODES TO VIEW. You can use these to tailor to your own needs
 This section retrieves the most recent version of the livestock dataset from an S3 bucket. It lists the available files, downloads the required .RData file, and loads it into R using miceadds::load.Rdata2. The objective is to prepare the dataset (livestock_metadata) for analysis.
 ```{r Loading the new version of ERA, message=F,echo=T,collapse=FALSE}
 # First we need to get the detailed dataset containing the management information that relates to the experiment, this is in the Atlas S3 Bucket
+
+  dl_dir<-"downloaded_data"
   s3<-s3fs::S3FileSystem$new(anonymous = T)
   era_s3<-"s3://digital-atlas/era"
   
@@ -561,7 +564,7 @@ This section retrieves the most recent version of the livestock dataset from an 
   files<-tail(grep(".RData",grep("skinny_cow_2022",files,value=T),value=T),1)
   
   # Set a save location for the dataset (amend to something more suitable for your needs)
-  save_path<-file.path(getwd(),basename(files))
+  save_path<-file.path(getwd(),dl_dir,basename(files))
   
   if(!file.exists(save_path)){
     s3$file_download(files,save_path,overwrite = T)
@@ -678,7 +681,7 @@ We can choose to explore the data in future detail. The table below shows the st
 
 
 The table below shows the studies that looked at the impact of substitution of other ingredient types with tree fodders to diets of cattle goat and sheep.
-```{rpresenting the remaining papers based on sub papers, message=F, echo=F}
+```{r presenting the remaining papers based on sub papers, message=F, echo=F}
   # Substitution
   tree_sub<- data[tree_fodder_sub==T,.(no_studies=length(unique(Code)),
                             no_observations=.N,
@@ -778,7 +781,7 @@ It starts by filtering the feed intake data to include only entire diets with no
 Similarly, weight gain data for non-fish species is filtered, standardized by converting weight measurements into kilograms per day, and calculating the final weight (end weight) after a given period. The script then merges the feed intake data with the weight gain data using common identifiers. 
 
 This results in a unified dataset that combines feed intake (including tree species) with corresponding weight gain metrics for livestock, enabling detailed analysis of the impacts of different feed practices on animal growth.
-```{r feed intake and weight gain, echo=TRUE}
+```{r feed intake and weight gain, echo=TRUE, message=FALSE, warning=FALSE}
 # 4.5) Feed Intake and Weight Gain with Tree Species #####
 
 # Filter Feed Intake data to include only entire diets and remove NA values
@@ -860,6 +863,9 @@ units_per_day <- c(
       all = FALSE # Inner join: retain only matching rows
     )
     
+    intake_WG<- intake_WG %>%
+      rename(`D.Item.raw`= ED.Intake.Item)
+    
   #	Display	the	summary	table	of	diets
 DT::datatable(
   intake_WG,
@@ -871,17 +877,149 @@ DT::datatable(
   )
 )
 
-    
+
 ```
 
 ### 3.2 Adding nutrion information
+This script performs a detailed analysis by merging data on livestock feed intake, weight gain, and nutritional composition to create a comprehensive dataset. First, it renames the ED.Intake.Item column to D.Item_raw in the intake_WG dataset for consistency. Then, it filters the livestock_metadata$Animals.Diet.Comp dataset to exclude rows with missing values in the DC.Value column, ensuring only complete nutritional data is used. Relevant columns (B.Code, DC.Value, DC.Unit, DC.Variable, D.Item_raw) are selected from this filtered dataset. The script merges the nutritional data with the feed intake and weight gain dataset (intake_WG) using an inner join, retaining only rows with matching values in D.Item_raw and B.Code
 
-```{r adding nutrition, echo=TRUE}
-intake_WG <- intake_WG %>%
-  rename(`Intake item`= ED.Intake.Item)
+```{r adding nutrition, echo=TRUE, message=FALSE, warning=FALSE}
+  nutrition <- livestock_metadata$Animals.Diet.Comp %>% 
+    filter(!is.na(DC.Value)) %>%  # Omit rows with NA in DC.Value
+    select(B.Code, DC.Value, DC.Unit, DC.Variable, D.Item.raw)
+  
+  intake_WG_nut <- merge(
+    nutrition, intake_WG,
+    by = c("D.Item.raw", "B.Code"),
+    all = FALSE  # Inner join: retain only matching rows
+  )
+  
+  DT::datatable(
+    intake_WG_nut,
+    options = list(
+      scrollY = "400px",  # Set vertical scroll height
+      scrollX = TRUE,     # Enable horizontal scrolling
+      pageLength = 20,    # Initial number of rows displayed
+      fixedHeader = FALSE # Keep column headers fixed while scrolling
+    )
+  )
 
-nutrition <- data %>% 
-  select(Code, T.Descrip, Tree.Feed) %>% 
-  rename(`A.Level.Name` = T.Descrip, `B.Code` = Code)
+    
 ```
+
+
+## 4. Plotting simple figures
+### 4.1 Plotting weight gain distribution with outliers 
+This script creates a Shiny app that allows users to visualize the weight gain distribution of three livestock categories: "Cattle," "Goat," and "Sheep," with outliers included. The dataset WG is filtered to include only rows where the P.Product column matches the selected animal.
+```{r weight gain distribution with outliers, echo=TRUE, message=FALSE, warning=FALSE}
+# Define UI
+ui <- fluidPage(
+  titlePanel("Weight Gain Distribution With Outliers"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(
+        inputId = "animal",
+        label = "Select Animal:",
+        choices = c("Cattle", "Goat", "Sheep"),
+        selected = "Cattle"
+      )
+    ),
+    
+    mainPanel(
+      plotOutput("weightGainPlot")
+    )
+  )
+)
+
+# Define Server
+server <- function(input, output) {
+  # Function to filter data for the selected animal (no outlier removal here)
+  filter_animal_data <- function(data, animal) {
+    # Subset data for the selected animal
+    animal_data <- data[P.Product == animal]
+    return(animal_data)
+  }
+  
+  # Render plot based on selected animal
+  output$weightGainPlot <- renderPlot({
+    selected_animal <- input$animal
+    animal_data <- filter_animal_data(WG, selected_animal)
+    
+    ggplot(animal_data, aes(x = `Weight Gain_kg`)) +
+      geom_boxplot(outlier.color = "red", outlier.shape = 19) +
+      labs(
+        title = paste("Weight Gain Distribution for", selected_animal, "(With Outliers)"),
+        x = "Weight Gain (kg/day)", y = ""
+      ) +
+      theme_minimal()
+  })
+}
+
+# Run the App
+shinyApp(ui = ui, server = server)
+```
+
+
+### 4.2 Plotting weight gain distribution without outliers
+This script creates a Shiny app that allows users to visualize the weight gain distribution of three livestock categories: "Cattle," "Goat," and "Sheep," with outliers excluded. The dataset WG is filtered to include only rows where the P.Product column matches the selected animal. To remove outliers, the script applies the Interquartile Range (IQR) method, calculating the first quartile (Q1), third quartile (Q3), and IQR. Data points falling outside the range of Q1 - 1.5 * IQR to Q3 + 1.5 * IQR are excluded. A box plot, generated using ggplot2, dynamically displays the weight gain distribution for the selected animal, providing a clean and focused view without the influence of extreme values
+
+```{r weight gain distribution without outliers, echo=TRUE, message=FALSE, warning=FALSE}
+ui <- fluidPage(
+  titlePanel("Weight Gain Distribution Without Outliers"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(
+        inputId = "animal",
+        label = "Select Animal:",
+        choices = c("Cattle", "Goat", "Sheep"),
+        selected = "Cattle"
+      )
+    ),
+    
+    mainPanel(
+      plotOutput("weightGainPlot")
+    )
+  )
+)
+
+# Define Server
+server <- function(input, output) {
+  # Function to filter data for the selected animal and remove outliers
+  filter_and_remove_outliers <- function(data, animal) {
+    # Subset data for the selected animal
+    animal_data <- data[P.Product == animal]
+    
+    # Compute IQR and filter out outliers
+    Q1 <- quantile(animal_data$`Weight Gain_kg`, 0.25, na.rm = TRUE)
+    Q3 <- quantile(animal_data$`Weight Gain_kg`, 0.75, na.rm = TRUE)
+    IQR <- Q3 - Q1
+    
+    no_outliers <- animal_data[
+      `Weight Gain_kg` > (Q1 - 1.5 * IQR) & `Weight Gain_kg` < (Q3 + 1.5 * IQR)
+    ]
+    return(no_outliers)
+  }
+  
+  # Render plot based on selected animal
+  output$weightGainPlot <- renderPlot({
+    selected_animal <- input$animal
+    animal_data <- filter_and_remove_outliers(WG, selected_animal)
+    
+    ggplot(animal_data, aes(x = `Weight Gain_kg`)) +
+      geom_boxplot(outlier.color = "red", outlier.shape = 19) +
+      labs(
+        title = paste("Weight Gain Distribution for", selected_animal, "(Without Outliers)"),
+        x = "Weight Gain (kg/day)", y = ""
+      ) +
+      theme_minimal()
+  })
+}
+
+# Run the App
+shinyApp(ui = ui, server = server)
+```
+
+
 
