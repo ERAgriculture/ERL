@@ -1,0 +1,41 @@
+Table,Field,Field_Description,Table_Alt
+Pub.Out,B.Code,A unique code that identifies an extracted publication in the ERA dataset. This code is present in all the tables of era extraction data models.,bibliography
+Pub.Out,B.Author.Last,Publication first author's surname.,bibliography
+Pub.Out,B.Date,The year of publication.,bibliography
+Pub.Out,B.Journal,Name of journal this research is published in.,bibliography
+Pub.Out,B.DOI,"Digital object identifier (DOI) for the publication (e.g. 10.1080/03650340.2017.1411589). Do not include https://doi.org/ when entering this. Please strip the “https://doi.org/” when entering a doi . Correct = “10.1002/jrsm.1563”, Incorrect = “https://doi.org/10.1002/jrsm.1563”.
+If there is no DOI for a publication then report the https address of the article.",bibliography
+Pub.Out,B.Url,"For a publication with no DOI, please enter the full website address where it can be found.",bibliography
+Pub.Out,B.Project,Name the project of the current extraction round,bibliography
+Pub.Out,B.Link1,Publications that are referenced in this publication that may present results from the same experiment.,bibliography
+Pub.Out,B.Link2,Publications that are referenced in this publication that may present results from the same experiment.,bibliography
+Pub.Out,B.Link3,Publications that are referenced in this publication that may present results from the same experiment.,bibliography
+Pub.Out,B.Link4,Publications that are referenced in this publication that may present results from the same experiment.,bibliography
+Animals.Diet.Comp,B.Code,A unique code that identifies an extracted publication in the ERA dataset. This code is present in all the tables of era extraction data models.,feeds_nutrition
+Animals.Diet.Comp,D.Item,The name of the diet item. This should correspond to an entry in the AOM vocabulary.,feeds_nutrition
+Animals.Diet.Comp,D.Item.raw,Original diet item name as entered free text in the data extraction template.,feeds_nutrition
+Animals.Diet.Comp,D.Item.AOM,AOM (agricultural ontology for meta-analysis) code for the diet item.,feeds_nutrition
+Animals.Diet.Comp,D.Item.Root.Other.Comp.Proc_All,"Detailed and largely complete process names as described in the diet item name (D.Item). The purpose of this field to retain the unique identity of similar diet items with minor differences in processing when recombining root, component and processing fields to recreate a diet item name. Note the diet D.Item.Proc_Major and D.Item.Proc_Minor fields contain more useful harmonized process names that connect the diet item to AOM.",feeds_nutrition
+Animals.Diet.Comp,DC.Value,Value for composition variable and unit.,feeds_nutrition
+Animals.Diet.Comp,DC.Unit,Unit of measurement for composition variable.,feeds_nutrition
+Animals.Diet.Comp,DC.Unit.Is.Dry,"Are diet composition values calculated for dry matter (Yes), wet matter (No) or unknown (Unspecified).",feeds_nutrition
+Animals.Diet.Comp,DC.Method,"Is the composition value measured (e.g. a sample was processed in a lab) or estimated (e.g., generated from a formula or taken from a secondary source).",feeds_nutrition
+Animals.Diet.Comp,DC.Variable,Name of the composition variable.,feeds_nutrition
+Animals.Diet.Comp,is_group,Does this entry correspond to a composite diet item created using the D.Item.Group field in the Animals.Diet tab? In this case D.Item will correspond to an entry in the Animals.Diet$D.Item.Group column.,feeds_nutrition
+Animals.Diet.Comp,is_entire_diet,Does this entry correspond to an entire diet?  in this case D.Item will correspond to the Animals.Out$ A.Level.Name field.,feeds_nutrition
+Animals.Diet.Digest,DD.Unit.Is.Dry,"Are diet digestibility values calculated for dry matter (Yes), wet matter (No) or unknown (Unspecified).",feeds_digestibility
+Animals.Diet.Digest,D.Item.AOM,AOM (agricultural ontology for meta-analysis) code for the diet item.,feeds_digestibility
+Animals.Diet.Digest,D.Item,The name of the diet item. This should correspond to an entry in the AOM vocabulary.,feeds_digestibility
+Animals.Diet.Digest,D.Item.raw,Original diet item name as entered free text in the data extraction template.,feeds_digestibility
+Animals.Diet.Digest,DD.Unit.Is.Dry,"Are digestibility values calculated for dry matter (Yes), wet matter (No) or unknown (Unspecified).",feeds_digestibility
+Animals.Diet.Digest,is_group,Does this entry correspond to a composite diet item created using the D.Item.Group field in the Animals.Diet tab? In this case D.Item will correspond to an entry in the Animals.Diet$D.Item.Group column.,feeds_digestibility
+Animals.Diet.Digest,is_entire_diet,Does this entry correspond to an entire diet?  in this case D.Item will correspond to the Animals.Out$ A.Level.Name field.,feeds_digestibility
+Animals.Diet.Digest,D.Item.Root.Other.Comp.Proc_All,"Detailed and largely complete process names as described in the diet item name (D.Item). The purpose of this field to retain the unique identity of similar diet items with minor differences in processing when recombining root, component and processing fields to recreate a diet item name. Note the diet D.Item.Proc_Major and D.Item.Proc_Minor fields contain more useful harmonized process names that connect the diet item to AOM.",feeds_digestibility
+Animals.Diet.Digest,DD.Value,Value for digestibility variable and unit.,feeds_digestibility
+Animals.Diet.Digest,DD.Unit,Unit of measurement for digestibility variable.,feeds_digestibility
+Animals.Diet.Digest,DD.Nut.or.Diet,"Digestibility can be reported relative to a nutrient in the diet or the entire diet.
+Nutrient = relative to the nutrient, e.g. 52% of the organic matter in the diet/diet item is digestible. 
+Diet or Item = the focus is on the diet or item, e.g. 300 g/kg of the entire diet is digestible OM.",feeds_digestibility
+Animals.Diet.Digest,DD.Method,What is the method used to measure the digestibility variable?,feeds_digestibility
+Animals.Diet.Digest,DD.Variable,Name of the digestibility variable.,feeds_digestibility
+Animals.Diet.Digest,B.Code,A unique code that identifies an extracted publication in the ERA dataset. This code is present in all the tables of era extraction data models.,feeds_digestibility
