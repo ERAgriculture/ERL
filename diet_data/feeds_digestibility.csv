@@ -1,0 +1,186 @@
+D.Item.AOM,B.Code,DD.Unit.Is.Dry,D.Item,DD.Value,DD.Unit,DD.Nut.or.Diet,DD.Method,DD.Variable,Scientific Name,NCBI,WFO,Feedipedia,CPC_Code_Product,CPC_Code_Component
+,LM0311,Unspecified,,701,g/kg,Nutrient,Measured total collection techinque (Apparent),DM,,,,,,
+,NN0227,Unspecified,,668,g/kg,Nutrient,Measured total collection techinque,DM,,,,,,
+,LM0311,Unspecified,,699,g/kg,Nutrient,Measured total collection techinque (Apparent),OM,,,,,,
+,NN0227,Unspecified,,693,g/kg,Nutrient,Measured total collection techinque,OM,,,,,,
+,LM0311,Unspecified,,696,g/kg,Nutrient,Measured total collection techinque (Apparent),CP,,,,,,
+,NN0227,Unspecified,,687,g/kg,Nutrient,Measured total collection techinque,CP,,,,,,
+,LM0311,Unspecified,,663,g/kg,Nutrient,Measured total collection techinque (Apparent),NDF,,,,,,
+,NN0227,Unspecified,,730,g/kg,Nutrient,Measured total collection techinque,NDF,,,,,,
+,LM0311,Unspecified,,708,g/kg,Nutrient,Measured total collection techinque (Apparent),ADF,,,,,,
+,LM0311,Unspecified,,567,g/kg,Nutrient,Measured total collection techinque (Apparent),Cellu,,,,,,
+,LM0311,Unspecified,,765,g/kg,Nutrient,Measured total collection techinque (Apparent),Hemicell,,,,,,
+AOM_000574,NJ0013,Yes,Oat Leaves Dried,48.87,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Avena sativa,http://purl.obolibrary.org/obo/NCBITaxon_4498,,"https://www.feedipedia.org/node/500
+ https://www.feedipedia.org/node/707",0117,01919
+AOM_000620,JS0281,Yes,Cotton Seed Cake,73.2,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Gossypium,http://purl.obolibrary.org/obo/NCBITaxon_3633,,https://www.feedipedia.org/node/550,01921.01,2191
+AOM_000686,JS0230,Yes,Cenchrus ciliaris,37.5,g/100g DM,Nutrient,Measured in vitro (Tilley & Terry IVDMD),DM,Cenchrus ciliaris,http://purl.obolibrary.org/obo/NCBITaxon_35872,,https://www.feedipedia.org/node/482,NA,01919.9
+AOM_000686,JS0230,Yes,Cenchrus ciliaris,35.1,g/100g DM,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Cenchrus ciliaris,http://purl.obolibrary.org/obo/NCBITaxon_35872,,https://www.feedipedia.org/node/482,NA,01919.9
+AOM_000686,JS0226,Yes,Cenchrus ciliaris,59.6,%,Diet,Unspecified,Invitro,Cenchrus ciliaris,http://purl.obolibrary.org/obo/NCBITaxon_35872,,https://www.feedipedia.org/node/482,NA,01919.9
+AOM_000689,LM0228.1,Yes,Pennisetum purpureum,530,g/kg,Nutrient,Measured in vitro (Alexander & McGowan 1966),OM,Pennisetum purpureum,http://purl.obolibrary.org/obo/NCBITaxon_154765,,https://www.feedipedia.org/node/395,NA,01919.9
+AOM_000689,LM0228.2,Yes,Pennisetum purpureum,500,g/kg,Nutrient,Measured in vitro (Alexander & McGowan 1966),OM,Pennisetum purpureum,http://purl.obolibrary.org/obo/NCBITaxon_154765,,https://www.feedipedia.org/node/395,NA,01919.9
+AOM_000689,LM0229,Unspecified,Pennisetum purpureum,515,g,Nutrient,Measured total collection techinque,OM,Pennisetum purpureum,http://purl.obolibrary.org/obo/NCBITaxon_154765,,https://www.feedipedia.org/node/395,NA,01919.9
+AOM_000689,LM0227.1,Yes,Pennisetum purpureum,79.1,g/kg,Diet,Unspecified,Protein,Pennisetum purpureum,http://purl.obolibrary.org/obo/NCBITaxon_154765,,https://www.feedipedia.org/node/395,NA,01919.9
+AOM_000689,LM0227.2,Yes,Pennisetum purpureum,117.6,g/kg,Diet,Unspecified,Protein,Pennisetum purpureum,http://purl.obolibrary.org/obo/NCBITaxon_154765,,https://www.feedipedia.org/node/395,NA,01919.9
+AOM_000689,LM0227.1,Yes,Pennisetum purpureum,49,g/kg,Diet,Unspecified,Protein,Pennisetum purpureum,http://purl.obolibrary.org/obo/NCBITaxon_154765,,https://www.feedipedia.org/node/395,NA,01919.9
+AOM_000697,LM0126,Yes,Natural Pasture,530,g/kg,Nutrient,Measured in vitro (Van Soest & Robertson 1985),DM,,,,NA,NA,01919.9
+AOM_000697,LM0126,Yes,Natural Pasture,503.75,g/kg,Nutrient,Measured in vitro (Van Soest & Robertson 1985),NDF,,,,NA,NA,01919.9
+AOM_000698,LM0126,Yes,Natural Pasture Dried,545,g/kg,Nutrient,Measured in vitro (Van Soest & Robertson 1985),DM,,,,NA,NA,01919.9
+AOM_000698,NN0234,Yes,Natural Pasture Dried,428.9,g/kg,Diet,Measured AOAC (1990),OM,,,,NA,NA,01919.9
+AOM_000698,LM0126,Yes,Natural Pasture Dried,510,g/kg,Nutrient,Measured in vitro (Van Soest & Robertson 1985),NDF,,,,NA,NA,01919.9
+AOM_000710,LM0228.2,Yes,Leucaena leucocephala,480,g/kg,Nutrient,Measured in vitro (Alexander & McGowan 1966),OM,Leucaena leucocephala,http://purl.obolibrary.org/obo/NCBITaxon_3866,,https://www.feedipedia.org/node/282,NA,01919.9
+AOM_000710,LM0229,Unspecified,Leucaena leucocephala,360,g,Nutrient,Measured total collection techinque,OM,Leucaena leucocephala,http://purl.obolibrary.org/obo/NCBITaxon_3866,,https://www.feedipedia.org/node/282,NA,01919.9
+AOM_000719,JS0230,Yes,Alfalfa,58.6,g/100g DM,Nutrient,Measured in vitro (Tilley & Terry IVDMD),DM,Medicago sativa,http://purl.obolibrary.org/obo/NCBITaxon_3879,,https://www.feedipedia.org/node/275,NA,01919.9
+AOM_000719,JS0230,Yes,Alfalfa,57.1,g/100g DM,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Medicago sativa,http://purl.obolibrary.org/obo/NCBITaxon_3879,,https://www.feedipedia.org/node/275,NA,01919.9
+AOM_000751,JS0340,Unspecified,Enzyme,73.41,%,Nutrient,Measured total collection techinque (Apparent),DM,,,,NA,NA,
+AOM_000751,JS0340,Unspecified,Enzyme,71.48,%,Nutrient,Measured total collection techinque (Apparent),CP,,,,NA,NA,
+AOM_000751,JS0340,Unspecified,Enzyme,64.35,%,Nutrient,Measured total collection techinque (Apparent),NDF,,,,NA,NA,
+AOM_000751,JS0340,Unspecified,Enzyme,44.7,%,Nutrient,Measured total collection techinque (Apparent),ADF,,,,NA,NA,
+AOM_000751,JS0340,Unspecified,Enzyme,36.78,%,Nutrient,Measured total collection techinque (Apparent),ADL,,,,NA,NA,
+AOM_000800,NJ0013,Yes,Concentrate,80.74,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,,,,NA,NA,
+AOM_000800,NN0234,Yes,Concentrate,623.9,g/kg,Diet,Measured AOAC (1990),OM,,,,NA,NA,
+AOM_001109,LM0277.1,Yes,Poultry Litter Dried,76.1,%,Nutrient,Unspecified,Protein,,,,NA,NA,
+AOM_001109,LM0277.1,Yes,Poultry Litter Dried,76.1,%,Nutrient,Unspecified,Protein,,,,NA,NA,
+AOM_001109,LM0277.1,Yes,Poultry Litter Dried,51.1,%,Nutrient,Unspecified,Protein,,,,NA,NA,
+AOM_001197,NN0227,Unspecified,Teff Straw Crushed,465,g/kg,Nutrient,Measured total collection techinque,DM,Eragrostis tef,,,NA,1199.01,01913
+AOM_001197,NN0227,Unspecified,Teff Straw Crushed,497,g/kg,Nutrient,Measured total collection techinque,OM,Eragrostis tef,,,NA,1199.01,01913
+AOM_001197,NN0227,Unspecified,Teff Straw Crushed,302,g/kg,Nutrient,Measured total collection techinque,CP,Eragrostis tef,,,NA,1199.01,01913
+AOM_001197,NN0227,Unspecified,Teff Straw Crushed,546,g/kg,Nutrient,Measured total collection techinque,NDF,Eragrostis tef,,,NA,1199.01,01913
+AOM_001203,JS0269.2,Yes,Alfalfa Dried,65.6,%,Nutrient,Measured in vitro (Two-stage Van Soest IVDMD),DM,Medicago sativa,,,NA,NA,01919.9
+AOM_001216,JS0345,Unspecified,Indigofera indica,60.36,%,Nutrient,Measured in vitro (lab methods),DM,Indigofera indica,,,NA,NA,01919.9
+AOM_001216,JS0345,Unspecified,Indigofera indica,56.2,%,Nutrient,Measured in vitro (lab methods),OM,Indigofera indica,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,513,g/kg,Nutrient,Measured in sacco,DM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,551,g/kg,Nutrient,Measured in sacco,DM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,510,g/kg,Nutrient,Measured in sacco,DM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,492,g/kg,Nutrient,Measured in sacco,DM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,502,g/kg,Nutrient,Measured in sacco,DM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,544,g/kg,Nutrient,Measured in sacco,DM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,544,g/kg,Nutrient,Measured in sacco,OM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,579,g/kg,Nutrient,Measured in sacco,OM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,540,g/kg,Nutrient,Measured in sacco,OM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,525,g/kg,Nutrient,Measured in sacco,OM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,554,g/kg,Nutrient,Measured in sacco,OM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,575,g/kg,Nutrient,Measured in sacco,OM,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,520,g/kg,Nutrient,Measured in sacco,NDF,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,553,g/kg,Nutrient,Measured in sacco,NDF,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,524,g/kg,Nutrient,Measured in sacco,NDF,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,508,g/kg,Nutrient,Measured in sacco,NDF,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,509,g/kg,Nutrient,Measured in sacco,NDF,Sesbania sesban,,,NA,NA,01919.9
+AOM_001229,JS0290,No,Sesbania sesban Dried,527,g/kg,Nutrient,Measured in sacco,NDF,Sesbania sesban,,,NA,NA,01919.9
+AOM_001240,NN0366,Yes,Trifolium alexandrinum,301,g/kg,Diet,Measured marker technique,Carbs,Trifolium alexandrinum,,,https://www.feedipedia.org/node/248,NA,01919.9
+AOM_001277,JS0063,Yes,Sesame Seed Cake,82.4,%,Nutrient,In vitro,DM,Sesamum indicum,,,https://www.feedipedia.org/node/26,01444,2191
+AOM_001312,JS0063,Yes,Cotton Seed,42.7,%,Nutrient,In vitro,DM,Gossypium,http://purl.obolibrary.org/obo/NCBITaxon_3633,,https://www.feedipedia.org/node/742,01431,
+AOM_001312,NN0034,Yes,Cotton Seed,47.5,%,Nutrient,Measured in sacco,DM,Gossypium,http://purl.obolibrary.org/obo/NCBITaxon_3633,,https://www.feedipedia.org/node/742,01431,
+AOM_001312,NN0034,Yes,Cotton Seed,46.1,%,Nutrient,Measured in sacco,OM,Gossypium,http://purl.obolibrary.org/obo/NCBITaxon_3633,,https://www.feedipedia.org/node/742,01431,
+AOM_001334,JS0226,Yes,Pearl Millet,73.2,%,Diet,Unspecified,Invitro,Pennisetum glaucum,http://purl.obolibrary.org/obo/NCBITaxon_4543,,https://www.feedipedia.org/node/724,NA,
+AOM_001338,LM0126,Yes,Sunflower Seed Cake,430,g/kg,Nutrient,Measured in vitro (Van Soest & Robertson 1985),DM,Helianthus annuus,http://purl.obolibrary.org/obo/NCBITaxon_4232,,https://www.feedipedia.org/node/732,01445,2191
+AOM_001338,JS0345,Unspecified,Sunflower Seed Cake,57.68,%,Nutrient,Measured in vitro (lab methods),DM,Helianthus annuus,http://purl.obolibrary.org/obo/NCBITaxon_4232,,https://www.feedipedia.org/node/732,01445,2191
+AOM_001338,JS0345,Unspecified,Sunflower Seed Cake,60.67,%,Nutrient,Measured in vitro (lab methods),OM,Helianthus annuus,http://purl.obolibrary.org/obo/NCBITaxon_4232,,https://www.feedipedia.org/node/732,01445,2191
+AOM_001338,LM0126,Yes,Sunflower Seed Cake,410,g/kg,Nutrient,Measured in vitro (Van Soest & Robertson 1985),NDF,Helianthus annuus,http://purl.obolibrary.org/obo/NCBITaxon_4232,,https://www.feedipedia.org/node/732,01445,2191
+AOM_001347,NN0110.2,Unspecified,Winged Bean Autoclaved Ground,73.6,%,Nutrient,Measured marker technique,DM,Psophocarpus tetragonolobus,http://purl.obolibrary.org/obo/NCBITaxon_3847,,NA,NA,
+AOM_001347,NN0110.2,Unspecified,Winged Bean Autoclaved Ground,88.4,%,Nutrient,Measured marker technique,CP,Psophocarpus tetragonolobus,http://purl.obolibrary.org/obo/NCBITaxon_3847,,NA,NA,
+AOM_001348,NN0110.2,Unspecified,Winged Bean Ground Roasted,74.8,%,Nutrient,Measured marker technique,DM,Psophocarpus tetragonolobus,http://purl.obolibrary.org/obo/NCBITaxon_3847,,NA,NA,
+AOM_001348,NN0110.2,Unspecified,Winged Bean Ground Roasted,89.7,%,Nutrient,Measured marker technique,CP,Psophocarpus tetragonolobus,http://purl.obolibrary.org/obo/NCBITaxon_3847,,NA,NA,
+AOM_001351,NN0234,Yes,Blue Lupin,862.8,g/kg,Diet,Measured AOAC (1990),OM,Lupinus angustifolius,http://purl.obolibrary.org/obo/NCBITaxon_3847,,NA,01709.02,
+AOM_001409,LM0125,Yes,Pennisetum clandestinum,69.9,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Pennisetum clandestinum,,,https://www.feedipedia.org/node/398,NA,01919.9
+AOM_001410,LM0117.1,Yes,Pennisetum clandestinum Ensiled,60.4,%,Diet,Measured in vitro (Tilley & Terry IVDMD),DM,Pennisetum clandestinum,,,NA,NA,01919.9
+AOM_001410,LM0117.2,Yes,Pennisetum clandestinum Ensiled,70.4,%,Diet,Measured in vitro (Tilley & Terry IVDMD),DM,Pennisetum clandestinum,,,NA,NA,01919.9
+AOM_001410,LM0117.3,Yes,Pennisetum clandestinum Ensiled,70.4,%,Diet,Measured in vitro (Tilley & Terry IVDMD),DM,Pennisetum clandestinum,,,NA,NA,01919.9
+AOM_001412,JS0269.2,Yes,Pennisetum mezianum,37.5,%,Nutrient,Measured in vitro (Two-stage Van Soest IVDMD),DM,Pennisetum mezianum,,,NA,NA,01919.9
+AOM_001420,JS0340,Unspecified,Saccharomyces cerevisiae,71.23,%,Nutrient,Measured total collection techinque (Apparent),DM,Saccharomyces cerevisiae,,,NA,NA,
+AOM_001420,JS0340,Unspecified,Saccharomyces cerevisiae,70.94,%,Nutrient,Measured total collection techinque (Apparent),CP,Saccharomyces cerevisiae,,,NA,NA,
+AOM_001420,JS0340,Unspecified,Saccharomyces cerevisiae,64.96,%,Nutrient,Measured total collection techinque (Apparent),NDF,Saccharomyces cerevisiae,,,NA,NA,
+AOM_001420,JS0340,Unspecified,Saccharomyces cerevisiae,45.56,%,Nutrient,Measured total collection techinque (Apparent),ADF,Saccharomyces cerevisiae,,,NA,NA,
+AOM_001420,JS0340,Unspecified,Saccharomyces cerevisiae,38.29,%,Nutrient,Measured total collection techinque (Apparent),ADL,Saccharomyces cerevisiae,,,NA,NA,
+AOM_001446,JS0226,Yes,Sorghum sudanense,68.4,%,Diet,Unspecified,Invitro,Sorghum sudanense,,,https://www.feedipedia.org/node/375,NA,01919.9
+AOM_001453,JS0226,Yes,Urochloa mosambicensis,78,%,Diet,Unspecified,Invitro,Urochloa mosambicensis,,,https://www.feedipedia.org/node/362,NA,01919.9
+AOM_001460,JS0345,Unspecified,Bothriochloa insculpta,34.51,%,Nutrient,Measured in vitro (lab methods),DM,Creeping bluegrass,,,https://www.feedipedia.org/node/494,NA,01919.9
+AOM_001460,JS0345,Unspecified,Bothriochloa insculpta,29.95,%,Nutrient,Measured in vitro (lab methods),OM,Creeping bluegrass,,,https://www.feedipedia.org/node/494,NA,01919.9
+AOM_001465,JS0345,Unspecified,Cynodon nlemfuensis,28.37,%,Nutrient,Measured in vitro (lab methods),DM,Cynodon nlemfuensis,,,https://www.feedipedia.org/node/602,NA,01919.9
+AOM_001465,JS0345,Unspecified,Cynodon nlemfuensis,31.23,%,Nutrient,Measured in vitro (lab methods),OM,Cynodon nlemfuensis,,,https://www.feedipedia.org/node/602,NA,01919.9
+AOM_001476,LM0124,Yes,Lolium multiflorum,802,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Lolium multiflorum,,,NA,NA,01919.9
+AOM_001541,JS0345,Unspecified,Cyperus rotundus,42.85,%,Nutrient,Measured in vitro (lab methods),DM,Cyperus rotundus,,,NA,NA,01919.9
+AOM_001541,JS0345,Unspecified,Cyperus rotundus,41.59,%,Nutrient,Measured in vitro (lab methods),OM,Cyperus rotundus,,,NA,NA,01919.9
+AOM_001551,JS0345,Unspecified,Tribulus terrestris,33.39,%,Nutrient,Measured in vitro (lab methods),DM,Tribulus terrestris,,,NA,NA,01919.9
+AOM_001551,JS0345,Unspecified,Tribulus terrestris,37.71,%,Nutrient,Measured in vitro (lab methods),OM,Tribulus terrestris,,,NA,NA,01919.9
+AOM_001604,JS0269.2,Yes,Acacia tortilis Fruits Dried,59,%,Nutrient,Measured in vitro (Two-stage Van Soest IVDMD),DM,Vachellia tortilis,http://purl.obolibrary.org/obo/NCBITaxon_138046,,NA,NA,01919.9
+AOM_001614,JS0345,Unspecified,Maize Bran,60.8,%,Nutrient,Measured in vitro (lab methods),DM,Zea mays,http://purl.obolibrary.org/obo/NCBITaxon_4577,,https://www.feedipedia.org/node/712,0112,39120
+AOM_001614,NN0276.2,Unspecified,Maize Bran,893,g/kg,Diet,Measured total collection techinque,DM,Zea mays,http://purl.obolibrary.org/obo/NCBITaxon_4577,,https://www.feedipedia.org/node/712,0112,39120
+AOM_001614,JS0345,Unspecified,Maize Bran,66.87,%,Nutrient,Measured in vitro (lab methods),OM,Zea mays,http://purl.obolibrary.org/obo/NCBITaxon_4577,,https://www.feedipedia.org/node/712,0112,39120
+AOM_001614,LM0229,Unspecified,Maize Bran,750,g,Nutrient,Measured total collection techinque,OM,Zea mays,http://purl.obolibrary.org/obo/NCBITaxon_4577,,https://www.feedipedia.org/node/712,0112,39120
+AOM_001614,NN0276.2,Unspecified,Maize Bran,889,g/kg,Diet,Measured total collection techinque,OM,Zea mays,http://purl.obolibrary.org/obo/NCBITaxon_4577,,https://www.feedipedia.org/node/712,0112,39120
+AOM_001614,NN0276.2,Unspecified,Maize Bran,829,g/kg,Diet,Measured total collection techinque,NDF,Zea mays,http://purl.obolibrary.org/obo/NCBITaxon_4577,,https://www.feedipedia.org/node/712,0112,39120
+AOM_001624,JS0207,Yes,Wheat Straw Lime Treated Urea Treated,360,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),DM,Triticum aestivum,http://purl.obolibrary.org/obo/NCBITaxon_4565,,NA,0111,01913
+AOM_001624,JS0207,Yes,Wheat Straw Lime Treated Urea Treated,360,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Triticum aestivum,http://purl.obolibrary.org/obo/NCBITaxon_4565,,NA,0111,01913
+AOM_001632,JS0177,Yes,Pigeon Pea Dried,48.6,%,Nutrient,Measured in vitro (lab methods),DM,Cajanus cajan,http://purl.obolibrary.org/obo/NCBITaxon_3821,,https://www.feedipedia.org/node/22444,01707,
+AOM_001643,NN0236,Yes,Cotton Seed Ground,65.6,%,Nutrient,Measured total collection techinque,OM,Gossypium,,,NA,01921.01,2192
+AOM_001646,JS0269.2,Yes,Cowpea Dried,61.6,%,Nutrient,Measured in vitro (Two-stage Van Soest IVDMD),DM,Vigna unguiculata,http://purl.obolibrary.org/obo/NCBITaxon_3917,,https://www.feedipedia.org/node/12026,NA,1919
+AOM_001655,NN0233,Yes,Dichrostachys cinerea Fruits Dried,587.3,g/kg,Nutrient,Measured in vitro (Gas production technique),OM,Dichrostachys cinerea,,,NA,NA,01919.9
+AOM_001655,NN0233,Yes,Dichrostachys cinerea Fruits Dried,0.7,g/kg,Nutrient,Measured in vitro (Two-stage Van Soest IVDMD),Invitro,Dichrostachys cinerea,,,NA,NA,01919.9
+AOM_001667,JS0177,Yes,Leucaena leucocephala Dried,47.2,%,Nutrient,Measured in vitro (lab methods),DM,Leucaena leucocephala,http://purl.obolibrary.org/obo/NCBITaxon_3866,,https://www.feedipedia.org/node/282,NA,01919.9
+AOM_001667,JS0290,No,Leucaena leucocephala Dried,530,g/kg,Nutrient,Measured in sacco,DM,Leucaena leucocephala,http://purl.obolibrary.org/obo/NCBITaxon_3866,,https://www.feedipedia.org/node/282,NA,01919.9
+AOM_001667,JS0290,No,Leucaena leucocephala Dried,559,g/kg,Nutrient,Measured in sacco,OM,Leucaena leucocephala,http://purl.obolibrary.org/obo/NCBITaxon_3866,,https://www.feedipedia.org/node/282,NA,01919.9
+AOM_001667,JS0290,No,Leucaena leucocephala Dried,557,g/kg,Nutrient,Measured in sacco,NDF,Leucaena leucocephala,http://purl.obolibrary.org/obo/NCBITaxon_3866,,https://www.feedipedia.org/node/282,NA,01919.9
+AOM_001703,JS0290,No,Chamaecytisus palmensis Dried,505,g/kg,Nutrient,Measured in sacco,DM,Chamaecytisus palmensis,,,NA,NA,01919.9
+AOM_001703,JS0290,No,Chamaecytisus palmensis Dried,532,g/kg,Nutrient,Measured in sacco,OM,Chamaecytisus palmensis,,,NA,NA,01919.9
+AOM_001703,JS0290,No,Chamaecytisus palmensis Dried,514,g/kg,Nutrient,Measured in sacco,NDF,Chamaecytisus palmensis,,,NA,NA,01919.9
+AOM_001705,NN0236,Yes,Erythrina brucei Leaves Dried,68.9,%,Nutrient,Measured total collection techinque,OM,Erythrina brucei,,,NA,NA,01919.9
+AOM_001706,NJ0013,Yes,Olive Leaves Dried,53.79,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Olea europaea,http://purl.obolibrary.org/obo/NCBITaxon_4146,,https://www.feedipedia.org/node/121,NA,01919.9
+AOM_001721,NN0279,Unspecified,Pennisetum purpureum Dried,69.2,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Pennisetum purpureum,,,NA,NA,01919.9
+AOM_001725,JS0290,No,Sesbania goetzei Dried,514,g/kg,Nutrient,Measured in sacco,DM,Sesbania goetzei,,,NA,NA,01919.9
+AOM_001725,JS0290,No,Sesbania goetzei Dried,555,g/kg,Nutrient,Measured in sacco,OM,Sesbania goetzei,,,NA,NA,01919.9
+AOM_001725,JS0290,No,Sesbania goetzei Dried,504,g/kg,Nutrient,Measured in sacco,NDF,Sesbania goetzei,,,NA,NA,01919.9
+AOM_001729,JS0281,Yes,Desmodium intortum Dried,46.62,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Desmodium intortum,,,NA,NA,01919.9
+AOM_001731,JS0290,No,Lablab purpureus Leaves Dried,520,g/kg,Nutrient,Measured in sacco,DM,Dolichos lablab,,,NA,NA,01919.9
+AOM_001731,JS0290,No,Lablab purpureus Leaves Dried,550,g/kg,Nutrient,Measured in sacco,OM,Dolichos lablab,,,NA,NA,01919.9
+AOM_001731,JS0290,No,Lablab purpureus Leaves Dried,558,g/kg,Nutrient,Measured in sacco,NDF,Dolichos lablab,,,NA,NA,01919.9
+AOM_001735,JS0281,Yes,Macrotyloma axillare Dried,48.95,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Macrotyloma axillare,,,NA,NA,01919.9
+AOM_001743,NJ0013,Yes,Stipa tenacissima Dried,20.49,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Stipa tenacissima,,,NA,NA,01919.9
+AOM_001744,JS0281,Yes,Stylosanthes guianensis Dried,44.25,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Stylosanthes guianensis,,,NA,NA,01919.9
+AOM_001750,NN0007,Yes,Wheat Straw Ground,447,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Triticum aestivum,http://purl.obolibrary.org/obo/NCBITaxon_4565,,https://www.feedipedia.org/node/60,0111,01913
+AOM_001757,JS0269.2,Yes,Acacia brevispica Leaves Dried,56.7,%,Nutrient,Measured in vitro (Two-stage Van Soest IVDMD),DM,Acacia brevispica,http://purl.obolibrary.org/obo/NCBITaxon_546664,,NA,NA,01919.9
+AOM_001762,NN0233,Yes,Acacia etbaica Fruits Dried,502.9,g/kg,Nutrient,Measured in vitro (Gas production technique),OM,Acacia etbaica,http://purl.obolibrary.org/obo/NCBITaxon_546664,,NA,NA,01919.9
+AOM_001762,NN0233,Yes,Acacia etbaica Fruits Dried,0.6,g/kg,Nutrient,Measured in vitro (Two-stage Van Soest IVDMD),Invitro,Acacia etbaica,http://purl.obolibrary.org/obo/NCBITaxon_546664,,NA,NA,01919.9
+AOM_001765,LM0126,Yes,Acacia karroo Leaves Dried Ground,580,g/kg,Nutrient,Measured in vitro (Van Soest & Robertson 1985),DM,Acacia karroo,http://purl.obolibrary.org/obo/NCBITaxon_546664,,NA,NA,01919.9
+AOM_001765,LM0126,Yes,Acacia karroo Leaves Dried Ground,440,g/kg,Nutrient,Measured in vitro (Van Soest & Robertson 1985),NDF,Acacia karroo,http://purl.obolibrary.org/obo/NCBITaxon_546664,,NA,NA,01919.9
+AOM_001774,NN0007,Yes,Alfalfa Dried Ground,586,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Medicago sativa,,,https://www.feedipedia.org/node/275,NA,01919.9
+AOM_001794,JS0172,Yes,Albizia harveyi Dried,52.1,%,Nutrient,Measured total collection techinque (Apparent),DM,Albizia harveyi,,,NA,NA,01919.9
+AOM_001794,JS0172,Yes,Albizia harveyi Dried,50.5,%,Nutrient,Measured total collection techinque (Apparent),OM,Albizia harveyi,,,NA,NA,01919.9
+AOM_001794,JS0172,Yes,Albizia harveyi Dried,78.7,%,Nutrient,Measured total collection techinque (Apparent),CP,Albizia harveyi,,,NA,NA,01919.9
+AOM_001794,JS0172,Yes,Albizia harveyi Dried,48.8,%,Nutrient,Measured total collection techinque (Apparent),NDF,Albizia harveyi,,,NA,NA,01919.9
+AOM_001801,NN0279,Unspecified,Gliciridia sepium Leaves Dried,67,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Gliciridia sepium,,,NA,NA,01919.9
+AOM_001809,NJ0013,Yes,Grass Dried,51.56,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,,,,NA,0324,01919.9
+AOM_001809,NN0236,Yes,Grass Dried,61.3,%,Nutrient,Measured total collection techinque,OM,,,,NA,0324,01919.9
+AOM_001835,JS0421,Unspecified,Oat Straw,318.6,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Avena sativa,,,NA,0117,01913
+AOM_001857,NN0007,Yes,Acacia saligna Dried,488,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Acacia saligna,,,NA,NA,01919.9
+AOM_001859,NN0007,Yes,Atriplex nummularia Dried,622,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Atriplex nummularia,http://purl.obolibrary.org/obo/NCBITaxon_3553,,https://www.feedipedia.org/node/184,NA,01919.9
+AOM_001887,JS0207,Yes,Wheat Straw,590,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),DM,Triticum aestivum,http://purl.obolibrary.org/obo/NCBITaxon_4565,,https://www.feedipedia.org/node/60,0111,01913
+AOM_001887,JS0207,Yes,Wheat Straw,570,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Triticum aestivum,http://purl.obolibrary.org/obo/NCBITaxon_4565,,https://www.feedipedia.org/node/60,0111,01913
+AOM_001911,HK0337,Yes,Unspecified Grass Dried,404,g/kg,Nutrient,Measured in vitro (Van Soest 1991),DM,,,,NA,NA,01919.9
+AOM_001911,HK0337,Yes,Unspecified Grass Dried,411,g/kg,Nutrient,Measured in vitro (Van Soest 1991),OM,,,,NA,NA,01919.9
+AOM_001912,HK0337,Yes,Unspecified Grass,391,g/kg,Nutrient,Measured in vitro (Van Soest 1991),DM,,,,NA,NA,01919.9
+AOM_001912,HK0337,Yes,Unspecified Grass,373,g/kg,Nutrient,Measured in vitro (Van Soest 1991),OM,,,,NA,NA,01919.9
+AOM_001918,JS0177,Yes,Sesbania Dried,62,%,Nutrient,Measured in vitro (lab methods),DM,Sesbania sp,,,NA,NA,01919.9
+AOM_001926,NN0110.2,Unspecified,Menhaden Ground,75.2,%,Nutrient,Measured marker technique,DM,Brevoortia,,,NA,NA,
+AOM_001926,NN0110.2,Unspecified,Menhaden Ground,92.6,%,Nutrient,Measured marker technique,CP,Brevoortia,,,NA,NA,
+AOM_001952,NN0180.2,Yes,Beetroot Discards Dried,874.5,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,Beta vulgaris,http://purl.obolibrary.org/obo/NCBITaxon_161934,,NA,NA,
+AOM_001968,JS0172,Yes,Grewia similis Dried,58.2,%,Nutrient,Measured total collection techinque (Apparent),DM,Grewia similis,,,NA,NA,01919.9
+AOM_001968,JS0172,Yes,Grewia similis Dried,55.3,%,Nutrient,Measured total collection techinque (Apparent),OM,Grewia similis,,,NA,NA,01919.9
+AOM_001968,JS0172,Yes,Grewia similis Dried,76,%,Nutrient,Measured total collection techinque (Apparent),CP,Grewia similis,,,NA,NA,01919.9
+AOM_001968,JS0172,Yes,Grewia similis Dried,57.1,%,Nutrient,Measured total collection techinque (Apparent),NDF,Grewia similis,,,NA,NA,01919.9
+AOM_002067,JS0172,Yes,Delonix elata Dried,68.3,%,Nutrient,Measured total collection techinque (Apparent),DM,Delonix elata,,,NA,NA,01919.9
+AOM_002067,JS0172,Yes,Delonix elata Dried,67.4,%,Nutrient,Measured total collection techinque (Apparent),OM,Delonix elata,,,NA,NA,01919.9
+AOM_002067,JS0172,Yes,Delonix elata Dried,86.3,%,Nutrient,Measured total collection techinque (Apparent),CP,Delonix elata,,,NA,NA,01919.9
+AOM_002067,JS0172,Yes,Delonix elata Dried,53.3,%,Nutrient,Measured total collection techinque (Apparent),NDF,Delonix elata,,,NA,NA,01919.9
+AOM_002089,NN0007,Yes,Alfalfa Pods Dried,507,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Medicago sativa,http://purl.obolibrary.org/obo/NCBITaxon_3879,,https://www.feedipedia.org/node/275,NA,01919.9
+AOM_002204,JS0226,Yes,Lablab purpureus,75.8,%,Diet,Unspecified,Invitro,Dolichos lablab,,,https://www.feedipedia.org/node/297,NA,01919.9
+AOM_003102,JS0290,No,Teff Straw,522,g/kg,Nutrient,Measured in sacco,DM,,,,NA,1199.01,01913
+AOM_003102,JS0290,No,Teff Straw,556,g/kg,Nutrient,Measured in sacco,OM,,,,NA,1199.01,01913
+AOM_003102,JS0290,No,Teff Straw,573,g/kg,Nutrient,Measured in sacco,NDF,,,,NA,1199.01,01913
+AOM_006001,JS0281,Yes,Maize Stover,58.08,%,Nutrient,Measured in vitro (Tilley & Terry IVDMD),Invitro,Zea mays,http://purl.obolibrary.org/obo/NCBITaxon_4577,,https://www.feedipedia.org/node/16072,0112,
+No Match in AOM,JS0207,Yes,Bracharia & Bothriocloa,396,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),DM,,,,,,
+No Match in AOM,NN0227,Unspecified,Oat & Vetch Dried,630,g/kg,Nutrient,Measured total collection techinque,DM,,,,,,
+No Match in AOM,JS0207,Yes,Bracharia & Bothriocloa,310,g/kg,Nutrient,Measured in vitro (Tilley & Terry IVDMD),OM,,,,,,
+No Match in AOM,LM0123,Yes,Pennisetum clandestinum & Lolium,845,g/kg,Diet,Measured in vitro (Tilley & Terry IVDMD),OM,,,,,,
+No Match in AOM,NN0227,Unspecified,Oat & Vetch Dried,664,g/kg,Nutrient,Measured total collection techinque,OM,,,,,,
+No Match in AOM,NN0227,Unspecified,Oat & Vetch Dried,445,g/kg,Nutrient,Measured total collection techinque,CP,,,,,,
+No Match in AOM,NN0227,Unspecified,Oat & Vetch Dried,642,g/kg,Nutrient,Measured total collection techinque,NDF,,,,,,
