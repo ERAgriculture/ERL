@@ -47,10 +47,10 @@ This Quarto notebook demonstrates how to download and subset the ERA dataset, an
 - [ERA Codebase](https://github.com/CIAT/ERA_dev)
 
 A convenient shortcut to processed data is also provided within a local `diet_data/` folder, which stores:\
-- **feeds_nutrition.csv**\
-- **feeds_digestibility.csv**\
-- **bibliography.csv**\
-- **field_descriptions.csv**
+- [**feeds_nutrition.csv**](https://github.com/ERAgriculture/livestock_diet/blob/main/diet_data/feeds_nutrition.csv)\
+- [**feeds_digestibility.csv**](https://github.com/ERAgriculture/livestock_diet/blob/main/diet_data/feeds_digestibility.csv)\
+- [**bibliography.csv**](https://github.com/ERAgriculture/livestock_diet/blob/main/diet_data/bibliography.csv)\
+- [**field_descriptions.csv**](https://github.com/ERAgriculture/livestock_diet/blob/main/diet_data/field_descriptions.csv)
 
 These files can be reused for your own analyses or as a starting point for further data integration projects.
 
@@ -125,7 +125,7 @@ livestock_data <- miceadds::load.Rdata2(
 )
 ```
 
-These tables are available in the dataset: `r names(livestock_data)`. 
+These tables are available in the dataset: `r names(livestock_data)`.
 
 How to access information about these tables is discussed in Section 3.1.
 
@@ -215,56 +215,15 @@ DT::datatable(fields_ani, options = list(pageLength = 5))
 
 ------------------------------------------------------------------------
 
-## 4) Extract Animal Diet Data from livestock_data
+## 4) Prepare Feed Data
 
-The ERA dataset is divided into multiple tables. We focus on those describing animal diets, nutritional composition, digestibility, and bibliographic references.
+The ERA dataset is divided into multiple tables. We focus on those describing feed nutritional composition, feed digestibility, and bibliographic references.
 
-### 4.1) Animal Diet Overview (`master_codes$Animals.Out`)
-
-```{r 4.1a}
-table_name <- "Animals.Out"
-diet_overview <- livestock_data[[table_name]]
-
-descrip_diet_overview <- field_descriptions[Table == table_name, unique(Table_Description)]
-fields_diet_overview  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
-```
-
-`r descrip_diet_overview`
-
-Fields in the diet_overview (`Animals.Out`) table:
-
-```{r 4.1b}
-DT::datatable(fields_diet_overview, options = list(pageLength = 5))
-```
-
-### 4.2) Animal Diet Ingredients
-
-```{r 4.2a}
-table_name <- "Animals.Diet"
-diet_ingredients <- livestock_data[[table_name]]
-descrip_diet_ing <- field_descriptions[Table == table_name, unique(Table_Description)]
-fields_diet_ing  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
-```
-
-`r descrip_diet_ing`
-
-You can explore the fields interactively:
-
-```{r 4.2b}
-DT::datatable(fields_diet_ing, options = list(pageLength = 5))
-```
-
-**Note**: The **diet ingredients** table contains: - The total amount of the entire diet (where `Diet.Item == "Entire Diet"`) - The amount and identity of each ingredient within a diet - Composite items that are themselves made of multiple ingredients
-
-Although not strictly necessary for extracting feed item composition and digestibility, it provides insights into ERA’s structure of animal diets.
-
-------------------------------------------------------------------------
-
-## 5) Nutritional Composition of Feeds (`mastercodes$Animals.Diet.Comp`)
+### 4.1) Nutritional Composition (`mastercodes$Animals.Diet.Comp`)
 
 We are primarily interested in feed ingredients’ **nutritional composition**, stored in the `Animals.Diet.Comp` table.
 
-```{r 5a}
+```{r nutrition_a}
 table_name <- "Animals.Diet.Comp"
 diet_nutrition <- livestock_data[[table_name]]
 
@@ -276,15 +235,15 @@ fields_nut  <- field_descriptions[Table == table_name, .(Field, Field_Descriptio
 
 Fields in the diet_nutrition (`Animals.Diet.Comp`) table:
 
-```{r 5b}
+```{r nutrition_b}
 DT::datatable(fields_nut, options = list(pageLength = 5))
 ```
 
-### 5.1) Clean and Filter the Nutrition Data
+#### 4.1.1) Clean and Filter the Nutrition Data
 
 We want data only for **individual feed ingredients** (not entire diets or composite items), and we only want **measured** values (not estimated).
 
-```{r 5.1}
+```{r nutrition_c}
 # Remove records for entire diets
 diet_nutrition <- diet_nutrition[is_entire_diet == FALSE]
 diet_nutrition[, is_entire_diet := NULL]
@@ -304,11 +263,19 @@ setnames(diet_nutrition, "D.Item.Root.Comp.Proc_Major", "D.Item")
 DT::datatable(diet_nutrition, options = list(pageLength = 5))
 ```
 
-### 5.2) Enrich with AOM Vocab
+If you want to find out more information about variables see AOM elements under:
+`Management/Livestock Management/Feed Characteristic/Feed Chemical Composition`
+
+```{r aom_nut_vars}
+aom_nut_vars<-aom[grepl("Feed Characteristic/Feed Chemical Composition/",Path),.(AOM,Edge_Value,Description)]
+DT::datatable(aom_nut_vars[!is.na(Description)], options = list(pageLength = 5))
+```
+
+#### 4.1.2) Enrich with AOM Vocab
 
 We can merge in taxonomic or classification info (scientific names, CPC codes, etc.) from the **AOM** vocabulary to enhance our feed ingredient details.
 
-```{r 5.2}
+```{r nutrition_d}
 aom <- copy(master_codes[["AOM"]])
 descrip_aom <- field_descriptions[Table == "AOM", unique(Table_Description)]
 fields_aom  <- field_descriptions[Table == "AOM", .(Field, Field_Description)]
@@ -322,39 +289,41 @@ diet_nutrition <- merge(
   all.x = TRUE
 )
 
-DT::datatable(diet_nutrition[!grepl("No Match", D.Item.AOM)], options = list(pageLength = 5))
+DT::datatable(diet_nutrition[!grepl("No Match", D.Item.AOM) & 
+                            !is.na(D.Item) & 
+                            !is.na(`Scientific Name`),.(B.Code,D.Item.AOM,D.Item,`Scientific Name`,NCBI,WFO,Feedipedia)],
+              options = list(pageLength = 5))
 ```
 
 Some items might have `"No Match"` for `D.Item.AOM`—these are typically composite items or other special cases.
 
 ------------------------------------------------------------------------
 
-## 6) Digestibility of Feeds (`master_codes$Animals.Diet.Digest`)
+### 4.2) Digestibility (`master_codes$Animals.Diet.Digest`)
 
 Digestibility data are found in the `Animals.Diet.Digest` table.
 
-```{r 6a}
+```{r digest_a}
 table_name <- "Animals.Diet.Digest"
 diet_digest <- livestock_data[[table_name]]
 
 descrip_digest <- field_descriptions[Table == table_name, unique(Table_Description)]
 fields_digest  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
-
 ```
 
 `r descrip_digest`
 
 Fields in the diet_digest (`Animals.Diet.Digest`) table:
 
-```{r 6b}
+```{r digest_b}
 DT::datatable(fields_digest, options = list(pageLength = 5))
 ```
 
-### 6.1) Clean and Filter Digestibility Data
+#### 4.2.1) Clean and Filter Digestibility Data
 
 Similar to nutrition, we remove entries for entire diets, composite items, and estimated values.
 
-```{r 6.1}
+```{r digest_c}
 full_length <- nrow(diet_digest)
 
 # Remove entire diets
@@ -362,8 +331,6 @@ diet_digest <- diet_digest[is_entire_diet == FALSE]
 diet_digest[, is_entire_diet := NULL]
 
 sub_length <- nrow(diet_digest)
-cat("Most digestibility records in ERA are for entire diets, accounting for",
-    round(100 * (full_length - sub_length) / full_length, 1), "% of records.\n")
 
 # Remove composite items
 diet_digest <- diet_digest[is_group == FALSE]
@@ -375,13 +342,33 @@ diet_digest <- diet_digest[!grepl("Estimated", DD.Method)]
 # Drop unneeded columns, rename for consistency
 diet_digest <- diet_digest[, !c("D.Item", "D.Item.Root.Other.Comp.Proc_All", "D.Item.raw")]
 setnames(diet_digest, "D.Item.Root.Comp.Proc_Major", "D.Item")
+
+DT::datatable(diet_digest[!is.na(D.Item)], options = list(pageLength = 5))
 ```
 
-### 6.2) Enrich with AOM Vocab
+Most digestibility records in ERA are for entire diets, accounting for `r round(100 * (full_length - sub_length) / full_length, 1)` % of records.
+
+If you want to find out more information about digestibility measurement methods see AOM elements under:
+`Management/Livestock Management/Feed Characteristic/Feed Digestibility/Digestibility Measurement Method/`
+
+```{r aom_methods}
+aom_dig_methods<-aom[grepl("Digestibility Measurement Method/",Path),.(AOM,Edge_Value,Description)]
+DT::datatable(aom_dig_methods[!is.na(Description)], options = list(pageLength = 2))
+```
+
+If you want to find out more information about digestibility variables see AOM elements under:
+`Management/Livestock Management/Feed Characteristic/Feed Digestibility/`
+
+```{r aom_vars}
+aom_dig_vars<-aom[!grepl("Digestibility Measurement Method/",Path) & grepl("Feed Digestibility",Path),.(AOM,Edge_Value,Description)]
+DT::datatable(aom_dig_vars[!is.na(Description)], options = list(pageLength = 2))
+```
+
+#### 4.2.2) Enrich with AOM Vocab
 
 We merge again with the AOM data to get classification details.
 
-```{r 6.2}
+```{r digest_d}
 diet_digest <- merge(
   diet_digest,
   aom[, .(AOM, `Scientific Name`, NCBI, WFO, Feedipedia, CPC_Code_Product, CPC_Code_Component)],
@@ -390,16 +377,74 @@ diet_digest <- merge(
   all.x = TRUE
 )
 
-DT::datatable(diet_digest[!grepl("No Match", D.Item.AOM)], options = list(pageLength = 5))
+DT::datatable(diet_digest[!grepl("No Match", D.Item.AOM) & 
+                            !is.na(D.Item) & 
+                            !is.na(`Scientific Name`),.(B.Code,D.Item.AOM,D.Item,`Scientific Name`,NCBI,WFO,Feedipedia)],
+              options = list(pageLength = 5))
 ```
+
+### 4.3) Other Diet Tables (Optional)
+
+Here we present additional tables that do not contain information about feed items, but provide you with insights as to how animal diet experiment data is structured in ERA. If you are interested in this we also suggest you explore the data extraction template [skinny_cow_2022](https://github.com/CIAT/ERA_dev/blob/main/data_entry/skinny_cow_2022/excel_data_extraction_template/V1.06.3%20-%20Skinny%20Cow.xlsm).
+
+#### 4.3.1) Diet Overview (`master_codes$Animals.Out`)
+
+```{r animals_out_a}
+table_name <- "Animals.Out"
+diet_overview <- livestock_data[[table_name]]
+
+descrip_diet_overview <- field_descriptions[Table == table_name, unique(Table_Description)]
+fields_diet_overview  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
+```
+
+`r descrip_diet_overview`
+
+Fields in the diet_overview (`Animals.Out`) table:
+
+```{r animals_out_b}
+DT::datatable(fields_diet_overview, options = list(pageLength = 5))
+```
+
+Notes on experimental diets:
+
+```{r animals_out_c}
+DT::datatable(diet_overview[!is.na(A.Notes),.(B.Code,A.Level.Name,A.Notes)], options = list(pageLength = 5))
+```
+
+#### 4.3.2) Diet Ingredients (`master_codes$Animals.Diet`)
+
+```{r ingredients_a}
+table_name <- "Animals.Diet"
+diet_ingredients <- livestock_data[[table_name]]
+descrip_diet_ing <- field_descriptions[Table == table_name, unique(Table_Description)]
+fields_diet_ing  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
+```
+
+`r descrip_diet_ing`
+
+You can explore the fields interactively:
+
+```{r ingredients_b}
+DT::datatable(fields_diet_ing, options = list(pageLength = 5))
+```
+
+Notes on experimental diets:
+
+```{r ingredients_c}
+DT::datatable(diet_ingredients[,.(B.Code,D.Item.AOM,D.Item.Root.Comp.Proc_Major,D.Amount,D.Unit.Amount,D.Unit.Time,D.Unit.Animals)], options = list(pageLength = 5))
+```
+
+**Note**: The **diet ingredients** table contains: - The total amount of the entire diet (where `Diet.Item == "Entire Diet"`) - The amount and identity of each ingredient within a diet - Composite items that are themselves made of multiple ingredients
+
+Although not strictly necessary for extracting feed item composition and digestibility, it provides insights into ERA’s structure of animal diets.
 
 ------------------------------------------------------------------------
 
-## 7) Bibliographic Information
+## 5) Bibliographic Information
 
 All tables in ERA contain a field `B.Code` that identifies the source publication. We can link to the **Pub.Out** table to retrieve bibliographic info for these studies.
 
-```{r 7a}
+```{r 5a}
 table_name <- "Pub.Out"
 bibliography <- livestock_data[[table_name]]
 
@@ -411,13 +456,13 @@ fields_bib  <- field_descriptions[Table == table_name, .(Field, Field_Descriptio
 
 Fields in the bibliography (`Pub.Out`) table:
 
-```{r 7b}
+```{r 5b}
 DT::datatable(fields_bib, options = list(pageLength = 5))
 ```
 
 We subset the bibliographic data to only those entries appearing in our nutrition or digestibility tables and remove uneeded fields:
 
-```{r 7c}
+```{r 5c}
 bibliography <- bibliography[B.Code %in% unique(c(diet_nutrition[, B.Code], diet_digest[, B.Code]))]
 bibliography <- bibliography[,!c("B.Link1","B.Link2","B.Link3","B.Link4","B.New","B.Project")]
 DT::datatable(bibliography, options = list(pageLength = 5))
@@ -425,7 +470,7 @@ DT::datatable(bibliography, options = list(pageLength = 5))
 
 ------------------------------------------------------------------------
 
-## 8) Save Processed Data
+## 6) Save Processed Data
 
 To make repeated analyses easier, we will save our cleaned tables to CSV files in a local `diet_data/` folder. These can be loaded quickly in future sessions.
 
@@ -455,3 +500,11 @@ fields_subset[Table == "Pub.Out", Table_Alt := "bibliography"]
 
 fwrite(fields_subset, file.path(save_dir, "field_descriptions.csv"))
 ```
+
+## Acknowledgment
+
+This work is funded under the **CGIAR Livestock & Climate Initiative**.
+
+::: {style="text-align: center; margin-top: 20px;"}
+<img src="images/logo.png" alt="CGIAR Livestock &amp; Climate Initiative Logo" width="800"/>
+:::
