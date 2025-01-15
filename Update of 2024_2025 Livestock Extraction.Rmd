@@ -50,9 +50,11 @@ pacman::p_load(
 
 ```
 
+# Introduction
+
 This vignette aims to outline the workflows of the 2024/2025 livestock data extraction. These are some of the key steps we have taken and will be gone over indepth within this vignette:
 
-***1.Generation of search terms***
+***1. Generation of search terms***
 
 ***2. Using OpenAlex to test the search strings and generate relevance scores***
 
@@ -62,9 +64,9 @@ This vignette aims to outline the workflows of the 2024/2025 livestock data extr
 
 ***5. Extraction template***
 
-***6. Import script and automated QAQC***
+***6. Updated AOM***
 
-***7. Updated AOM***
+***7. Import script and automated QAQC***
 
 # 1. Generation of search terms
 
@@ -100,9 +102,8 @@ This script is designed to conduct a systematic search for livestock-related stu
 
     The script constructs an API endpoint. It retrieves search results, saving them as .csv files. Filtering by Date and Geography: The script limits the results to studies published between 2018 and 2024, with an optional geographic focus on Africa.
 
-```{=html}
 <!-- -->
-```
+
 4.  **Merging and Saving Results Combining Searches:** The results from different queries are merged to ensure a comprehensive dataset. Duplicates are identified and removed.
 
     Saving Results: The merged dataset is saved in a specified directory for further analysis.
@@ -1387,3 +1388,95 @@ The review emphasizes studies reporting primary data on key outcomes: Reproducti
 Studies must focus on interventions and primary data collection. Lab experiments or greenhouse studies are excluded unless they focus on emission outcomes.
 
 # 5. Extraction template
+
+Consultants went through an extensive training on how to input data from publications into our excel template. The link to the template can be found here: [V1.2.7- Courageous Camel.xlsm](https://cgiar-my.sharepoint.com/:x:/g/personal/p_steward_cgiar_org/EcPbtXN9dINJnnsdXp1KOYABLJuqqKGuJrJCPFePELSZcQ?e=e7xyAo)\
+\
+This template included the following tabs:
+
+-   **Pub**:\
+    This sheet stores bibliographic details, such as publication titles, authors, DOIs, and other metadata.
+
+-   **Site**:\
+    This sheet contains detailed information about the research sites, including location, climate, and ecological characteristics.
+
+-   **Site.Soils**:\
+    This sheet captures soil data from experimental sites, including soil type, pH, and nutrient composition.
+
+-   **ExpD**:\
+    This sheet documents the experimental design, outlining key parameters such as treatments, controls, and replications.
+
+-   **System & Housing**:\
+    This sheet focuses on livestock management systems and housing conditions, providing details on the type of housing, ventilation, and animal welfare.
+
+-   **Times**:\
+    This sheet records time-related data, including the duration of experiments, sampling intervals, and seasonal variations.
+
+-   **Herd or Group**:\
+    This sheet contains data on livestock demographics, such as herd size, age groups, and breed composition.
+
+-   **Diet-Ingredients**:\
+    This sheet lists the specific ingredients used in livestock diets, including their quantities and sources.
+
+-   **Diet-Nutrition**:\
+    This sheet provides a comprehensive nutritional breakdown of the livestock diets, detailing macronutrient and micronutrient contents.
+
+-   **Diet-Digestibility**:\
+    This sheet records data on feed digestibility, including in vivo and in vitro results.
+
+-   **Pasture-Description**:\
+    This sheet documents the characteristics of pastures used in the experiments, such as plant species, ground cover, and soil quality.
+
+-   **Grazing & Pasture-Management**:\
+    This sheet captures grazing strategies and pasture management practices, including rotation schedules and stocking densities.
+
+-   **Chemicals, Vaccines, Medicines**:\
+    This sheet tracks the use of chemicals, vaccines, and medicines in livestock management.
+
+-   **Make.Trt**:\
+    This sheet brings together all the practices applied during the experiment
+
+-   **Outcomes**:\
+    This sheet focuses on the experimental outcomes, such as weight gain, milk yield, and feed efficiency.
+
+-   **EnterData**:\
+    This sheet is where the outcome values are reported for each treatment, at each time period and at different sites where applicable.
+
+Each of these sheets has a corresponding 'out' table, which summarizes the information for each tab and feeds into our data model. For example, the animals diets are split into 3 tabs, or 3 tables (see image below), which can then be stitched together using a compilation script, which is currently under development.
+
+![](images/extraction%20schema%202.png){width="589"}
+
+# 6. Update of the AOM ontology
+
+The data extraction process and the development of our ontology has worked hand-in-hand such that we add new terms as they are presented to publications. The AOM can be found here: <https://github.com/peetmate/era_codes/blob/main/era_master_sheet.xlsx>
+
+The AOM ontology is designed to classify and organize concepts related to animal species, diets, and other agricultural research elements. The ontology follows a hierarchical structure with multiple levels of granularity, represented by columns such as **L1** to **L8**, which progressively categorize concepts from broad to specific.
+
+### Key Features of the AOM Ontology:
+
+1.  **Hierarchical Structure**:
+
+    -   Each row represents a unique concept, identified by a unique code (e.g., **AOM_000001**).
+
+    -   The levels (L1 to L8) provide a structured breakdown of these concepts. For instance, "Species" might branch into "Animal," "Terrestrial," and further into specific categories like "Mammal."
+
+2.  **External References**:
+
+    -   Links to external databases (e.g., **NCBI**, **Feedipedia**) offer detailed taxonomic and feed information, providing evidence-backed categorization.
+
+Importance of Ontologies in Evidence Synthesis:
+
+An ontology is essential in evidence synthesis as it provides a standardized vocabulary and structure, enabling researchers to:
+
+-Systematically organize diverse datasets.
+
+-Enhance the interoperability and comparability of studies.
+
+-Minimize ambiguity and ensure consistent interpretation of terms.
+
+-Facilitate automated searches and systematic reviews by linking data to global standards.
+
+# 7. **Import script and automated QAQC**
+
+An import script was developed in ingest the high number of excels that were used to extract information from livestock publications.
+
+To ensure consistency and high-quality data, the ERA initiative engages consultants to extract relevant information from these studies using a standardized Excel-based template. Given the volume and complexity of data, errors in extraction, formatting, or adherence to standards are inevitable. Recognizing the need for efficiency and accuracy, this import script was designed to automate data validation and harmonization while providing clear feedback on errors to consultants.
