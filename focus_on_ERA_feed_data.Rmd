@@ -1,0 +1,457 @@
+---
+title: "Focus on ERA Animal Feed Data"
+author: "Peter Steward"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+    includes:
+      after_body: hypothes.html
+vignette: >
+  %\VignetteIndexEntry{Focus on ERA Animal Feed Data}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+comments:
+  utterances:
+    repo: ERAgriculture/livestock_diet
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+## Overview and Purpose
+
+The ERA dataset is a synthesis of peer-reviewed research conducted in sub-Saharan Africa. It provides valuable information on livestock diets, focusing on:
+
+-   Animal feed items\
+-   Their nutritional composition\
+-   Digestibility
+
+This Quarto notebook demonstrates how to download and subset the ERA dataset, and how to extract tables containing data on:
+
+-   **Nutritional composition** of feed ingredients\
+-   **Digestibility** values for various feed ingredients\
+-   **Bibliographic** details for the included studies
+
+**Links for reference**:\
+- [ERA Publication](https://www.nature.com/articles/s41597-024-03805-z)\
+- [ERA Codebase](https://github.com/CIAT/ERA_dev)
+
+A convenient shortcut to processed data is also provided within a local `diet_data/` folder, which stores:\
+- **feeds_nutrition.csv**\
+- **feeds_digestibility.csv**\
+- **bibliography.csv**\
+- **field_descriptions.csv**
+
+These files can be reused for your own analyses or as a starting point for further data integration projects.
+
+------------------------------------------------------------------------
+
+## 1) Set Up the Workspace
+
+Install and load packages and create directory for downloaded data.
+
+```{r setup 2}
+
+# Install and load pacman if not already installed
+if (!require("pacman", character.only = TRUE)) {
+  install.packages("pacman")
+  library(pacman)
+}
+
+# Load or install required packages
+pacman::p_load(
+  data.table,
+  s3fs,
+  clipr,
+  miceadds,
+  httr,
+  readxl,
+  DT
+)
+
+# Set a directory for downloaded data
+dl_dir <- "downloaded_data"
+
+# Create the directory if it doesn't already exist
+if(!dir.exists(dl_dir)){
+  dir.create(dl_dir, showWarnings = FALSE)
+}
+```
+
+------------------------------------------------------------------------
+
+## 2) Download and Import ERA Data
+
+The ERA dataset is stored in an Amazon S3 bucket with open/anonymous access. Below, we demonstrate how to list files in this bucket, download the most recent version of the dataset, and load the relevant tables into R.
+
+We are importing data from a 2022 project that extracted livestock data using an excel template called [skinny_cow_2022](https://github.com/CIAT/ERA_dev/blob/main/data_entry/skinny_cow_2022/excel_data_extraction_template/V1.06.3%20-%20Skinny%20Cow.xlsm). Publications were identified using the era search strings as described in [Rosenstock et. al. (2024)](https://www.nature.com/articles/s41597-024-03805-z).
+
+```{r import-era-data}
+# Create an S3 filesystem handle
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+era_s3 <- "s3://digital-atlas/era"
+
+# List files in the s3 bucket
+all_files <- s3$dir_ls(file.path(era_s3, "data"))
+
+# Filter for the "skinny_cow_2022" RData file, selecting the most recent version
+target_file <- tail(
+  grep(".RData", grep("skinny_cow_2022", all_files, value = TRUE), value = TRUE),
+  1
+)
+
+# Define a local path for saving the downloaded file
+save_path <- file.path(getwd(), dl_dir, basename(target_file))
+
+# Download the file if it does not exist already
+if (!file.exists(save_path)) {
+  s3$file_download(target_file, save_path, overwrite = TRUE)
+}
+
+# Load the livestock data using the miceadds package
+livestock_data <- miceadds::load.Rdata2(
+  file = basename(save_path),
+  path = dirname(save_path)
+)
+```
+
+These tables are available in the dataset: `r names(livestock_data)`. 
+
+How to access information about these tables is discussed in Section 3.1.
+
+------------------------------------------------------------------------
+
+## 3) Download and Load ERA Controlled Vocabulary
+
+The ERA project maintains a “controlled vocabulary” that describes the fields, tables, and terminology used in the dataset. Below, we download the relevant Excel file from GitHub and load these vocab tables.
+
+The controlled vocabularly is available [here](https://github.com/peetmate/era_codes/raw/main/era_master_sheet.xlsx).
+
+```{r  era-controlled-vocab,message=F,warning=F}
+# Define the URL and local path for the vocab file
+era_vocab_url <- "https://github.com/peetmate/era_codes/raw/main/era_master_sheet.xlsx"
+era_vocab_local <- file.path(getwd(), dl_dir, "era_master_sheet.xlsx")
+
+# Download the file (set 'update=TRUE' to refresh the local copy)
+update <- F
+if (update) {
+  download.file(era_vocab_url, era_vocab_local, mode = "wb")  # Write in binary mode
+}
+
+# Identify sheet names in the workbook (excluding placeholder sheets)
+sheet_names <- readxl::excel_sheets(era_vocab_local)
+sheet_names <- sheet_names[!grepl("sheet|Sheet", sheet_names)]
+
+# Read each sheet into a list of tables
+master_codes <- suppressWarnings(
+  suppressMessages(
+    sapply(sheet_names,
+           FUN = function(x) {
+             data.table(readxl::read_excel(era_vocab_local, sheet = x))
+           },
+           USE.NAMES = TRUE
+    )
+  )
+)
+
+```
+
+### 3.1) ERA Field Descriptions (`master_codes$era_fields_v2`)
+
+```{r 3.1}
+field_descriptions <- data.table::copy(master_codes$era_fields_v2)
+```
+
+The `master_codes$era_fields_v2` table contains descriptions of field in the ERA data model and is used subsequent sections to describe the contents of the tables we will focus on.
+
+### 3.2) AOM Controlled Vocabulary for Livestock Meta-analysus (`master_codes$AOM`)
+
+```{r 3.2a}
+table_name<-"AOM"
+aom<-copy(master_codes[[table_name]])
+descrip_aom<-field_descriptions[Table==table_name,unique(Table_Description)]
+fields_aom<-field_descriptions[Table==table_name,.(Field,Field_Description)]
+```
+
+`r descrip_aom`
+
+Fields in the AOM table:
+
+```{r 3.2b}
+DT::datatable(fields_aom, options = list(pageLength = 5))
+```
+
+### 3.3) Animal Diet Harmonization (`master_codes$ani_diet`)
+
+```{r 3.3}
+table_name <- "ani_diet"
+ani_diet <- copy(master_codes[[table_name]])
+
+descrip_ani <- field_descriptions[Table == table_name, unique(Table_Description)]
+fields_ani  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
+
+# Remove depreciated columns
+depreciated <- fields_ani[grepl("Depreciated legacy column", Field_Description), Field]
+ani_diet[, (depreciated) := NULL]
+```
+
+`r descrip_ani`
+
+Fields in the animal diet harmonization (`ani_diet`) table:
+
+```{r}
+DT::datatable(fields_ani, options = list(pageLength = 5))
+```
+
+------------------------------------------------------------------------
+
+## 4) Extract Animal Diet Data from livestock_data
+
+The ERA dataset is divided into multiple tables. We focus on those describing animal diets, nutritional composition, digestibility, and bibliographic references.
+
+### 4.1) Animal Diet Overview (`master_codes$Animals.Out`)
+
+```{r 4.1a}
+table_name <- "Animals.Out"
+diet_overview <- livestock_data[[table_name]]
+
+descrip_diet_overview <- field_descriptions[Table == table_name, unique(Table_Description)]
+fields_diet_overview  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
+```
+
+`r descrip_diet_overview`
+
+Fields in the diet_overview (`Animals.Out`) table:
+
+```{r 4.1b}
+DT::datatable(fields_diet_overview, options = list(pageLength = 5))
+```
+
+### 4.2) Animal Diet Ingredients
+
+```{r 4.2a}
+table_name <- "Animals.Diet"
+diet_ingredients <- livestock_data[[table_name]]
+descrip_diet_ing <- field_descriptions[Table == table_name, unique(Table_Description)]
+fields_diet_ing  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
+```
+
+`r descrip_diet_ing`
+
+You can explore the fields interactively:
+
+```{r 4.2b}
+DT::datatable(fields_diet_ing, options = list(pageLength = 5))
+```
+
+**Note**: The **diet ingredients** table contains: - The total amount of the entire diet (where `Diet.Item == "Entire Diet"`) - The amount and identity of each ingredient within a diet - Composite items that are themselves made of multiple ingredients
+
+Although not strictly necessary for extracting feed item composition and digestibility, it provides insights into ERA’s structure of animal diets.
+
+------------------------------------------------------------------------
+
+## 5) Nutritional Composition of Feeds (`mastercodes$Animals.Diet.Comp`)
+
+We are primarily interested in feed ingredients’ **nutritional composition**, stored in the `Animals.Diet.Comp` table.
+
+```{r 5a}
+table_name <- "Animals.Diet.Comp"
+diet_nutrition <- livestock_data[[table_name]]
+
+descrip_nut <- field_descriptions[Table == table_name, unique(Table_Description)]
+fields_nut  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
+```
+
+`r descrip_nut`
+
+Fields in the diet_nutrition (`Animals.Diet.Comp`) table:
+
+```{r 5b}
+DT::datatable(fields_nut, options = list(pageLength = 5))
+```
+
+### 5.1) Clean and Filter the Nutrition Data
+
+We want data only for **individual feed ingredients** (not entire diets or composite items), and we only want **measured** values (not estimated).
+
+```{r 5.1}
+# Remove records for entire diets
+diet_nutrition <- diet_nutrition[is_entire_diet == FALSE]
+diet_nutrition[, is_entire_diet := NULL]
+
+# Remove records for composite diet items
+diet_nutrition <- diet_nutrition[is_group == FALSE]
+diet_nutrition[, is_group := NULL]
+
+# Keep only measured (non-estimated) values
+diet_nutrition <- diet_nutrition[DC.Method != "Estimated"]
+diet_nutrition[, DC.Method := NULL]
+
+# Drop unneeded columns; rename main diet item column
+diet_nutrition <- diet_nutrition[, !c("D.Item", "D.Item.Root.Other.Comp.Proc_All", "D.Item.raw")]
+setnames(diet_nutrition, "D.Item.Root.Comp.Proc_Major", "D.Item")
+
+DT::datatable(diet_nutrition, options = list(pageLength = 5))
+```
+
+### 5.2) Enrich with AOM Vocab
+
+We can merge in taxonomic or classification info (scientific names, CPC codes, etc.) from the **AOM** vocabulary to enhance our feed ingredient details.
+
+```{r 5.2}
+aom <- copy(master_codes[["AOM"]])
+descrip_aom <- field_descriptions[Table == "AOM", unique(Table_Description)]
+fields_aom  <- field_descriptions[Table == "AOM", .(Field, Field_Description)]
+
+# Merge AOM data into the diet_nutrition table
+diet_nutrition <- merge(
+  diet_nutrition,
+  aom[, .(AOM, `Scientific Name`, NCBI, WFO, Feedipedia, CPC_Code_Product, CPC_Code_Component)],
+  by.x = "D.Item.AOM",
+  by.y = "AOM",
+  all.x = TRUE
+)
+
+DT::datatable(diet_nutrition[!grepl("No Match", D.Item.AOM)], options = list(pageLength = 5))
+```
+
+Some items might have `"No Match"` for `D.Item.AOM`—these are typically composite items or other special cases.
+
+------------------------------------------------------------------------
+
+## 6) Digestibility of Feeds (`master_codes$Animals.Diet.Digest`)
+
+Digestibility data are found in the `Animals.Diet.Digest` table.
+
+```{r 6a}
+table_name <- "Animals.Diet.Digest"
+diet_digest <- livestock_data[[table_name]]
+
+descrip_digest <- field_descriptions[Table == table_name, unique(Table_Description)]
+fields_digest  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
+
+```
+
+`r descrip_digest`
+
+Fields in the diet_digest (`Animals.Diet.Digest`) table:
+
+```{r 6b}
+DT::datatable(fields_digest, options = list(pageLength = 5))
+```
+
+### 6.1) Clean and Filter Digestibility Data
+
+Similar to nutrition, we remove entries for entire diets, composite items, and estimated values.
+
+```{r 6.1}
+full_length <- nrow(diet_digest)
+
+# Remove entire diets
+diet_digest <- diet_digest[is_entire_diet == FALSE]
+diet_digest[, is_entire_diet := NULL]
+
+sub_length <- nrow(diet_digest)
+cat("Most digestibility records in ERA are for entire diets, accounting for",
+    round(100 * (full_length - sub_length) / full_length, 1), "% of records.\n")
+
+# Remove composite items
+diet_digest <- diet_digest[is_group == FALSE]
+diet_digest[, is_group := NULL]
+
+# Remove estimated values
+diet_digest <- diet_digest[!grepl("Estimated", DD.Method)]
+
+# Drop unneeded columns, rename for consistency
+diet_digest <- diet_digest[, !c("D.Item", "D.Item.Root.Other.Comp.Proc_All", "D.Item.raw")]
+setnames(diet_digest, "D.Item.Root.Comp.Proc_Major", "D.Item")
+```
+
+### 6.2) Enrich with AOM Vocab
+
+We merge again with the AOM data to get classification details.
+
+```{r 6.2}
+diet_digest <- merge(
+  diet_digest,
+  aom[, .(AOM, `Scientific Name`, NCBI, WFO, Feedipedia, CPC_Code_Product, CPC_Code_Component)],
+  by.x = "D.Item.AOM",
+  by.y = "AOM",
+  all.x = TRUE
+)
+
+DT::datatable(diet_digest[!grepl("No Match", D.Item.AOM)], options = list(pageLength = 5))
+```
+
+------------------------------------------------------------------------
+
+## 7) Bibliographic Information
+
+All tables in ERA contain a field `B.Code` that identifies the source publication. We can link to the **Pub.Out** table to retrieve bibliographic info for these studies.
+
+```{r 7a}
+table_name <- "Pub.Out"
+bibliography <- livestock_data[[table_name]]
+
+descrip_bib <- field_descriptions[Table == table_name, unique(Table_Description)]
+fields_bib  <- field_descriptions[Table == table_name, .(Field, Field_Description)]
+```
+
+`r descrip_bib`
+
+Fields in the bibliography (`Pub.Out`) table:
+
+```{r 7b}
+DT::datatable(fields_bib, options = list(pageLength = 5))
+```
+
+We subset the bibliographic data to only those entries appearing in our nutrition or digestibility tables and remove uneeded fields:
+
+```{r 7c}
+bibliography <- bibliography[B.Code %in% unique(c(diet_nutrition[, B.Code], diet_digest[, B.Code]))]
+bibliography <- bibliography[,!c("B.Link1","B.Link2","B.Link3","B.Link4","B.New","B.Project")]
+DT::datatable(bibliography, options = list(pageLength = 5))
+```
+
+------------------------------------------------------------------------
+
+## 8) Save Processed Data
+
+To make repeated analyses easier, we will save our cleaned tables to CSV files in a local `diet_data/` folder. These can be loaded quickly in future sessions.
+
+```{r save-processed-data,message=F,warning=F,eval=T}
+save_dir <- "diet_data"
+if(!dir.exists(save_dir)){
+  dir.create(save_dir)
+}
+
+# Save the nutritional composition and digestibility tables
+fwrite(diet_nutrition, file.path(save_dir, "feeds_nutrition.csv"))
+fwrite(diet_digest,    file.path(save_dir, "feeds_digestibility.csv"))
+
+# Save the bibliography subset
+fwrite(bibliography, file.path(save_dir, "bibliography.csv"))
+
+# Prepare a small field description subset for reference
+fields_subset <- field_descriptions[
+  Table %in% c("Animals.Diet.Comp", "Animals.Diet.Digest", "Pub.Out"),
+  .(Table, Field, Field_Description)
+]
+
+# Add an alternate table name for clarity when reading this file
+fields_subset[Table == "Animals.Diet.Comp", Table_Alt := "feeds_nutrition"]
+fields_subset[Table == "Animals.Diet.Digest", Table_Alt := "feeds_digestibility"]
+fields_subset[Table == "Pub.Out", Table_Alt := "bibliography"]
+
+fwrite(fields_subset, file.path(save_dir, "field_descriptions.csv"))
+```
