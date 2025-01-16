@@ -1,5 +1,5 @@
 ---
-title: "Focus on ERA Animal Feed Data"
+title: "Evidence for Resilient Livestock: Focus on ERA Animal Feed Data"
 author:
   - name: "Peter Steward"
     email: "p.steward@cgiar.org"
@@ -24,7 +24,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 comments:
   utterances:
-    repo: ERAgriculture/livestock_diet
+    repo: ERAgriculture/ERL
 ---
 
 ```{r setup, include = FALSE}
@@ -56,10 +56,10 @@ This Quarto notebook demonstrates how to download and subset the ERA dataset, an
 - [ERA Codebase](https://github.com/CIAT/ERA_dev)
 
 A convenient shortcut to processed data is also provided within a local `diet_data/` folder, which stores:\
-- [**feeds_nutrition.csv**](https://github.com/ERAgriculture/livestock_diet/blob/main/diet_data/feeds_nutrition.csv)\
-- [**feeds_digestibility.csv**](https://github.com/ERAgriculture/livestock_diet/blob/main/diet_data/feeds_digestibility.csv)\
-- [**bibliography.csv**](https://github.com/ERAgriculture/livestock_diet/blob/main/diet_data/bibliography.csv)\
-- [**field_descriptions.csv**](https://github.com/ERAgriculture/livestock_diet/blob/main/diet_data/field_descriptions.csv)
+- [**feeds_nutrition.csv**](https://github.com/ERAgriculture/ERL/blob/main/diet_data/feeds_nutrition.csv)\
+- [**feeds_digestibility.csv**](https://github.com/ERAgriculture/ERL/blob/main/diet_data/feeds_digestibility.csv)\
+- [**bibliography.csv**](https://github.com/ERAgriculture/ERL/blob/main/diet_data/bibliography.csv)\
+- [**field_descriptions.csv**](https://github.com/ERAgriculture/ERL/blob/main/diet_data/field_descriptions.csv)
 
 These files can be reused for your own analyses or as a starting point for further data integration projects.
 
