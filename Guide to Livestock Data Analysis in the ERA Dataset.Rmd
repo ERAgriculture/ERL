@@ -43,10 +43,20 @@ if (!requireNamespace("pacman", quietly = TRUE)) {
   install.packages("pacman")
 }
 pacman::p_load(
-  ERAg, ERAgON, sf, knitr, rnaturalearth, rnaturalearthdata, 
+  sf, knitr, rnaturalearth, rnaturalearthdata, 
   ggplot2, viridis, shiny, dplyr, treemap, treemapify, plotly, data.table,
-  s3fs, arrow, devtools, gh, htmlwidgets
+  s3fs, arrow, devtools, gh, htmlwidgets,remotes
 )
+
+if(!require(ERAgON)){
+  remotes::install_github(repo="https://github.com/EiA2030/ERAgON",build_vignettes = T)
+  library(ERAgON)
+}
+
+if(!require(ERAg)){
+  remotes::install_github(repo="https://github.com/EiA2030/ERAg",build_vignettes = T)
+  library(ERAg)
+}
 
 ```
 
