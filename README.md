@@ -5,7 +5,7 @@ This repository is part of the **Evidence for Resilient Agriculture (ERA)** data
 
 Explore the rendered HTML files for detailed documentation:
 
-- [Guide to Livestock Data Analysis in ERA Dataset](https://eragriculture.github.io/ERL/Guide-to-Livestock-Data-Analysis-in-the-ERA-Dataset.html)
+- [Guide to Livestock Data Analysis in ERA Dataset](https://eragriculture.github.io/ERL/Guide-to-Livestock-Data-Analysis-in-the-ERA-Dataset--STATIC.html)
 
 - [ERL Feed Data Analysis](https://eragriculture.github.io/ERL/ERL_feed_data.html)
 
