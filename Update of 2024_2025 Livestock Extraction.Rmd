@@ -1,5 +1,5 @@
 ---
-title: "Update of 2024_2025 Livestock Extraction"
+title: "Evidence for Resilient Livestock: Update of 2024_2025 Livestock Extraction"
 author: 
  - name: "Namita Joshi"
    email: "n.joshi@cgiar.org"
