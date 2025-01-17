@@ -894,45 +894,35 @@ This script performs a detailed analysis by merging data on livestock feed intak
 ### 4.1 Plotting weight gain distribution with outliers 
 This script creates a Shiny app that allows users to visualize the weight gain distribution of three livestock categories: "Cattle," "Goat," and "Sheep," with outliers included. The dataset WG is filtered to include only rows where the P.Product column matches the selected animal.
 ```{r weight gain distribution with outliers, echo=TRUE, message=FALSE, warning=FALSE}
-# Function to filter data for all animals and remove outliers
-filter_and_remove_outliers <- function(data) {
+# Function to filter data for all animals and include outliers
+filter_all_animals <- function(data) {
   # Subset data for selected animals
   animal_data <- data[data$P.Product %in% c("Cattle", "Goat", "Sheep"), ]
-  
-  # Remove outliers for each animal type
-  animal_data <- animal_data %>%
-    group_by(P.Product) %>%
-    filter(
-      `Weight Gain_kg` > quantile(`Weight Gain_kg`, 0.25, na.rm = TRUE) - 1.5 * IQR(`Weight Gain_kg`, na.rm = TRUE) &
-      `Weight Gain_kg` < quantile(`Weight Gain_kg`, 0.75, na.rm = TRUE) + 1.5 * IQR(`Weight Gain_kg`, na.rm = TRUE)
-    ) %>%
-    ungroup()
-  
   return(animal_data)
 }
 
-# Filter and remove outliers for all animals
-animal_data_no_outliers <- filter_and_remove_outliers(WG)
+# Filter the data for all animals
+animal_data_with_outliers <- filter_all_animals(WG)
 
-# Create individual plots for each animal without outliers
-plot_cattle <- ggplot(animal_data_no_outliers[animal_data_no_outliers$P.Product == "Cattle", ], aes(x = P.Product, y = `Weight Gain_kg`)) +
-  geom_boxplot() +
+# Create individual plots for each animal with outliers
+plot_cattle <- ggplot(animal_data_with_outliers[animal_data_with_outliers$P.Product == "Cattle", ], aes(x = P.Product, y = `Weight Gain_kg`)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 19) +
   labs(
     x = "Animal Type",
     y = "Weight Gain (kg/day)"
   ) +
   theme_minimal()
 
-plot_goat <- ggplot(animal_data_no_outliers[animal_data_no_outliers$P.Product == "Goat", ], aes(x = P.Product, y = `Weight Gain_kg`)) +
-  geom_boxplot() +
+plot_goat <- ggplot(animal_data_with_outliers[animal_data_with_outliers$P.Product == "Goat", ], aes(x = P.Product, y = `Weight Gain_kg`)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 19) +
   labs(
     x = "Animal Type",
     y = "Weight Gain (kg/day)"
   ) +
   theme_minimal()
 
-plot_sheep <- ggplot(animal_data_no_outliers[animal_data_no_outliers$P.Product == "Sheep", ], aes(x = P.Product, y = `Weight Gain_kg`)) +
-  geom_boxplot() +
+plot_sheep <- ggplot(animal_data_with_outliers[animal_data_with_outliers$P.Product == "Sheep", ], aes(x = P.Product, y = `Weight Gain_kg`)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 19) +
   labs(
     x = "Animal Type",
     y = "Weight Gain (kg/day)"
@@ -944,7 +934,6 @@ combined_plot <- grid.arrange(plot_cattle, plot_goat, plot_sheep, nrow = 1)
 
 # Display the combined plot
 print(combined_plot)
-
 
 ```
 
