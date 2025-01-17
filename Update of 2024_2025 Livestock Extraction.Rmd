@@ -74,7 +74,7 @@ This vignette aims to outline the workflows of the 2024/2025 livestock data extr
 
 This script is designed to conduct a systematic search for livestock-related studies using the OpenAlex API. The aim is to retrieve papers that investigate how changes in animal diets affect outcomes such as weight gain, feed efficiency, and milk yield. Below is a detailed breakdown of the script:
 
-0.  **Setting Up the Workspace Loading Required Packages**: The script uses the pacman package to load data.table for data manipulation and openalexR for accessing the OpenAlex API.
+0.  **Setting Up the Workspace Loading Required Packages**: The script uses the pacman package to load data.table for data manipulation and openalexR for accessing the OpenAlex API and aims to be easily reproducible.
 
     Defining Utility Functions: A helper function add_quotes ensures that multi-word search terms are properly quoted to prevent issues during the query process.
 
@@ -125,16 +125,13 @@ This script is designed to conduct a systematic search for livestock-related stu
       }
     }, USE.NAMES = FALSE)
   }
-
-# GitHub raw URL for the repository
-github_url <- "https://github.com/ERAgriculture/livestock_diet/raw/main/data"
-
-# Define the data directory to store the downloaded files
-search_data_dir <- "livestock_data"
-if (!dir.exists(search_data_dir)) {
-  dir.create(search_data_dir, recursive = TRUE)
-}
-
+  # 0.3) Set directories & project ######
+  project<-era_projects$livestock_2024
+  
+  search_data_dir<-file.path(era_dirs$era_search_dir,project)
+  if(!dir.exists(search_data_dir)){
+    dir.create(search_data_dir,recursive = T)
+  }
   
 # 1) Create terms ####
 # Read in additional animal breed terms provided by Claudia Arndt's team
@@ -311,24 +308,24 @@ process_breeds <- function(breeds) {
   
   return(processed_breeds)
 }
-# africa_breeds<-fread("https://raw.githubusercontent.com/CIAT/ERA_dev/main/data/search_history/livestock_2024/african_livestock_breeds.csv")
-# africa_breeds<-process_breeds(breeds=africa_breeds$breed)
-# # Remove breeds that are commonly used words
-# africa_breeds<-africa_breeds[!africa_breeds %in% c("delta","dwarf","somali","taitataveta","pare","hammer","british alpine",
-#                                                    "alpine goat","forest goat","corriedale","hampshire down","meatmaster",
-#                                                    "bovines of tete","grassland dwarf","chèvre naine","chèvre naine des savanes",
-#                                                    "pygmy",'toggenburger',"angora","damascus","blackhead persian","romney marsh",
-#                                                    "barbary","ram ewe","anglo-nubian goat","afar bhs","angora","caprivi sanga",
-#                                                    "maure black maure","mere","merino","morcia granada"
-#                                                    )]
-# africa_breeds<-africa_breeds[!grepl(paste0(tolower(region_terms),collapse = "|"),africa_breeds)]
-# africa_breeds<-gsub(" goat| zebu","",africa_breeds)
-# africa_breeds[grep("boran",africa_breeds)]<-"boran"
-# africa_breeds[grep("fulani",africa_breeds)]<-"fulani"
-# africa_breeds<-c(africa_breeds,"sahelian","majorera")
-# 
-# 
-# africa_breeds<-sort(unique(africa_breeds))
+africa_breeds<-fread("https://raw.githubusercontent.com/CIAT/ERA_dev/main/data/search_history/livestock_2024/african_livestock_breeds.csv")
+africa_breeds<-process_breeds(breeds=africa_breeds$breed)
+# Remove breeds that are commonly used words
+africa_breeds<-africa_breeds[!africa_breeds %in% c("delta","dwarf","somali","taitataveta","pare","hammer","british alpine",
+                                                   "alpine goat","forest goat","corriedale","hampshire down","meatmaster",
+                                                   "bovines of tete","grassland dwarf","chèvre naine","chèvre naine des savanes",
+                                                   "pygmy",'toggenburger',"angora","damascus","blackhead persian","romney marsh",
+                                                   "barbary","ram ewe","anglo-nubian goat","afar bhs","angora","caprivi sanga",
+                                                   "maure black maure","mere","merino","morcia granada"
+                                                   )]
+africa_breeds<-africa_breeds[!grepl(paste0(tolower(region_terms),collapse = "|"),africa_breeds)]
+africa_breeds<-gsub(" goat| zebu","",africa_breeds)
+africa_breeds[grep("boran",africa_breeds)]<-"boran"
+africa_breeds[grep("fulani",africa_breeds)]<-"fulani"
+africa_breeds<-c(africa_breeds,"sahelian","majorera")
+
+
+africa_breeds<-sort(unique(africa_breeds))
 
 # Create a vector called feed_terms with each term as an element
 feed_terms <- c(
@@ -395,11 +392,11 @@ animal_2_boolean<-paste0("(",paste0(terms,collapse = " OR "),")")
 terms <-add_quotes(region_terms)
 region_boolean<-paste0("(",paste0(terms,collapse = " OR "),")")
 
-# terms <-add_quotes(c(africa_breeds[1:71]))
-# breeds_1_boolean<-paste0("(",paste0(terms,collapse = " OR "),")")
-# 
-# terms <-add_quotes(c(africa_breeds[72:length(africa_breeds)]))
-# breeds_2_boolean<-paste0("(",paste0(terms,collapse = " OR "),")")
+terms <-add_quotes(c(africa_breeds[1:71]))
+breeds_1_boolean<-paste0("(",paste0(terms,collapse = " OR "),")")
+
+terms <-add_quotes(c(africa_breeds[72:length(africa_breeds)]))
+breeds_2_boolean<-paste0("(",paste0(terms,collapse = " OR "),")")
 
 terms <-add_quotes(feed_terms)
 feed_boolean<-paste0("(",paste0(terms,collapse = " OR "),")")
@@ -407,16 +404,16 @@ feed_boolean<-paste0("(",paste0(terms,collapse = " OR "),")")
 terms <-add_quotes(experiment_terms)
 experiment_boolean<-paste0("(",paste0(terms,collapse = " OR "),")")
 
-terms<-list(#l1=outcome_boolean,
-            #l1.1=outcome_2_boolean,
+terms<-list(l1=outcome_boolean,
+            l1.1=outcome_2_boolean,
             l1.2=outcome_3_boolean,
             l2=animal_boolean,
             l2.2=animal_2_boolean,
             l3=region_boolean,
             l4=feed_boolean,
-            l5=experiment_boolean)
-            #l6.1=breeds_1_boolean,
-            #l6.2=breeds_2_boolean)
+            l5=experiment_boolean,
+            l6.1=breeds_1_boolean,
+            l6.2=breeds_2_boolean)
 
 # 1.2) Save terms #####
 save(terms,file=file.path(search_data_dir,"terms.RData"))
@@ -778,6 +775,7 @@ save(terms,file=file.path(search_data_dir,"terms.RData"))
     # 2.2.3) Merge & save results #####
     searches_all<-rbind(searches_all,searches)
     fwrite(searches_all,file.path(search_data_dir,"searches.csv"))
+      
 
 ```
 
@@ -1451,7 +1449,7 @@ The data extraction process and the development of our ontology has worked hand-
 
 The AOM ontology is designed to classify and organize concepts related to animal species, diets, and other agricultural research elements. The ontology follows a hierarchical structure with multiple levels of granularity, represented by columns such as **L1** to **L8**, which progressively categorize concepts from broad to specific.
 
-### Key Features of the AOM Ontology:
+***Key Features of the AOM Ontology:***
 
 1.  **Hierarchical Structure**:
 
@@ -1477,6 +1475,36 @@ An ontology is essential in evidence synthesis as it provides a standardized voc
 
 # 7. **Import script and automated QAQC**
 
-An import script was developed in ingest the high number of excels that were used to extract information from livestock publications.
+An import script was developed in ingest the high number of excels that were used to extract information from livestock publications. iT can be found here: <https://github.com/CIAT/ERA_dev/blob/main/R/import/import_courageous_camel_2024.R>
 
 To ensure consistency and high-quality data, the ERA initiative engages consultants to extract relevant information from these studies using a standardized Excel-based template. Given the volume and complexity of data, errors in extraction, formatting, or adherence to standards are inevitable. Recognizing the need for efficiency and accuracy, this import script was designed to automate data validation and harmonization while providing clear feedback on errors to consultants.
+
+These are some for the errors that are reported:
+
+1.  Mismatch Between B.Code and Filename: This error flags instances where the study code (B.Code) does not match the filename. This mismatch can indicate issues in data organization or improper file labeling.
+
+2.  Missing or Incorrect Location Data: The script checks latitude and longitude values to ensure they are valid. It flags cases where Site.LatD or Site.LonD is 0 (incorrect) or where coordinates do not match the specified country.
+
+3.  Duplicate File Entries: The script identifies and resolves duplicate files, ensuring only unique data files are processed, which prevents double-counting or overwriting of results.
+
+4.  Extreme or Invalid Numerical Values: For fields like temperature, elevation, or precipitation, the script checks for values outside realistic ranges (e.g., precipitation outside 40-4000 mm). These extreme values are flagged as potential errors.
+
+5.  Missing Compulsory Fields: The script validates that required fields, such as Site.ID, Country, and Site.Type, are not left blank. Missing data in these fields can compromise the integrity of the analysis.
+
+6.  Harmonization of Site and Soil Data: The script checks if site names and soil classifications are consistent with master datasets. It flags un-harmonized entries and attempts to standardize them.
+
+7.  Invalid Sum of Soil Composition: It validates that the sum of sand, silt, and clay percentages is approximately 100%. Discrepancies greater than ±2% are flagged.
+
+8.  Errors in Temporal Data: The script ensures that time periods, such as starting and ending years, are consistent and logical. Missing or invalid time entries are flagged.
+
+9.  Diet Composition Errors in Livestock Data: For studies related to animal diets, it checks that dietary components are correctly reported and that their percentages or quantities align with unit constraints (e.g., percentages not exceeding 100%).
+
+10. Blank or Missing Column Headers: It detects if any columns in the template have missing headers, which can disrupt data loading or interpretation.
+
+11. Incorrect Relationships Between Parent and Child Tables: The script checks for mismatches in hierarchical relationships, such as between site data and associated soil or climate data.
+
+12. Duplicate or Conflicting Entries in Lookup Tables: The script validates entries against lookup tables (e.g., soil texture or climate data) to ensure there are no conflicting or duplicate entries that could cause inconsistencies.
+
+13. Unrecognized Values in Allowed Fields: For fields with predefined allowed values, the script flags entries that do not conform to the expected options (e.g., soil types or climate scenario labels).
+
+Each of these errors highlights potential data quality issues that can affect the analysis' reliability. By identifying and flagging these problems, the script ensures the data is clean, consistent, and ready for further processing.
