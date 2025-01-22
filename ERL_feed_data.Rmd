@@ -12,9 +12,9 @@ author:
   - name: "Namita Joshi"
     email: "n.joshi@cgiar.org"
     orcid: "0000-0002-1623-6910"
-  - name: Lolita Muller
-    email: m.lolita@cgiar.org
-    orcid: 0009-0002-8345-7219
+  - name: "Lolita Muller"
+    email: "m.lolita@cgiar.org"
+    orcid: "0009-0002-8345-7219"
   - name: "Todd Rosenstock"
     email: "t.rosenstock@cgiar.org"
     orcid: "0000-0002-1958-9500"
