@@ -1,9 +1,4 @@
 ---
-title: "namita livestcok"
-output: html_document
-date: "2025-01-22"
----
----
 title: "Evidence for Resilient Livestock: Focus on ERA Animal Feed Data"
 author:
   - name: "Peter Steward"
