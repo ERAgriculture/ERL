@@ -770,7 +770,7 @@ DT::datatable(validation_dt, options = list(pageLength = 5))
 
 All totals are =100% except for the base diets which are a lot of the times ad libitum with no precise amounts or for the diets for which we have more than one unit. 
 
-4.7 Integrate digestibility and nutrition information for the whole diet 
+### 4.7 Integrate digestibility and nutrition information for the whole diet 
 
 ```{r}
 
