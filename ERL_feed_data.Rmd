@@ -1,4 +1,9 @@
 ---
+title: "namita livestcok"
+output: html_document
+date: "2025-01-22"
+---
+---
 title: "Evidence for Resilient Livestock: Focus on ERA Animal Feed Data"
 author:
   - name: "Peter Steward"
@@ -7,6 +12,9 @@ author:
   - name: "Namita Joshi"
     email: "n.joshi@cgiar.org"
     orcid: "0000-0002-1623-6910"
+  - name: Lolita Muller
+    email: m.lolita@cgiar.org
+    orcid: 0009-0002-8345-7219
   - name: "Todd Rosenstock"
     email: "t.rosenstock@cgiar.org"
     orcid: "0000-0002-1958-9500"
@@ -447,6 +455,365 @@ DT::datatable(diet_ingredients[,.(B.Code,D.Item.AOM,D.Item.Root.Comp.Proc_Major,
 
 Although not strictly necessary for extracting feed item composition and digestibility, it provides insights into ERA’s structure of animal diets.
 
+
+### 4.4) Harmonize diet ingredient units 
+
+
+```{r}
+library(data.table)
+
+###
+# 1) Convert your livestock_metadata to a data.table and select columns
+###
+ingredients_dt <- as.data.table(livestock_data$Animals.Diet)[
+  ,
+  .(
+    B.Code,
+    A.Level.Name,
+    D.Item.AOM,
+    D.Item,
+    D.Type,
+    D.Amount,
+    D.Unit.Amount,
+    D.Unit.Time,
+    D.Unit.Animals,
+    DC.Is.Dry,
+    D.Ad.lib,
+    D.Is.Group,
+    D.Item.Root.Other.Comp.Proc_All
+  )
+]
+
+# Convert D.Amount to numeric
+ingredients_dt[, D.Amount := as.numeric(D.Amount)]
+
+###
+# 2) Define a function to harmonize the dataset using data.table operations
+###
+harmonize_units_dt <- function(dt) {
+  # 2a: Capture original Units (optional; good for debugging)
+  dt[, Units := paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals, sep=";")]
+  
+  # 2b: Harmonize weight/volume units by referencing D.Unit.Amount
+  #     (Multiple steps rather than case_when)
+  dt[D.Unit.Amount == "kg",         D.Amount := D.Amount * 1000]
+  dt[D.Unit.Amount == "mg",         D.Amount := D.Amount / 1000]
+  dt[D.Unit.Amount == "g/100g",     D.Amount := D.Amount * 10]
+  dt[D.Unit.Amount == "l",          D.Amount := D.Amount * 1000]
+  dt[D.Unit.Amount == "kg/t",       D.Amount := D.Amount * 1000]
+  dt[D.Unit.Amount == "g/300l",     D.Amount := D.Amount / 300]
+  dt[D.Unit.Amount == "mg/kg",      D.Amount := D.Amount / 1000]
+  dt[D.Unit.Amount == "kg/100kg body weight",  D.Amount := D.Amount * 10]
+  dt[D.Unit.Amount == "kg/kg metabolic weight", D.Amount := D.Amount * 1000]
+
+  # (No direct action for "g/kg metabolic weight (0.75)" or "g/L" here)
+
+  # 2c: Update D.Unit.Amount to new base units
+  dt[D.Unit.Amount == "kg",                  D.Unit.Amount := "g"]
+  dt[D.Unit.Amount == "mg",                  D.Unit.Amount := "g"]
+  dt[D.Unit.Amount == "g/100g",              D.Unit.Amount := "g/kg"]
+  dt[D.Unit.Amount == "l",                   D.Unit.Amount := "ml"]
+  dt[D.Unit.Amount == "kg/t",                D.Unit.Amount := "g/kg"]
+  dt[D.Unit.Amount == "g/300l",              D.Unit.Amount := "g/L"]
+  dt[D.Unit.Amount == "mg/kg",               D.Unit.Amount := "g/kg"]
+  dt[D.Unit.Amount == "kg/100kg body weight",D.Unit.Amount := "g/kg body weight"]
+  dt[D.Unit.Amount == "kg/kg metabolic weight", D.Unit.Amount := "g/kg metabolic weight"]
+  dt[D.Unit.Amount == "g/kg metabolic weight (0.75)", D.Unit.Amount := "g/kg metabolic weight"]
+  dt[D.Unit.Amount == "g/kg body weight (0.75)", D.Unit.Amount := "g/kg metabolic weight"]
+  dt[D.Unit.Amount == "g/kg Body Weight", D.Unit.Amount := "g/kg body weight"]
+  dt[D.Unit.Amount == "g/kg DM", D.Unit.Amount := "g/kg"]
+
+
+
+
+  # 2d: Harmonize time units to 'day'
+  dt[D.Unit.Time == "week",           D.Amount := D.Amount / 7]
+  dt[D.Unit.Time == "month",          D.Amount := D.Amount / 30]
+  dt[D.Unit.Time == "2 weeks",        D.Amount := D.Amount / 14]
+  dt[D.Unit.Time == "4 days interval",D.Amount := D.Amount / 4]
+  dt[D.Unit.Time == "2x/day",         D.Amount := D.Amount * 2]
+  dt[D.Unit.Time == "days",         D.Unit.Time := "day"]
+
+  
+  # If not NA, force "day" as the time unit
+  dt[!is.na(D.Unit.Time), D.Unit.Time := "day"]
+
+  # 2e: If D.Amount is NA, set unit fields to NA
+  dt[is.na(D.Amount), c("D.Unit.Amount","D.Unit.Time","D.Unit.Animals") := NA]
+
+  return(dt)
+}
+
+###
+# 3) Harmonize units in ingredients_dt
+###
+ingredients_dt <- harmonize_units_dt(ingredients_dt)
+
+###
+# 4) Merge replicate info using data.table
+#    (Adjust for "all animals in replicate")
+###
+# Convert replicate table to data.table and select columns
+reps_dt <- as.data.table(livestock_data$MT.Out)[
+  ,
+  .SD,
+  .SDcols = c("B.Code","A.Level.Name","T.Animals")
+]
+
+# Ensure T.Animals is numeric
+reps_dt[, T.Animals := as.numeric(T.Animals)]
+
+# Distinct combos of B.Code + A.Level.Name
+reps_dt <- unique(reps_dt, by=c("B.Code","A.Level.Name"))
+
+# Merge replicate info: 
+# We'll add T.Animals to ingredients_dt from reps_dt
+ingredients_dt <- reps_dt[ingredients_dt, on = .(B.Code, A.Level.Name)]
+# Now ingredients_dt has T.Animals available as 'i.T.Animals' from reps_dt
+
+# If T.Animals is not NA and D.Unit.Animals == "all animals in replicate", divide D.Amount
+ingredients_dt[D.Unit.Animals == "all animals in replicate" & !is.na(T.Animals),
+               D.Amount := D.Amount / T.Animals]
+
+# Then set D.Unit.Animals to 'individual' if it was "all animals in replicate"
+ingredients_dt[D.Unit.Animals == "all animals in replicate",
+               D.Unit.Animals := "individual"]
+
+###
+# 5) Optionally re-build the final 'Units' field
+###
+ingredients_dt[, Units := paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals, sep = ";")]
+
+
+unique(ingredients_dt$D.Unit.Amount)
+```
+
+Some units are very specific, we can filter the data on the most used and reliable units. 
+
+```{r}
+
+# Define acceptable units
+acceptable_units <- c(
+  "g/kg","g","%","ml","L","kg","g/L",
+  "g/kg metabolic weight","% Diet","g/kg metabolic weight",
+  "g/kg body weight","ml/kg","% Body Mass","% Concentrate",
+  "kg/100kg body weight"
+)
+
+# 1) Filter (subset) so that only rows with D.Unit.Amount in `acceptable_units`
+#    or NA remain
+ingredients_dt <- ingredients_dt[
+  D.Unit.Amount %in% acceptable_units | is.na(D.Unit.Amount)
+]
+
+# 2) If D.Item is NA, set it to "Unspecified"
+ingredients_dt[is.na(D.Item), D.Item := "Unspecified"]
+
+
+unique(ingredients_dt$D.Unit.Amount)
+```
+### 4.5) Integrate basal diets 
+
+Basal diets in livestock experiments are often used as control and they serve as a base for other treatments. That means they are present in both the control and each one of the treatments where other ingredients are added. The goal of this section is to integrate basal diet ingredients into treatments and still keep the base diet. 
+
+```{r}
+
+
+############################################
+# 1) Assume your harmonized data.table is `ingredients_dt`
+############################################
+
+# Example: Show B.Code == "NN0022" BEFORE the expansion
+# (This is just an illustrative snippet to let users see the difference.)
+DT::datatable( ingredients_dt[B.Code == "NN0022",
+    .(B.Code, A.Level.Name, D.Item, D.Amount, D.Unit.Amount)], options = list(pageLength = 5))
+
+
+
+############################################
+# 2) Split out Basal vs Non-Basal
+############################################
+
+basal_diets_dt <- ingredients_dt[
+  tolower(trimws(A.Level.Name)) == "base"
+]
+basal_diets_dt[, from_basal := TRUE]
+
+non_basal_diets_dt <- ingredients_dt[
+  tolower(trimws(A.Level.Name)) != "base"
+]
+non_basal_diets_dt[, from_basal := FALSE]
+
+############################################
+# 3) Duplicate Basal Diets for Each Non-Basal Diet
+#    within the same B.Code
+############################################
+
+non_basal_keys_dt <- unique(non_basal_diets_dt[, .(B.Code, A.Level.Name)])
+basal_expanded_dt <- merge(
+  non_basal_keys_dt,
+  basal_diets_dt,
+  by = "B.Code",
+  allow.cartesian = TRUE  # <-- explicitly allow bigger expansions
+)
+
+# Basal expansion introduces columns A.Level.Name.x (from non-basal_keys_dt)
+# and A.Level.Name.y (from basal_diets_dt). We keep A.Level.Name.x.
+basal_expanded_dt[, A.Level.Name := A.Level.Name.x]
+basal_expanded_dt[, c("A.Level.Name.x","A.Level.Name.y") := NULL]
+basal_expanded_dt[, from_basal := TRUE]  # clearly mark these newly expanded rows as from basal
+
+############################################
+# 4) Combine Non-Basal, Expanded Basal, and Pure Basal
+############################################
+
+ingredients_dt <- rbindlist(
+  list(
+    non_basal_diets_dt,  # original non-basal
+    basal_expanded_dt,   # basal items expanded to each non-basal
+    basal_diets_dt       # original basal diets as standalone
+  ),
+  use.names = TRUE,
+  fill = TRUE
+)
+
+############################################
+# 5) Example: Show B.Code == "NN0022" AFTER expansion
+############################################
+
+DT::datatable( ingredients_dt[B.Code == "NN0022",
+    .(B.Code, A.Level.Name, D.Item, D.Amount, D.Unit.Amount)], options = list(pageLength = 5))
+
+```
+
+#### 4.5.1) Ingredient table 
+
+This is the table with the breakdown of ingredients for each diet with harmonized units and integrated basal diets. 
+```{r}
+
+DT::datatable(ingredients_dt, options = list( pageLength = 5, scrollX = TRUE  # adds a horizontal scrollbar
+  )
+)
+
+```
+
+### 4.6) Table with % of each ingredient within each diet 
+
+
+```{r}
+
+# 1) Filter to diets that have a single unit type per group (consistent units) to be able to calculate relative %
+# 2) Compute total amounts and percentages.
+
+
+# 1a) Calculate Unit_Count within each group
+ingredients_dt[, Unit_Count := uniqueN(na.omit(D.Unit.Amount)),
+               by = .(B.Code, A.Level.Name)]
+
+# 1b) Filter to keep rows with Unit_Count <= 1
+consistent_diets_dt <- ingredients_dt[Unit_Count <= 1]
+
+# 1c) Optionally remove the helper column to keep data clean
+consistent_diets_dt[, Unit_Count := NULL]
+
+########################################
+# Step 2: Summarize total amounts per group
+########################################
+# - Remove rows that have NA in D.Amount or D.Unit.Amount.
+# - Sum D.Amount for each group of (B.Code, A.Level.Name, D.Unit.Amount).
+
+total_amounts_dt <- consistent_diets_dt[
+  !is.na(D.Amount) & !is.na(D.Unit.Amount), 
+  .(Total_Amount = sum(D.Amount, na.rm = TRUE)),
+  by = .(B.Code, A.Level.Name, D.Unit.Amount)
+]
+
+########################################
+# Step 3: Calculate Percentages
+########################################
+
+
+# 3a) Merge on (B.Code, A.Level.Name, D.Unit.Amount)
+diet_percentages_dt <- merge(
+  consistent_diets_dt,
+  total_amounts_dt,
+  by = c("B.Code", "A.Level.Name", "D.Unit.Amount"),
+  all.x = TRUE  # left join
+)
+
+# 3b) Calculate Percentage_of_Diet
+diet_percentages_dt[, Percentage_of_Diet := fcase(
+  !is.na(Total_Amount) & Total_Amount > 0, (D.Amount / Total_Amount) * 100,
+  default = NA_real_
+)]
+
+# 3c) Select the final columns for the output table
+diet_percentages_dt <- diet_percentages_dt[,
+  .(B.Code, A.Level.Name, D.Item, D.Type, D.Amount,
+    D.Unit.Amount, Percentage_of_Diet, from_basal)
+]
+
+# 'diet_percentages_dt' is now the final table for relative % of ingredients within the diet 
+DT::datatable(diet_percentages_dt, options = list(pageLength = 5))
+
+
+
+```
+
+```{r}
+# Check if each diet sums close to 100%
+validation_dt <- diet_percentages_dt[,
+  .(Total_Percentage = sum(Percentage_of_Diet, na.rm=TRUE)),
+  by = .(B.Code, A.Level.Name)
+]
+
+# 2) Print or inspect results
+DT::datatable(validation_dt, options = list(pageLength = 5))
+
+
+```
+
+All totals are =100% except for the base diets which are a lot of the times ad libitum with no precise amounts or for the diets for which we have more than one unit. 
+
+4.7 Integrate digestibility and nutrition information for the whole diet 
+
+```{r}
+
+# Convert data frames to data.table if not already
+Digestibility_dt <- as.data.table(livestock_data$Animals.Diet.Digest)
+Nutrition_dt     <- as.data.table(livestock_data$Animals.Diet.Comp)
+total_amounts_dt <- as.data.table(total_amounts_dt)  # from your prior code
+
+# Rename `D.Item` to `A.Level.Name` in Digestibility and Nutrition
+setnames(Digestibility_dt, "D.Item", "A.Level.Name")
+setnames(Nutrition_dt,     "D.Item", "A.Level.Name")
+
+# 1) Left join Digestibility_dt onto total_amounts_dt
+complete_diet_dt <- merge(
+  x = total_amounts_dt,
+  y = Digestibility_dt,
+  by = c("B.Code", "A.Level.Name"),
+  all.x = TRUE
+)
+
+# 2) Left join Nutrition_dt onto the result
+complete_diet_dt <- merge(
+  x = complete_diet_dt,
+  y = Nutrition_dt,
+  by = c("B.Code", "A.Level.Name","is_group","is_entire_diet","D.Item.AOM","D.Item.Root.Comp.Proc_Major","D.Item.Root.Other.Comp.Proc_All","D.Item.raw"),
+  all.x = TRUE
+)
+
+
+DT::datatable( complete_diet_dt, options = list( pageLength = 5, scrollX = TRUE  # adds a horizontal scrollbar
+  )
+)
+
+```
+
+DD value for the numerical value calculated for the digestibility of the diet. The variable is in the DD variable column. In the same way DC value holds the nutritional value for the DC variable. 
+
+
 ------------------------------------------------------------------------
 
 ## 5) Bibliographic Information
@@ -492,6 +859,11 @@ if(!dir.exists(save_dir)){
 # Save the nutritional composition and digestibility tables
 fwrite(diet_nutrition, file.path(save_dir, "feeds_nutrition.csv"))
 fwrite(diet_digest,    file.path(save_dir, "feeds_digestibility.csv"))
+
+#Save the different table with diet information 
+fwrite(ingredients_dt, file.path(save_dir, "ingredients.csv"))#amount of each ingredient within the diet 
+fwrite(diet_percentages_dt, file.path(save_dir, "diet_percentage.csv"))# relative % of each ingredient within the diet 
+fwrite(complete_diet_dt, file.path(save_dir, "complete_diet.csv"))#Whole diet infomration with total amount and digestibility and nutrition information
 
 # Save the bibliography subset
 fwrite(bibliography, file.path(save_dir, "bibliography.csv"))
