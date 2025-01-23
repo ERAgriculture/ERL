@@ -1,4 +1,4 @@
-# ERL: The ERA Livestock Data Ecosystem
+# ERL Evidence for Resilient Livestock: The ERA Livestock Data Ecosystem
 
 ## Repository Overview
 This repository is part of the **Evidence for Resilient Agriculture (ERA)** data ecosystem, focusing on livestock data. It demonstrates ERA’s capacity to integrate and analyze diverse datasets on livestock management practices, feed types, and productivity outcomes. The repository supports research on agricultural resilience, helping identify sustainable practices to enhance productivity, environmental sustainability, and resilience under diverse contexts.
