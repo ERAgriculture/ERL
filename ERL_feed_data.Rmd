@@ -48,7 +48,7 @@ The ERA dataset is a synthesis of peer-reviewed research conducted in sub-Sahara
 -   Their nutritional composition\
 -   Digestibility
 
-This Quarto notebook demonstrates how to download and subset the ERA dataset, and how to extract tables containing data on:
+This notebook demonstrates how to download and subset the ERA dataset, and how to extract tables containing data on:
 
 -   **Nutritional composition** of feed ingredients\
 -   **Digestibility** values for various feed ingredients\
