@@ -25,7 +25,7 @@ output:
 ## Introduction
 
 ### Background
-Understanding livestock diets is crucial for improving animal nutrition, optimizing feed efficiency, and assessing environmental impacts. However, raw diet composition data is often messy, with inconsistent units and missing harmonized nutritional information. Standardizing and integrating these datasets enables more accurate comparisons and facilitates meta-analysis across studies.
+Understanding livestock diets is crucial for improving animal nutrition, optimizing feed efficiency,emisisons, and assessing environmental impacts. However, raw diet composition data is often messy, with inconsistent units and missing harmonized nutritional information. Standardizing and integrating these datasets enables more accurate comparisons and facilitates meta-analysis across studies.
 
 ### Objective
 This analysis aims to:
@@ -40,6 +40,7 @@ By automating this workflow, we streamline livestock nutrition research and ensu
 
 
 ## 1) Set up 
+Download the packages and download the data from the s3 bucket.
 
 ```{r,message=FALSE,warning=FALSE}
 # Install and load 'pacman' package manager if not already installed
@@ -77,6 +78,7 @@ livestock_metadata <- miceadds::load.Rdata2(file=basename(save_path), path=dirna
 
 
 ## 2) Harmonize units 
+
 
 ```{r,message=FALSE,warning=FALSE}
 # diet ingredients: breakdown of all ingredients within each diet
@@ -208,6 +210,8 @@ ingredients <- ingredients %>%
 
 ## 3) Integrate basal diets 
 
+Basal diets in livestock experiments are often used as control and they serve as a base for other treatments. That means they are present in both the control and each one of the treatments where other ingredients are added. The goal of this section is to integrate basal diet ingredients into treatments and still keep the base diet. We also flagged the ingredient if they are coming from the basal diet.
+
 ```{r,message=FALSE,warning=FALSE}
 # Identify basal diets
 basal_diets <- ingredients %>%
@@ -237,6 +241,14 @@ ingredients <- bind_rows(
   basal_diets        # keep the purely basal diet for control
 )
 
+
+
+```
+
+## 4) Table of all diet ingredients amounts within each diet 
+```{r}
+
+
 # This 'ingredients' now contains all diets + basal integrated.
 # Table 1: Final diet amounts with harmonized units (including basal)
 datatable(
@@ -252,7 +264,9 @@ datatable(
 
 ```
 
-## 4) Relative % of each ingredient in the diet
+## 5) Relative % of each ingredient in the diet
+
+This table presents the relative percentage of each ingredient within a diet. To ensure accurate proportion calculations, we first filtered the dataset to include only diets with consistent units. Diets with incompatible or non-harmonizable units were excluded, as their proportions could not be reliably determined.
 
 ```{r,message=FALSE,warning=FALSE}
 # We now have a single integrated dataset: 'ingredients'.
@@ -362,8 +376,11 @@ datatable(
 
 ```
 
+The lines that have 0 as validation are the ones that were feeding ad libitum for which we do not have a precise amount so it's impossible to calculate the relative proportion of the ingredients.
 
-## 5) Table with nutrition and digestibility for the entire diet
+## 6) Table with nutrition and digestibility for the entire diet
+
+In this section, we integrate digestibility and nutrition data into a comprehensive table at the diet level. The resulting table includes the total amount of feed provided, along with corresponding nutritional and digestibility information.
 
 ```{r,message=FALSE,warning=FALSE}
 
@@ -399,9 +416,9 @@ datatable(
 )
 
 ```
-- porblem i sentire diet = false in nutrition no way to know from which ingredient it is coming from because only diet column in the nutrition table 
+- problem if entire diet = false in nutrition no way to know from which ingredient it is coming from because only diet column in the nutrition table 
 
-6) Tracking paper loss and ad libitum data 
+7) Tracking paper loss and ad libitum data 
 ```{r,message=FALSE,warning=FALSE}
 
 
@@ -456,7 +473,25 @@ tracking_table <- rbind(tracking_table, data.frame(Step = "After Removing NA Amo
                                                    Lost_BCodes = post_consistent_units - post_percentage_calc,
                                                    Additional_Info = "Filtered out missing diet proportions"))
 
+diet_status <- complete_diet %>%
+  group_by(A.Level.Name) %>%
+  summarize(
+    has_digestibility = any(!is.na(DD.Value)),  # TRUE if any DC.Value exists
+    has_nutrition = any(!is.na(DC.Value))       # TRUE if any DD.Value exists
+  ) %>%
+  mutate(
+    no_digestibility = !has_digestibility,  # TRUE if digestibility is missing
+    no_nutrition = !has_nutrition,          # TRUE if nutrition is missing
+    no_info = no_digestibility & no_nutrition # TRUE if both are missing
+  )
+
+
 # Step 7: Number of studies with ad libitum diets
+b_codes_with_ad_libitum <- ingredients %>%
+  group_by(B.Code) %>%
+  filter(any(D.Ad.lib == "Yes", na.rm = TRUE)) %>%
+  distinct(B.Code)
+
 num_b_codes_with_ad_libitum <- length(unique(b_codes_with_ad_libitum$B.Code))
 tracking_table <- rbind(tracking_table, data.frame(Step = "Studies with Ad Libitum Diets", 
                                                    Unique_BCodes = num_b_codes_with_ad_libitum, 
@@ -498,12 +533,10 @@ datatable(
 
 ```
 
-Add how many papers dont have nutrition and or digestibility info with NAS
 
-## 6) Infer amounts from feed intake data in outcomes 
+## 7) Infer amounts from feed intake data in outcomes 
 
 ```{r}
-
 
 feed_intake<-livestock_metadata$Data.Out%>%
   select(B.Code,A.Level.Name,ED.Intake.Item,ED.Intake.Item.Raw,ED.Mean.T,ED.Error,ED.Product.Comp)
