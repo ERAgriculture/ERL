@@ -1,15 +1,15 @@
 ---
 title: "Livestock diet items"
 author:
+  - name: "Lolita Muller"
+    email: "m.lolita@cgiar.org"
+    orcid: "0009-0002-8345-7219"
   - name: "Peter Steward"
     email: "p.steward@cgiar.org"
     orcid: "0000-0003-3985-4911"
   - name: "Namita Joshi"
     email: "n.joshi@cgiar.org"
     orcid: "0000-0002-1623-6910"
-  - name: "Lolita Muller"
-    email: "m.lolita@cgiar.org"
-    orcid: "0009-0002-8345-7219"
   - name: "Todd Rosenstock"
     email: "t.rosenstock@cgiar.org"
     orcid: "0000-0002-1958-9500"
@@ -245,6 +245,37 @@ ingredients <- bind_rows(
 
 ```
 
+
+## 3.1) Infer ingreident amount from feed intake data 
+
+```{r}
+
+# Extract feed intake data
+feed_intake <- livestock_metadata$Data.Out %>%
+  select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, ED.Mean.T, ED.Error)
+
+# Filter feed intake data for ingredients only (not entire diet)
+feed_intake_ingredients <- feed_intake %>%
+  filter(ED.Intake.Item != A.Level.Name)
+
+# Merge to fill missing D.Amount values
+ingredients <- ingredients %>%
+  left_join(feed_intake_ingredients %>% 
+              select(B.Code, A.Level.Name, ED.Intake.Item, ED.Mean.T), 
+            by = c("B.Code", "A.Level.Name", "D.Item" = "ED.Intake.Item")) %>%
+  mutate(
+    # Flag if the value is being inferred from feed intake
+    from_feed_intake = ifelse(is.na(D.Amount) & !is.na(ED.Mean.T), TRUE, FALSE),
+
+    # If D.Amount is missing, fill with ED.Mean.T
+    D.Amount = ifelse(is.na(D.Amount), ED.Mean.T, D.Amount)
+  ) %>%
+  select(-ED.Mean.T) %>%  # Remove ED.Mean.T column after use
+  distinct()  # Remove duplicates if any
+
+```
+whats the unit of feed intake ??
+
 ## 4) Table of all diet ingredients amounts within each diet 
 ```{r}
 
@@ -275,7 +306,7 @@ This table presents the relative percentage of each ingredient within a diet. To
 
 inconsistent_diets <- ingredients %>%
   group_by(B.Code, A.Level.Name) %>%
-  mutate(Unit_Count = n_distinct(D.Unit.Amount)) %>%
+  mutate(Unit_Count = n_distinct(na.omit(D.Unit.Amount))) %>%
   filter(Unit_Count > 1) %>%
   ungroup()
 
@@ -403,6 +434,38 @@ complete_diet <- total_amounts %>%
             suffix = c("", "_nutri"))
 
 
+```
+- problem if entire diet = false in nutrition no way to know from which ingredient it is coming from because only diet column in the nutrition table 
+
+
+## 7) Infer amounts from feed intake data in outcomes 
+
+```{r}
+
+# Extract feed intake data
+feed_intake <- livestock_metadata$Data.Out %>%
+  select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, ED.Mean.T, ED.Error)
+
+# Filter feed intake data for ingredients only (not entire diet)
+feed_intake_diet <- feed_intake %>%
+  filter(ED.Intake.Item == A.Level.Name)
+
+# Merge to fill missing D.Amount values
+complete_diet <- complete_diet %>%
+  left_join(feed_intake_diet %>% 
+              select(B.Code, A.Level.Name, ED.Intake.Item, ED.Mean.T), 
+            by = c("B.Code", "A.Level.Name")) %>%
+  mutate(
+    # Flag if the value is being inferred from feed intake
+    from_feed_intake = ifelse(is.na(Total_Amount) & !is.na(ED.Mean.T), TRUE, FALSE),
+
+    # If D.Amount is missing, fill with ED.Mean.T
+    Total_Amount = ifelse(is.na(Total_Amount), ED.Mean.T, Total_Amount)
+  ) %>%
+  distinct()  # Remove duplicates if any
+
+
+
 
 datatable(
   complete_diet, 
@@ -416,9 +479,8 @@ datatable(
 )
 
 ```
-- problem if entire diet = false in nutrition no way to know from which ingredient it is coming from because only diet column in the nutrition table 
 
-7) Tracking paper loss and ad libitum data 
+## 8) Tracking paper loss and ad libitum data 
 ```{r,message=FALSE,warning=FALSE}
 
 
@@ -535,11 +597,8 @@ datatable(
 ```
 
 
-## 7) Infer amounts from feed intake data in outcomes 
 
-```{r}
 
-feed_intake<-livestock_metadata$Data.Out%>%
-  select(B.Code,A.Level.Name,ED.Intake.Item,ED.Intake.Item.Raw,ED.Mean.T,ED.Error,ED.Product.Comp)
-```
+
+## 9) Add feedapedia codes from mastersheet 
 
