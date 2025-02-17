@@ -486,6 +486,7 @@ diet_status <- complete_diet %>%
   )
 
 
+
 # Step 7: Number of studies with ad libitum diets
 b_codes_with_ad_libitum <- ingredients %>%
   group_by(B.Code) %>%
