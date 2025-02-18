@@ -270,7 +270,6 @@ diet_nutrition[, DC.Method := NULL]
 
 # Drop unneeded columns; rename main diet item column
 diet_nutrition <- diet_nutrition[, !c("D.Item", "D.Item.Root.Other.Comp.Proc_All", "D.Item.raw")]
-setnames(diet_nutrition, "D.Item.Root.Comp.Proc_Major", "D.Item")
 
 DT::datatable(diet_nutrition, options = list(pageLength = 5))
 ```
@@ -455,8 +454,10 @@ Although not strictly necessary for extracting feed item composition and digesti
 
 
 ```{r}
-library(data.table)
-
+livestock_data <- miceadds::load.Rdata2(
+  file = basename(save_path),
+  path = dirname(save_path)
+)
 ###
 # 1) Convert your livestock_metadata to a data.table and select columns
 ###
@@ -795,7 +796,7 @@ complete_diet_dt <- merge(
 complete_diet_dt <- merge(
   x = complete_diet_dt,
   y = Nutrition_dt,
-  by = c("B.Code", "A.Level.Name","is_group","is_entire_diet","D.Item.AOM","D.Item.Root.Comp.Proc_Major","D.Item.Root.Other.Comp.Proc_All","D.Item.raw"),
+  by = c("B.Code", "A.Level.Name","is_group","is_entire_diet"),
   all.x = TRUE
 )
 
