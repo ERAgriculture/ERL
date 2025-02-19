@@ -18,25 +18,43 @@ output:
   html_document:
     toc: true
     toc_float: true
-    code_folding: hide
+    code_folding: show
 
 ---
 
 ## Introduction
 
 ### Background
-Understanding livestock diets is crucial for improving animal nutrition, optimizing feed efficiency,emisisons, and assessing environmental impacts. However, raw diet composition data is often messy, with inconsistent units and missing harmonized nutritional information. Standardizing and integrating these datasets enables more accurate comparisons and facilitates meta-analysis across studies.
+Livestock diet data provide vital insights into animal nutrition, feed efficiency, and environmental impacts. However, these data are often collected from diverse studies with inconsistent measurement units, missing values, and fragmented information. To enable robust cross-study comparisons and meta-analyses, it is essential to standardize, integrate, and enrich these datasets—especially by linking to external sources such as Feedapedia and using supplementary feed intake records.
 
-### Objective
-This analysis aims to:
-1. **Download and process livestock diet metadata** from an online repository.
-2. **Harmonize dietary ingredient units** 
-3. **Integrate basal diets** into experimental treatments.
-4. **Calculate the relative proportion of each ingredient** within each diet.
-5. **Generate a final table** with summarized nutritional and digestibility information for complete diets.
-6. **Infer the data** from feedapedia and when missing infer from current data for nutrition and digestibility.
+### Objectives
+This analysis implements a comprehensive, automated workflow for processing livestock diet data with the following key goals:
 
-By automating this workflow, we streamline livestock nutrition research and ensure consistent data preparation for further analysis.
+1. **Download and Load Metadata:**  
+   Retrieve the latest livestock diet metadata from an S3 bucket, ensuring that the data are up-to-date.
+
+2. **Harmonize Ingredient Units:**  
+   Standardize various weight, volume, and time units (e.g., converting kg to grams, liters to milliliters, and weeks to days) to ensure consistent measurements across studies.
+
+3. **Link Diet Ingredients to Feedapedia:**  
+   Merge diet ingredient data with external nutritional and digestibility information from Feedapedia by matching corresponding feed ingredient codes.
+
+4. **Integrate Basal Diets:**  
+   Combine basal (control) diet components with experimental diets, while preserving the identity of the basal ingredients through appropriate flagging.
+
+5. **Impute Missing Amounts Using Feed Intake Data:**  
+   Where ingredient amounts are missing, infer values from feed intake records and flag these instances, thus improving dataset completeness.
+
+6. **Calculate Relative Ingredient Proportions:**  
+   Compute the percentage contribution of each ingredient within a complete diet, ensuring that only diets with consistent units are used for accurate calculations.
+
+7. **Merge Nutritional and Digestibility Information:**  
+   Create a comprehensive diet-level table that integrates total feed amounts with nutritional and digestibility metrics from both the original metadata and Feedapedia.
+
+8. **Track Data Filtering and Potential Loss:**  
+   Monitor the impact of each processing step—from unit harmonization to the filtering of inconsistent data—and document any data loss or special cases (such as ad libitum feeding).
+
+By automating these steps, this workflow not only streamlines data preparation for livestock nutrition research but also ensures reproducibility and robust analyses across diverse studies.
 
 
 ## 1) Set up 
@@ -50,6 +68,10 @@ library(stringr)
 library(knitr)
 library(dplyr)
 library(DT)
+library(readxl)
+library(tidyr)
+library(arrow)
+
 
 
 # Set up connection to S3 bucket
@@ -207,8 +229,52 @@ ingredients <- ingredients %>%
 
 ```
 
+## 3) Link ingredients to feedipedia 
 
-## 3) Integrate basal diets 
+Feedipedia is an online database that provides comprehensive information on feed ingredients used in livestock nutrition. It aggregates data on the nutritional composition, digestibility, and other relevant properties of various feeds.We will use it to infer data when info is missing from our data extraction. 
+
+```{r,message=FALSE,warning=FALSE}
+
+## download data from feedapedia (generated with the "feedapedia scrapping script available on github)
+
+feedipedia <- read_parquet("feedipedia/feedipedia.parquet")
+
+## download AOM with the correspondance between feedipedia codes and diet items 
+
+# Define the raw URL for the Excel file
+url <- "https://raw.githubusercontent.com/peetmate/era_codes/main/era_master_sheet.xlsx"
+
+# Download the file to a temporary location
+temp_file <- tempfile(fileext = ".xlsx")
+download.file(url, destfile = temp_file, mode = "wb")
+
+# Read only the sheet called "AOM"
+mastersheet <- read_excel(temp_file, sheet = "AOM") %>%
+  filter(L5=="Feed Ingredient")
+
+mastersheet$Feedipedia <- as.numeric(sub(".*node/", "", mastersheet$Feedipedia))
+
+
+
+
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+
+# Merge the mastersheet feedipedia node numbers into the ingredients data
+ingredients <- ingredients %>%
+  left_join(
+    mastersheet %>% select(Edge_Value, Feedipedia),
+    by = c("D.Item" = "Edge_Value")
+  )%>%
+  distinct()
+
+```
+
+
+## 4) Integrate basal diets 
 
 Basal diets in livestock experiments are often used as control and they serve as a base for other treatments. That means they are present in both the control and each one of the treatments where other ingredients are added. The goal of this section is to integrate basal diet ingredients into treatments and still keep the base diet. We also flagged the ingredient if they are coming from the basal diet.
 
@@ -246,9 +312,11 @@ ingredients <- bind_rows(
 ```
 
 
-## 3.1) Infer ingreident amount from feed intake data 
+## 5) Infer ingredient amount from feed intake data 
 
-```{r}
+Occasionally, the ingredient amounts may be missing from the ingredient table or simply noted as ad libitum feeding. However, since the actual intake is recorded in the outcome data, we can extract the feed intake value and infer it as the amount of the ingredient administered to the animal.
+
+```{r,message=FALSE,warning=FALSE}
 
 # Extract feed intake data
 feed_intake <- livestock_metadata$Data.Out %>%
@@ -276,8 +344,8 @@ ingredients <- ingredients %>%
 ```
 whats the unit of feed intake ??
 
-## 4) Table of all diet ingredients amounts within each diet 
-```{r}
+## 6) Table of all diet ingredients amounts within each diet 
+```{r,message=FALSE,warning=FALSE}
 
 
 # This 'ingredients' now contains all diets + basal integrated.
@@ -295,7 +363,7 @@ datatable(
 
 ```
 
-## 5) Relative % of each ingredient in the diet
+## 7) Relative % of each ingredient in the diet
 
 This table presents the relative percentage of each ingredient within a diet. To ensure accurate proportion calculations, we first filtered the dataset to include only diets with consistent units. Diets with incompatible or non-harmonizable units were excluded, as their proportions could not be reliably determined.
 
@@ -409,7 +477,7 @@ datatable(
 
 The lines that have 0 as validation are the ones that were feeding ad libitum for which we do not have a precise amount so it's impossible to calculate the relative proportion of the ingredients.
 
-## 6) Table with nutrition and digestibility for the entire diet
+## 8) Table with nutrition and digestibility for the entire diet
 
 In this section, we integrate digestibility and nutrition data into a comprehensive table at the diet level. The resulting table includes the total amount of feed provided, along with corresponding nutritional and digestibility information.
 
@@ -437,50 +505,179 @@ complete_diet <- total_amounts %>%
 ```
 - problem if entire diet = false in nutrition no way to know from which ingredient it is coming from because only diet column in the nutrition table 
 
+## 9) Add nutrition and digestibility information from feedipedia parquet at the ingredient level
 
-## 7) Infer amounts from feed intake data in outcomes 
+```{r,message=FALSE,warning=FALSE}
+### --- 1. Categorize Feedipedia Variables ----------------------------------
 
-```{r}
-
-# Extract feed intake data
-feed_intake <- livestock_metadata$Data.Out %>%
-  select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, ED.Mean.T, ED.Error)
-
-# Filter feed intake data for ingredients only (not entire diet)
-feed_intake_diet <- feed_intake %>%
-  filter(ED.Intake.Item == A.Level.Name)
-
-# Merge to fill missing D.Amount values
-complete_diet <- complete_diet %>%
-  left_join(feed_intake_diet %>% 
-              select(B.Code, A.Level.Name, ED.Intake.Item, ED.Mean.T), 
-            by = c("B.Code", "A.Level.Name")) %>%
-  mutate(
-    # Flag if the value is being inferred from feed intake
-    from_feed_intake = ifelse(is.na(Total_Amount) & !is.na(ED.Mean.T), TRUE, FALSE),
-
-    # If D.Amount is missing, fill with ED.Mean.T
-    Total_Amount = ifelse(is.na(Total_Amount), ED.Mean.T, Total_Amount)
-  ) %>%
-  distinct()  # Remove duplicates if any
-
-
-
-
-datatable(
-  complete_diet, 
-  options = list(
-    pageLength = 10,         # Show 10 rows per page by default
-    scrollX = TRUE,          # Enable horizontal scrolling
-    autoWidth = TRUE,        # Adjust column width automatically
-    searchHighlight = TRUE   # Highlight search terms
-  ),
-  caption = "Interactive Table: Nutrition and digestibility information at the diet levels"
+# Define the digestibility variable names (from your digestibility list)
+digest_vars <- c(
+  "In vitro OM digestibility (pepsin)",
+  "In vitro DM digestibility (pepsin-cellulase)",
+  "OM digestibility, ruminants",
+  "Energy digestibility, ruminants",
+  "DE ruminants",
+  "ME ruminants",
+  "Nitrogen digestibility, ruminants",
+  "Dry matter degradability (effective, k=6%)",
+  "Dry matter degradability (effective, k=4%)",
+  "a (DM)",
+  "b (DM)",
+  "c (DM)",
+  "DE rabbit",
+  "MEn rabbit",
+  "Energy digestibility, rabbit",
+  "Nitrogen digestibility, rabbit",
+  "Starch (polarimetry)",
+  "Alanine",
+  "Arginine",
+  "Aspartic acid",
+  "Cystine",
+  "Glutamic acid",
+  "Glycine",
+  "Histidine",
+  "Isoleucine",
+  "Leucine",
+  "Lysine",
+  "Methionine",
+  "Methionine+cystine",
+  "Phenylalanine",
+  "Phenylalanine+tyrosine",
+  "Proline",
+  "Serine",
+  "Threonine",
+  "Tyrosine",
+  "Valine",
+  "Sodium",
+  "Sulfur",
+  "Manganese",
+  "Energy digestibility, growing pig",
+  "DE growing pig",
+  "MEn growing pig",
+  "NE growing pig",
+  "Nitrogen digestibility, growing pig",
+  "AMEn cockerel",
+  "AMEn broiler",
+  "Starch (enzymatic)",
+  "NDF",
+  "ADF",
+  "OM digestibility, Ruminant",
+  "Tryptophan",
+  "Tannins, condensed (eq. catechin)",
+  "a (N)",
+  "b (N)",
+  "c (N)",
+  "Nitrogen degradability (effective, k=4%)",
+  "Nitrogen degradability (effective, k=6%)",
+  "Total sugars",
+  "In vitro DM digestibility (pepsin)",
+  "ME ruminants (FAO, 1982)",
+  "Ether extract, HCl hydrolysis",
+  "DM digestibility, pepsin-cellulase",
+  "ME ruminants (gas production)",
+  "DE salmonids",
+  "Energy digestibility, salmonids",
+  "Nitrogen digestibility, salmonids",
+  "Water-soluble carbohydrates",
+  "OM digestibility, ruminants (gas production)",
+  "Specific viscosity (AFNOR)",
+  "Myristic acid C14:0",
+  "Palmitic acid C16:0",
+  "Stearic acid C18:0",
+  "Oleic acid C18:1",
+  "Linoleic acid C18:2",
+  "Linolenic acid C18:3",
+  "DM digestibility, pepsin",
+  "Xanthophylls",
+  "OM digestibility, pepsin-cellulase",
+  "Palmitoleic acid C16:1",
+  "OM digestibility, pepsin",
+  "Selenium",
+  "Ricinoleic acid C18:1 OH",
+  "Chlorine",
+  "Gossypol, free",
+  "AME poultry",
+  "AMEn poultry",
+  "TMEn poultry",
+  "TME poultry",
+  "Dry matter degradability, k=4%",
+  "DM degradability (effective, k=6%)",
+  "OM digestibility, cellulase",
+  "DM digestibility, ruminants",
+  "Lauric acid C12:0",
+  "Lactose",
+  "Pectins",
+  "Organic matter digestibility",
+  "Energy digestibility",
+  "Digestible energy",
+  "Metabolizable energy",
+  "Coumarin",
+  "Antitrypsic activity",
+  "Glucosinolates",
+  "Oxalates",
+  "Ether extract (hydrolysis)",
+  "Gamma-linolenic acid C18:3 w-6",
+  "Cell walls, water insoluble",
+  "Fructose",
+  "OM digestibility, horse",
+  "DM digestibility, horse",
+  "Energy digestibility, horse",
+  "DE horse"
 )
+
+# Classify each row in feedipedia as "digestibility" if Variable is in digest_vars, otherwise "nutrition"
+feedipedia <- feedipedia %>%
+  mutate(category = if_else(Variable %in% digest_vars, "digestibility", "nutrition"))
+
+### --- 2. Prepare Long-Format Feedipedia Data for Each Ingredient ------------
+
+# Convert feedipedia_node to numeric and select needed columns
+feedipedia_long <- feedipedia %>%
+  mutate(feedipedia_node = as.numeric(feedipedia_node)) %>%
+  select(feedipedia_node, Variable, Unit, Avg, category)
+
+# Join the feedipedia data to the ingredients data by matching Feedipedia node number
+ingredients_feed <- ingredients %>%
+  left_join(feedipedia_long, by = c("Feedipedia" = "feedipedia_node"))
+
+# For each ingredient (grouped by B.Code and Feedipedia), separate nutrition and digestibility rows,
+# and add a row number for alignment.
+nutr_long <- ingredients_feed %>%
+  filter(category == "nutrition") %>%
+  group_by(B.Code, Feedipedia) %>%
+  mutate(DC_row = row_number()) %>%
+  ungroup() %>%
+  select(B.Code, Feedipedia, DC_row,
+         DC_Variable = Variable, DC_Value = Avg, DC_Unit = Unit)
+
+dig_long <- ingredients_feed %>%
+  filter(category == "digestibility") %>%
+  group_by(B.Code, Feedipedia) %>%
+  mutate(DD_row = row_number()) %>%
+  ungroup() %>%
+  select(B.Code, Feedipedia, DD_row,
+         DD_Variable = Variable, DD_Value = Avg, DD_Unit = Unit)
+
+# Combine the nutrition and digestibility subsets by matching B.Code, Feedipedia, and the row numbers.
+combined_feed <- full_join(nutr_long, dig_long, 
+                           by = c("B.Code", "Feedipedia", "DC_row" = "DD_row")) %>%
+  select(-DC_row)  # remove the temporary row number
+
+### --- 3. Merge Combined Feedipedia Data Back with Ingredients and Pivot to Long Format ----
+
+# Merge the combined feed information back with the original ingredients data.
+ingredients <- ingredients %>%
+  left_join(combined_feed, by = c("B.Code", "Feedipedia")) %>%
+  mutate(
+    nutrition_source = if_else(!is.na(DC_Value), "feedipedia", NA_character_),
+    digestibility_source = if_else(!is.na(DD_Value), "feedipedia", NA_character_)
+  )
+
 
 ```
 
-## 8) Tracking paper loss and ad libitum data 
+
+## 10) Tracking paper loss and ad libitum data 
 ```{r,message=FALSE,warning=FALSE}
 
 
@@ -595,10 +792,4 @@ datatable(
 
 
 ```
-
-
-
-
-
-## 9) Add feedapedia codes from mastersheet 
 
