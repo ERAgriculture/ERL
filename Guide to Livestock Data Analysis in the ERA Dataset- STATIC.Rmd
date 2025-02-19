@@ -911,7 +911,7 @@ intake_WG_nut_dosage <- intake_WG_nut %>%
   
   # Step 2: Calculate Feed Dosage (only where applicable)
   mutate(Feed_Dosage_g_DM_per_kg_MW = ifelse(
-    `Feed Intake Unit` == "g DM/kg body weight (0.75)/individual/day",
+    `Feed Intake Unit` == "g DM/individual/day",
     `Feed Intake` / Metabolic_Weight,
     NA  # Assign NA for rows that don’t meet the condition
   ))
