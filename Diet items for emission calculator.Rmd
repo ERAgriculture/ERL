@@ -13,7 +13,7 @@ author:
   - name: "Todd Rosenstock"
     email: "t.rosenstock@cgiar.org"
     orcid: "0000-0002-1958-9500"
-date: "2024-12-15"
+date: "2025-02-19"
 output:
   html_document:
     toc: true
@@ -479,31 +479,62 @@ The lines that have 0 as validation are the ones that were feeding ad libitum fo
 
 ## 8) Table with nutrition and digestibility for the entire diet
 
-In this section, we integrate digestibility and nutrition data into a comprehensive table at the diet level. The resulting table includes the total amount of feed provided, along with corresponding nutritional and digestibility information.
+Within the nutrition and digestibility tables, the "is entire diet" column distinguishes the scope of the data. A value of FALSE indicates that the nutrition or digestibility information pertains solely to the specific diet ingredient, whereas a value of TRUE signifies that the information represents the nutritional or digestibility profile of the entire diet. 
+
+## 8.1) Add nutrition and digestibility info at the ingredient level 
+
 
 ```{r,message=FALSE,warning=FALSE}
 
 #### 1) Prepare Digestibility data
-Digestibility <- livestock_metadata$Animals.Diet.Digest %>%
+Digestibility_ingredient <- livestock_metadata$Animals.Diet.Digest %>%
+  filter(is_entire_diet=="FALSE")
+
+#### 2) Prepare Nutrition data
+Nutrition_ingredient <- livestock_metadata$Animals.Diet.Comp %>%
+  filter(is_entire_diet=="FALSE")
+
+#### 3) Join to total_amounts
+
+ingredients <- ingredients %>%
+  left_join(Digestibility_ingredient, 
+            by = c("B.Code", "D.Item"),
+            suffix = c("", "_digest")) %>%
+  left_join(Nutrition_ingredient, 
+            by = c("B.Code", "D.Item"),
+            suffix = c("", "_nutri"))
+
+
+```
+
+
+## 8.2) Add nutrition and digestibility info at the diet level 
+
+```{r,message=FALSE,warning=FALSE}
+
+#### 1) Prepare Digestibility data
+Digestibility_diet <- livestock_metadata$Animals.Diet.Digest %>%
+  filter(is_entire_diet=="TRUE")%>%
   rename(A.Level.Name = D.Item) 
 
 #### 2) Prepare Nutrition data
-Nutrition <- livestock_metadata$Animals.Diet.Comp %>%
+Nutrition_diet <- livestock_metadata$Animals.Diet.Comp %>%
+  filter(is_entire_diet=="TRUE")%>%
   rename(A.Level.Name = D.Item) 
 
 #### 3) Join to total_amounts
 
 complete_diet <- total_amounts %>%
-  left_join(Digestibility, 
+  left_join(Digestibility_diet, 
             by = c("B.Code", "A.Level.Name"),
             suffix = c("", "_digest")) %>%
-  left_join(Nutrition, 
+  left_join(Nutrition_diet, 
             by = c("B.Code", "A.Level.Name"),
             suffix = c("", "_nutri"))
 
 
 ```
-- problem if entire diet = false in nutrition no way to know from which ingredient it is coming from because only diet column in the nutrition table 
+
 
 ## 9) Add nutrition and digestibility information from feedipedia parquet at the ingredient level
 
@@ -676,8 +707,53 @@ ingredients <- ingredients %>%
 
 ```
 
+## 10) infer nutrition from our data 
 
-## 10) Tracking paper loss and ad libitum data 
+```{r,message=FALSE,warning=FALSE}
+
+# -----------------------------
+# Impute missing nutrition values
+# -----------------------------
+nutrition_imputed <- ingredients %>%
+  # Consider only rows with non-missing nutrition values (extracted from our data source)
+   filter(!is.na(DC_Value) & is.na(nutrition_source))%>%
+  group_by(D.Item,DC_Variable, DC_Unit) %>%  # Group by ingredient and its nutrition unit
+  summarise(mean_nutrition = mean(DC_Value, na.rm = TRUE))
+# Merge back to the ingredients data and impute missing nutrition values
+ingredients <- ingredients %>%
+  left_join(nutrition_imputed, by = c("D.Item","DC_Variable", "DC_Unit" = "DC_Unit")) %>%
+  mutate(
+    # If DC_Value is missing, fill it with the computed mean
+    DC_Value = if_else(is.na(DC_Value), mean_nutrition, DC_Value),
+    # Flag the source as "extraction" if we imputed the value
+    nutrition_source = if_else(is.na(nutrition_source) & is.na(DC_Value) == FALSE, "extraction estimate", nutrition_source)
+  ) %>%
+  select(-mean_nutrition)
+
+# -----------------------------
+# Impute missing digestibility values
+# -----------------------------
+digest_imputed <- ingredients %>%
+  filter(!is.na(DD_Value)) %>%
+  group_by(D.Item,DD_Variable, DD_Unit) %>%  # Group by ingredient and its digestibility unit
+  summarise(mean_digest = mean(DD_Value, na.rm = TRUE))
+
+# Merge back to the ingredients data and impute missing digestibility values
+ingredients <- ingredients %>%
+  left_join(digest_imputed, by = c("D.Item","DD_Variable", "DD_Unit" = "DD_Unit")) %>%
+  mutate(
+    DD_Value = if_else(is.na(DD_Value), mean_digest, DD_Value),
+    digestibility_source = if_else(is.na(digestibility_source) & is.na(DD_Value) == FALSE, "extraction estimate", digestibility_source)
+  ) %>%
+  select(-mean_digest)
+
+
+
+```
+
+
+
+## 11) Tracking paper loss and ad libitum data 
 ```{r,message=FALSE,warning=FALSE}
 
 
