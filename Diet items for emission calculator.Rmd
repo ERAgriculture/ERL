@@ -1,0 +1,871 @@
+---
+title: "Livestock diet items"
+author:
+  - name: "Lolita Muller"
+    email: "m.lolita@cgiar.org"
+    orcid: "0009-0002-8345-7219"
+  - name: "Peter Steward"
+    email: "p.steward@cgiar.org"
+    orcid: "0000-0003-3985-4911"
+  - name: "Namita Joshi"
+    email: "n.joshi@cgiar.org"
+    orcid: "0000-0002-1623-6910"
+  - name: "Todd Rosenstock"
+    email: "t.rosenstock@cgiar.org"
+    orcid: "0000-0002-1958-9500"
+date: "2025-02-19"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: show
+
+---
+
+## Introduction
+
+### Background
+Livestock diet data provide vital insights into animal nutrition, feed efficiency, and environmental impacts. However, these data are often collected from diverse studies with inconsistent measurement units, missing values, and fragmented information. To enable robust cross-study comparisons and meta-analyses, it is essential to standardize, integrate, and enrich these datasets—especially by linking to external sources such as Feedapedia and using supplementary feed intake records.
+
+### Objectives
+This analysis implements a comprehensive, automated workflow for processing livestock diet data with the following key goals:
+
+1. **Download and Load Metadata:**  
+   Retrieve the latest livestock diet metadata from an S3 bucket, ensuring that the data are up-to-date.
+
+2. **Harmonize Ingredient Units:**  
+   Standardize various weight, volume, and time units (e.g., converting kg to grams, liters to milliliters, and weeks to days) to ensure consistent measurements across studies.
+
+3. **Link Diet Ingredients to Feedapedia:**  
+   Merge diet ingredient data with external nutritional and digestibility information from Feedapedia by matching corresponding feed ingredient codes.
+
+4. **Integrate Basal Diets:**  
+   Combine basal (control) diet components with experimental diets, while preserving the identity of the basal ingredients through appropriate flagging.
+
+5. **Impute Missing Amounts Using Feed Intake Data:**  
+   Where ingredient amounts are missing, infer values from feed intake records and flag these instances, thus improving dataset completeness.
+
+6. **Calculate Relative Ingredient Proportions:**  
+   Compute the percentage contribution of each ingredient within a complete diet, ensuring that only diets with consistent units are used for accurate calculations.
+
+7. **Merge Nutritional and Digestibility Information:**  
+   Create a comprehensive diet-level table that integrates total feed amounts with nutritional and digestibility metrics from both the original metadata and Feedapedia.
+
+8. **Track Data Filtering and Potential Loss:**  
+   Monitor the impact of each processing step—from unit harmonization to the filtering of inconsistent data—and document any data loss or special cases (such as ad libitum feeding).
+
+By automating these steps, this workflow not only streamlines data preparation for livestock nutrition research but also ensures reproducibility and robust analyses across diverse studies.
+
+
+## 1) Set up 
+Download the packages and download the data from the s3 bucket.
+
+```{r,message=FALSE,warning=FALSE}
+# Install and load 'pacman' package manager if not already installed
+
+library(ERAg)
+library(stringr)
+library(knitr)
+library(dplyr)
+library(DT)
+library(readxl)
+library(tidyr)
+library(arrow)
+
+
+
+# Set up connection to S3 bucket
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+era_s3 <- "s3://digital-atlas/era"
+
+# List the files in the s3 bucket
+files <- s3$dir_ls(file.path(era_s3,"data"))
+
+# Identify the latest skinny_cow_2022-YYYY-MM-DD.RData file
+files <- tail(grep(".RData", grep("skinny_cow_2022", files, value=TRUE), value=TRUE), 1)
+
+# Download to local if not already present
+save_path <- file.path(getwd(), basename(files))
+if(!file.exists(save_path)){
+  s3$file_download(files, save_path, overwrite = TRUE)
+}
+
+# Load the data
+livestock_metadata <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path))
+
+
+
+```
+
+
+
+## 2) Harmonize units 
+
+
+```{r,message=FALSE,warning=FALSE}
+# diet ingredients: breakdown of all ingredients within each diet
+ingredients <- livestock_metadata$Animals.Diet %>%
+  dplyr::select(
+    B.Code,
+    A.Level.Name,
+    D.Item.AOM,
+    D.Item,
+    D.Type,
+    D.Amount,
+    D.Unit.Amount,
+    D.Unit.Time,
+    D.Unit.Animals,
+    DC.Is.Dry,
+    D.Ad.lib,
+    D.Is.Group,
+    D.Item.Root.Other.Comp.Proc_All
+  ) %>%
+  mutate(D.Amount = as.numeric(D.Amount))
+
+# Function to harmonize diet ingredient units
+harmonize_units <- function(df) {
+  df %>%
+    mutate(
+      # Record original units (optional, for debugging/traceability)
+      Units = paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals, sep=";"),
+
+      # Harmonize weight and volume units to a consistent base
+      D.Amount = case_when(
+        D.Unit.Amount %in% c("kg", "mg", "g/100g", "l", "kg/t", "g/300l", 
+                             "mg/kg", "kg/100kg", "kg/kg metabolic weight", 
+                             "kg/100kg body weight", "g/kg metabolic weight (0.75)", 
+                             "g/L") ~ {
+          case_when(
+            D.Unit.Amount == "kg" ~ D.Amount * 1000,                      # kg -> g
+            D.Unit.Amount == "mg" ~ D.Amount / 1000,                     # mg -> g
+            D.Unit.Amount == "g/100g" ~ D.Amount * 10,                   # g/100g -> g/kg
+            D.Unit.Amount == "l" ~ D.Amount * 1000,                      # l -> ml (assumed g ~ ml in water)
+            D.Unit.Amount == "kg/t" ~ D.Amount * 1000,                   # kg/t -> g/kg
+            D.Unit.Amount == "g/300l" ~ D.Amount / 300,                  # g/300l -> g/L
+            D.Unit.Amount == "mg/kg" ~ D.Amount / 1000,                  # mg/kg -> g/kg
+            D.Unit.Amount == "kg/100kg body weight" ~ D.Amount * 10,     # -> g/kg body weight
+            D.Unit.Amount == "kg/kg metabolic weight" ~ D.Amount * 1000, # -> g/kg metabolic weight
+            TRUE ~ D.Amount
+          )
+        },
+        TRUE ~ D.Amount
+      ),
+
+      # Update D.Unit.Amount to reflect new base
+      D.Unit.Amount = case_when(
+        D.Unit.Amount == "kg"  ~ "g",
+        D.Unit.Amount == "mg"  ~ "g",
+        D.Unit.Amount == "g/100g" ~ "g/kg",
+        D.Unit.Amount == "l"  ~ "ml",
+        D.Unit.Amount == "kg/t" ~ "g/kg",
+        D.Unit.Amount == "g/300l" ~ "g/L",
+        D.Unit.Amount == "mg/kg" ~ "g/kg",
+        D.Unit.Amount == "kg/100kg body weight" ~ "g/kg body weight",
+        D.Unit.Amount == "kg/kg metabolic weight" ~ "g/kg metabolic weight",
+        D.Unit.Amount == "g/kg metabolic weight (0.75)" ~ "g/kg metabolic weight",
+        D.Unit.Amount == "g/L" ~ "g/L",
+        TRUE ~ D.Unit.Amount
+      ),
+
+      # Harmonize time units to day
+      D.Amount = case_when(
+        D.Unit.Time == "week" ~ D.Amount / 7,
+        D.Unit.Time == "month" ~ D.Amount / 30,
+        D.Unit.Time == "2 weeks" ~ D.Amount / 14,
+        D.Unit.Time == "4 days interval" ~ D.Amount / 4,
+        D.Unit.Time == "2x/day" ~ D.Amount * 2,
+        TRUE ~ D.Amount
+      ),
+       D.Unit.Time = ifelse(!is.na(D.Unit.Time), "day", D.Unit.Time)
+    ) %>%
+    # NEW: If D.Amount is NA, set unit fields to NA as well
+    mutate(
+      D.Unit.Amount   = ifelse(is.na(D.Amount), NA_character_, D.Unit.Amount),
+      D.Unit.Time     = ifelse(is.na(D.Amount), NA_character_, D.Unit.Time),
+      D.Unit.Animals  = ifelse(is.na(D.Amount), NA_character_, D.Unit.Animals)
+    )
+}
+
+# Apply the harmonization
+ingredients <- harmonize_units(ingredients)
+
+# Load replicate info to adjust for "all animals in replicate"
+reps <- livestock_metadata$MT.Out %>%
+  mutate(T.Animals = as.numeric(T.Animals)) %>%
+  distinct(B.Code, A.Level.Name, .keep_all = TRUE)
+
+ingredients <- ingredients %>%
+  left_join(reps %>% dplyr::select(B.Code, A.Level.Name, T.Animals), by=c("B.Code","A.Level.Name")) %>%
+  mutate(
+    D.Amount = case_when(
+      D.Unit.Animals == "all animals in replicate" & !is.na(T.Animals) ~ D.Amount / T.Animals,
+      TRUE ~ D.Amount
+    ),
+    D.Unit.Animals = ifelse(D.Unit.Animals == "all animals in replicate", "individual", D.Unit.Animals)
+  )
+
+# Refresh 'Units' column after these adjustments (optional)
+ingredients <- ingredients %>%
+  mutate(Units = paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals, sep=";"))
+
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+
+
+# Define a list of acceptable units
+acceptable_units <- c("g/kg","g","%","ml","L","kg","g/L",
+                      "g/kg metabolic weight (0.75)","% Diet","kg/kg metabolic weight",
+                      "g/kg body weight","ml/kg","% Body Mass","% Concentrate",
+                      "kg/100kg body weight")
+
+# Filter rows to keep only acceptable units
+ingredients <- ingredients %>%
+  filter(D.Unit.Amount %in% acceptable_units | is.na(D.Unit.Amount)) %>%
+  mutate(D.Item = ifelse(is.na(D.Item), "Unspecified", D.Item))
+
+
+```
+
+## 3) Link ingredients to feedipedia 
+
+Feedipedia is an online database that provides comprehensive information on feed ingredients used in livestock nutrition. It aggregates data on the nutritional composition, digestibility, and other relevant properties of various feeds.We will use it to infer data when info is missing from our data extraction. 
+
+```{r,message=FALSE,warning=FALSE}
+
+## download data from feedapedia (generated with the "feedapedia scrapping script available on github)
+
+feedipedia <- read_parquet("feedipedia/feedipedia.parquet")
+
+## download AOM with the correspondance between feedipedia codes and diet items 
+
+# Define the raw URL for the Excel file
+url <- "https://raw.githubusercontent.com/peetmate/era_codes/main/era_master_sheet.xlsx"
+
+# Download the file to a temporary location
+temp_file <- tempfile(fileext = ".xlsx")
+download.file(url, destfile = temp_file, mode = "wb")
+
+# Read only the sheet called "AOM"
+mastersheet <- read_excel(temp_file, sheet = "AOM") %>%
+  filter(L5=="Feed Ingredient")
+
+mastersheet$Feedipedia <- as.numeric(sub(".*node/", "", mastersheet$Feedipedia))
+
+
+
+
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+
+# Merge the mastersheet feedipedia node numbers into the ingredients data
+ingredients <- ingredients %>%
+  left_join(
+    mastersheet %>% select(Edge_Value, Feedipedia),
+    by = c("D.Item" = "Edge_Value")
+  )%>%
+  distinct()
+
+```
+
+
+## 4) Integrate basal diets 
+
+Basal diets in livestock experiments are often used as control and they serve as a base for other treatments. That means they are present in both the control and each one of the treatments where other ingredients are added. The goal of this section is to integrate basal diet ingredients into treatments and still keep the base diet. We also flagged the ingredient if they are coming from the basal diet.
+
+```{r,message=FALSE,warning=FALSE}
+# Identify basal diets
+basal_diets <- ingredients %>%
+  filter(tolower(str_trim(A.Level.Name)) == "base") %>%
+  mutate(from_basal = TRUE)
+
+# Identify non-basal diets
+non_basal_diets <- ingredients %>%
+  filter(tolower(str_trim(A.Level.Name)) != "base") %>%
+  mutate(from_basal = FALSE)
+
+# Duplicate basal diets for each non-basal diet within the same B.Code
+basal_expanded <- non_basal_diets %>%
+  dplyr::select(B.Code, A.Level.Name) %>%
+  distinct() %>%
+  inner_join(basal_diets, by="B.Code") %>%
+  mutate(
+    A.Level.Name = A.Level.Name.x, # carry over the non-basal A.Level.Name
+    from_basal   = TRUE
+  ) %>%
+  dplyr::select(-A.Level.Name.x, -A.Level.Name.y)
+
+# Combine everything into one integrated dataset
+ingredients <- bind_rows(
+  non_basal_diets,   # original non-basal
+  basal_expanded,    # basal items added to each non-basal diet
+  basal_diets        # keep the purely basal diet for control
+)
+
+
+
+```
+
+
+## 5) Infer ingredient amount from feed intake data 
+
+Occasionally, the ingredient amounts may be missing from the ingredient table or simply noted as ad libitum feeding. However, since the actual intake is recorded in the outcome data, we can extract the feed intake value and infer it as the amount of the ingredient administered to the animal.
+
+```{r,message=FALSE,warning=FALSE}
+
+# Extract feed intake data
+feed_intake <- livestock_metadata$Data.Out %>%
+  select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, ED.Mean.T, ED.Error)
+
+# Filter feed intake data for ingredients only (not entire diet)
+feed_intake_ingredients <- feed_intake %>%
+  filter(ED.Intake.Item != A.Level.Name)
+
+# Merge to fill missing D.Amount values
+ingredients <- ingredients %>%
+  left_join(feed_intake_ingredients %>% 
+              select(B.Code, A.Level.Name, ED.Intake.Item, ED.Mean.T), 
+            by = c("B.Code", "A.Level.Name", "D.Item" = "ED.Intake.Item")) %>%
+  mutate(
+    # Flag if the value is being inferred from feed intake
+    from_feed_intake = ifelse(is.na(D.Amount) & !is.na(ED.Mean.T), TRUE, FALSE),
+
+    # If D.Amount is missing, fill with ED.Mean.T
+    D.Amount = ifelse(is.na(D.Amount), ED.Mean.T, D.Amount)
+  ) %>%
+  select(-ED.Mean.T) %>%  # Remove ED.Mean.T column after use
+  distinct()  # Remove duplicates if any
+
+```
+whats the unit of feed intake ??
+
+## 6) Table of all diet ingredients amounts within each diet 
+```{r,message=FALSE,warning=FALSE}
+
+
+# This 'ingredients' now contains all diets + basal integrated.
+# Table 1: Final diet amounts with harmonized units (including basal)
+datatable(
+  ingredients, 
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Interactive Table: Diet Ingredients"
+)
+
+```
+
+## 7) Relative % of each ingredient in the diet
+
+This table presents the relative percentage of each ingredient within a diet. To ensure accurate proportion calculations, we first filtered the dataset to include only diets with consistent units. Diets with incompatible or non-harmonizable units were excluded, as their proportions could not be reliably determined.
+
+```{r,message=FALSE,warning=FALSE}
+# We now have a single integrated dataset: 'ingredients'.
+# 1) Filter to diets that have a single unit type per group (consistent units).
+# 2) Compute total amounts and percentages.
+
+inconsistent_diets <- ingredients %>%
+  group_by(B.Code, A.Level.Name) %>%
+  mutate(Unit_Count = n_distinct(na.omit(D.Unit.Amount))) %>%
+  filter(Unit_Count > 1) %>%
+  ungroup()
+
+# Step 1: Flag only consistent-unit diets
+consistent_diets <- ingredients %>%
+  group_by(B.Code, A.Level.Name) %>%
+  # Count only the non-NA units
+  mutate(Unit_Count = n_distinct(na.omit(D.Unit.Amount))) %>%
+  # Keep groups with 0 or 1 distinct unit (ignoring NA)
+  filter(Unit_Count <= 1) %>%
+  ungroup()
+
+
+
+# Step 2: Sum total amounts per (B.Code, A.Level.Name, D.Unit.Amount)
+# Transform consistent_diets into a summary of totals, removing any NA in amount or unit
+total_amounts <- consistent_diets %>%
+  filter(!is.na(D.Amount), !is.na(D.Unit.Amount)) %>%
+  group_by(B.Code, A.Level.Name, D.Unit.Amount) %>%
+  summarise(Total_Amount = sum(D.Amount, na.rm = TRUE), .groups = "drop")
+# Display the resulting table
+
+
+# Create an interactive table for "total_amounts"
+datatable(
+  total_amounts, 
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Interactive Table: Total Amounts of Diet Ingredients"
+)
+
+
+
+# Step 3: Calculate percentages
+diet_percentages <- consistent_diets %>%
+  left_join(total_amounts, by=c("B.Code","A.Level.Name","D.Unit.Amount")) %>%
+  mutate(
+    Percentage_of_Diet = ifelse(Total_Amount > 0,
+                                (D.Amount / Total_Amount)*100,
+                                NA_real_)
+  ) %>%
+  dplyr::select(
+    B.Code,
+    A.Level.Name,
+    D.Item,
+    D.Type,
+    D.Amount,
+    D.Unit.Amount,
+    Percentage_of_Diet,
+    from_basal
+  )
+
+# Table 2: Relative percentage of each ingredient in each diet
+
+
+# Create an interactive table for "total_amounts"
+datatable(
+  diet_percentages, 
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Interactive Table: Relative % of Ingredients"
+)
+
+
+
+
+
+
+```
+
+```{r,message=FALSE,warning=FALSE}
+# Check if each diet sums close to 100%
+validation <- diet_percentages %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(Total_Percentage = sum(Percentage_of_Diet, na.rm=TRUE)) %>%
+  ungroup()
+
+# Display diets and their total percentages
+datatable(
+  validation, 
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Validation table"
+)
+
+
+```
+
+The lines that have 0 as validation are the ones that were feeding ad libitum for which we do not have a precise amount so it's impossible to calculate the relative proportion of the ingredients.
+
+## 8) Table with nutrition and digestibility for the entire diet
+
+Within the nutrition and digestibility tables, the "is entire diet" column distinguishes the scope of the data. A value of FALSE indicates that the nutrition or digestibility information pertains solely to the specific diet ingredient, whereas a value of TRUE signifies that the information represents the nutritional or digestibility profile of the entire diet. 
+
+## 8.1) Add nutrition and digestibility info at the ingredient level 
+
+
+```{r,message=FALSE,warning=FALSE}
+
+#### 1) Prepare Digestibility data
+Digestibility_ingredient <- livestock_metadata$Animals.Diet.Digest %>%
+  filter(is_entire_diet=="FALSE")
+
+#### 2) Prepare Nutrition data
+Nutrition_ingredient <- livestock_metadata$Animals.Diet.Comp %>%
+  filter(is_entire_diet=="FALSE")
+
+#### 3) Join to total_amounts
+
+ingredients <- ingredients %>%
+  left_join(Digestibility_ingredient, 
+            by = c("B.Code", "D.Item"),
+            suffix = c("", "_digest")) %>%
+  left_join(Nutrition_ingredient, 
+            by = c("B.Code", "D.Item"),
+            suffix = c("", "_nutri"))
+
+
+```
+
+
+## 8.2) Add nutrition and digestibility info at the diet level 
+
+```{r,message=FALSE,warning=FALSE}
+
+#### 1) Prepare Digestibility data
+Digestibility_diet <- livestock_metadata$Animals.Diet.Digest %>%
+  filter(is_entire_diet=="TRUE")%>%
+  rename(A.Level.Name = D.Item) 
+
+#### 2) Prepare Nutrition data
+Nutrition_diet <- livestock_metadata$Animals.Diet.Comp %>%
+  filter(is_entire_diet=="TRUE")%>%
+  rename(A.Level.Name = D.Item) 
+
+#### 3) Join to total_amounts
+
+complete_diet <- total_amounts %>%
+  left_join(Digestibility_diet, 
+            by = c("B.Code", "A.Level.Name"),
+            suffix = c("", "_digest")) %>%
+  left_join(Nutrition_diet, 
+            by = c("B.Code", "A.Level.Name"),
+            suffix = c("", "_nutri"))
+
+
+```
+
+
+## 9) Add nutrition and digestibility information from feedipedia parquet at the ingredient level
+
+```{r,message=FALSE,warning=FALSE}
+### --- 1. Categorize Feedipedia Variables ----------------------------------
+
+# Define the digestibility variable names (from your digestibility list)
+digest_vars <- c(
+  "In vitro OM digestibility (pepsin)",
+  "In vitro DM digestibility (pepsin-cellulase)",
+  "OM digestibility, ruminants",
+  "Energy digestibility, ruminants",
+  "DE ruminants",
+  "ME ruminants",
+  "Nitrogen digestibility, ruminants",
+  "Dry matter degradability (effective, k=6%)",
+  "Dry matter degradability (effective, k=4%)",
+  "a (DM)",
+  "b (DM)",
+  "c (DM)",
+  "DE rabbit",
+  "MEn rabbit",
+  "Energy digestibility, rabbit",
+  "Nitrogen digestibility, rabbit",
+  "Starch (polarimetry)",
+  "Alanine",
+  "Arginine",
+  "Aspartic acid",
+  "Cystine",
+  "Glutamic acid",
+  "Glycine",
+  "Histidine",
+  "Isoleucine",
+  "Leucine",
+  "Lysine",
+  "Methionine",
+  "Methionine+cystine",
+  "Phenylalanine",
+  "Phenylalanine+tyrosine",
+  "Proline",
+  "Serine",
+  "Threonine",
+  "Tyrosine",
+  "Valine",
+  "Sodium",
+  "Sulfur",
+  "Manganese",
+  "Energy digestibility, growing pig",
+  "DE growing pig",
+  "MEn growing pig",
+  "NE growing pig",
+  "Nitrogen digestibility, growing pig",
+  "AMEn cockerel",
+  "AMEn broiler",
+  "Starch (enzymatic)",
+  "NDF",
+  "ADF",
+  "OM digestibility, Ruminant",
+  "Tryptophan",
+  "Tannins, condensed (eq. catechin)",
+  "a (N)",
+  "b (N)",
+  "c (N)",
+  "Nitrogen degradability (effective, k=4%)",
+  "Nitrogen degradability (effective, k=6%)",
+  "Total sugars",
+  "In vitro DM digestibility (pepsin)",
+  "ME ruminants (FAO, 1982)",
+  "Ether extract, HCl hydrolysis",
+  "DM digestibility, pepsin-cellulase",
+  "ME ruminants (gas production)",
+  "DE salmonids",
+  "Energy digestibility, salmonids",
+  "Nitrogen digestibility, salmonids",
+  "Water-soluble carbohydrates",
+  "OM digestibility, ruminants (gas production)",
+  "Specific viscosity (AFNOR)",
+  "Myristic acid C14:0",
+  "Palmitic acid C16:0",
+  "Stearic acid C18:0",
+  "Oleic acid C18:1",
+  "Linoleic acid C18:2",
+  "Linolenic acid C18:3",
+  "DM digestibility, pepsin",
+  "Xanthophylls",
+  "OM digestibility, pepsin-cellulase",
+  "Palmitoleic acid C16:1",
+  "OM digestibility, pepsin",
+  "Selenium",
+  "Ricinoleic acid C18:1 OH",
+  "Chlorine",
+  "Gossypol, free",
+  "AME poultry",
+  "AMEn poultry",
+  "TMEn poultry",
+  "TME poultry",
+  "Dry matter degradability, k=4%",
+  "DM degradability (effective, k=6%)",
+  "OM digestibility, cellulase",
+  "DM digestibility, ruminants",
+  "Lauric acid C12:0",
+  "Lactose",
+  "Pectins",
+  "Organic matter digestibility",
+  "Energy digestibility",
+  "Digestible energy",
+  "Metabolizable energy",
+  "Coumarin",
+  "Antitrypsic activity",
+  "Glucosinolates",
+  "Oxalates",
+  "Ether extract (hydrolysis)",
+  "Gamma-linolenic acid C18:3 w-6",
+  "Cell walls, water insoluble",
+  "Fructose",
+  "OM digestibility, horse",
+  "DM digestibility, horse",
+  "Energy digestibility, horse",
+  "DE horse"
+)
+
+# Classify each row in feedipedia as "digestibility" if Variable is in digest_vars, otherwise "nutrition"
+feedipedia <- feedipedia %>%
+  mutate(category = if_else(Variable %in% digest_vars, "digestibility", "nutrition"))
+
+### --- 2. Prepare Long-Format Feedipedia Data for Each Ingredient ------------
+
+# Convert feedipedia_node to numeric and select needed columns
+feedipedia_long <- feedipedia %>%
+  mutate(feedipedia_node = as.numeric(feedipedia_node)) %>%
+  select(feedipedia_node, Variable, Unit, Avg, category)
+
+# Join the feedipedia data to the ingredients data by matching Feedipedia node number
+ingredients_feed <- ingredients %>%
+  left_join(feedipedia_long, by = c("Feedipedia" = "feedipedia_node"))
+
+# For each ingredient (grouped by B.Code and Feedipedia), separate nutrition and digestibility rows,
+# and add a row number for alignment.
+nutr_long <- ingredients_feed %>%
+  filter(category == "nutrition") %>%
+  group_by(B.Code, Feedipedia) %>%
+  mutate(DC_row = row_number()) %>%
+  ungroup() %>%
+  select(B.Code, Feedipedia, DC_row,
+         DC_Variable = Variable, DC_Value = Avg, DC_Unit = Unit)
+
+dig_long <- ingredients_feed %>%
+  filter(category == "digestibility") %>%
+  group_by(B.Code, Feedipedia) %>%
+  mutate(DD_row = row_number()) %>%
+  ungroup() %>%
+  select(B.Code, Feedipedia, DD_row,
+         DD_Variable = Variable, DD_Value = Avg, DD_Unit = Unit)
+
+# Combine the nutrition and digestibility subsets by matching B.Code, Feedipedia, and the row numbers.
+combined_feed <- full_join(nutr_long, dig_long, 
+                           by = c("B.Code", "Feedipedia", "DC_row" = "DD_row")) %>%
+  select(-DC_row)  # remove the temporary row number
+
+### --- 3. Merge Combined Feedipedia Data Back with Ingredients and Pivot to Long Format ----
+
+# Merge the combined feed information back with the original ingredients data.
+ingredients <- ingredients %>%
+  left_join(combined_feed, by = c("B.Code", "Feedipedia")) %>%
+  mutate(
+    nutrition_source = if_else(!is.na(DC_Value), "feedipedia", NA_character_),
+    digestibility_source = if_else(!is.na(DD_Value), "feedipedia", NA_character_)
+  )
+
+
+```
+
+## 10) infer nutrition from our data 
+
+```{r,message=FALSE,warning=FALSE}
+
+# -----------------------------
+# Impute missing nutrition values
+# -----------------------------
+nutrition_imputed <- ingredients %>%
+  # Consider only rows with non-missing nutrition values (extracted from our data source)
+   filter(!is.na(DC_Value) & is.na(nutrition_source))%>%
+  group_by(D.Item,DC_Variable, DC_Unit) %>%  # Group by ingredient and its nutrition unit
+  summarise(mean_nutrition = mean(DC_Value, na.rm = TRUE))
+# Merge back to the ingredients data and impute missing nutrition values
+ingredients <- ingredients %>%
+  left_join(nutrition_imputed, by = c("D.Item","DC_Variable", "DC_Unit" = "DC_Unit")) %>%
+  mutate(
+    # If DC_Value is missing, fill it with the computed mean
+    DC_Value = if_else(is.na(DC_Value), mean_nutrition, DC_Value),
+    # Flag the source as "extraction" if we imputed the value
+    nutrition_source = if_else(is.na(nutrition_source) & is.na(DC_Value) == FALSE, "extraction estimate", nutrition_source)
+  ) %>%
+  select(-mean_nutrition)
+
+# -----------------------------
+# Impute missing digestibility values
+# -----------------------------
+digest_imputed <- ingredients %>%
+  filter(!is.na(DD_Value)) %>%
+  group_by(D.Item,DD_Variable, DD_Unit) %>%  # Group by ingredient and its digestibility unit
+  summarise(mean_digest = mean(DD_Value, na.rm = TRUE))
+
+# Merge back to the ingredients data and impute missing digestibility values
+ingredients <- ingredients %>%
+  left_join(digest_imputed, by = c("D.Item","DD_Variable", "DD_Unit" = "DD_Unit")) %>%
+  mutate(
+    DD_Value = if_else(is.na(DD_Value), mean_digest, DD_Value),
+    digestibility_source = if_else(is.na(digestibility_source) & is.na(DD_Value) == FALSE, "extraction estimate", digestibility_source)
+  ) %>%
+  select(-mean_digest)
+
+
+
+```
+
+
+
+## 11) Tracking paper loss and ad libitum data 
+```{r,message=FALSE,warning=FALSE}
+
+
+# Initialize the tracking table
+tracking_table <- data.frame(
+  Step = character(),
+  Unique_BCodes = integer(),
+  Lost_BCodes = integer(),
+  Additional_Info = character(),
+  stringsAsFactors = FALSE
+)
+
+# Step 1: Initial unique B.Codes count
+initial_count <- length(unique(livestock_metadata$Animals.Diet$B.Code))
+tracking_table <- rbind(tracking_table, data.frame(Step = "Initial Dataset", 
+                                                   Unique_BCodes = initial_count, 
+                                                   Lost_BCodes = 0,
+                                                   Additional_Info = "Raw dataset before processing"))
+
+# Step 2: After harmonization
+post_harmonization <- length(unique(ingredients$B.Code))
+tracking_table <- rbind(tracking_table, data.frame(Step = "After Harmonization", 
+                                                   Unique_BCodes = post_harmonization, 
+                                                   Lost_BCodes = initial_count - post_harmonization,
+                                                   Additional_Info = "Standardized units across dataset"))
+
+# Step 3: After filtering acceptable units
+post_units_filter <- length(unique(ingredients$B.Code))
+tracking_table <- rbind(tracking_table, data.frame(Step = "After Filtering Acceptable Units", 
+                                                   Unique_BCodes = post_units_filter, 
+                                                   Lost_BCodes = post_harmonization - post_units_filter,
+                                                   Additional_Info = "Removed studies with inconsistent units"))
+
+# Step 4: After integrating basal diets
+post_basal_integration <- length(unique(ingredients$B.Code))
+tracking_table <- rbind(tracking_table, data.frame(Step = "After Integrating Basal Diets", 
+                                                   Unique_BCodes = post_basal_integration, 
+                                                   Lost_BCodes = post_units_filter - post_basal_integration,
+                                                   Additional_Info = "Integrated basal diets into experimental diets"))
+
+# Step 5: After filtering for consistent units
+post_consistent_units <- length(unique(consistent_diets$B.Code))
+tracking_table <- rbind(tracking_table, data.frame(Step = "After Filtering for Consistent Units", 
+                                                   Unique_BCodes = post_consistent_units, 
+                                                   Lost_BCodes = post_basal_integration - post_consistent_units,
+                                                   Additional_Info = "Removed diets with multiple inconsistent units"))
+
+# Step 6: After removing NA amounts for percentage calculation
+post_percentage_calc <- length(unique(total_amounts$B.Code))
+tracking_table <- rbind(tracking_table, data.frame(Step = "After Removing NA Amounts for Percentage Calculation", 
+                                                   Unique_BCodes = post_percentage_calc, 
+                                                   Lost_BCodes = post_consistent_units - post_percentage_calc,
+                                                   Additional_Info = "Filtered out missing diet proportions"))
+
+diet_status <- complete_diet %>%
+  group_by(A.Level.Name) %>%
+  summarize(
+    has_digestibility = any(!is.na(DD.Value)),  # TRUE if any DC.Value exists
+    has_nutrition = any(!is.na(DC.Value))       # TRUE if any DD.Value exists
+  ) %>%
+  mutate(
+    no_digestibility = !has_digestibility,  # TRUE if digestibility is missing
+    no_nutrition = !has_nutrition,          # TRUE if nutrition is missing
+    no_info = no_digestibility & no_nutrition # TRUE if both are missing
+  )
+
+
+
+# Step 7: Number of studies with ad libitum diets
+b_codes_with_ad_libitum <- ingredients %>%
+  group_by(B.Code) %>%
+  filter(any(D.Ad.lib == "Yes", na.rm = TRUE)) %>%
+  distinct(B.Code)
+
+num_b_codes_with_ad_libitum <- length(unique(b_codes_with_ad_libitum$B.Code))
+tracking_table <- rbind(tracking_table, data.frame(Step = "Studies with Ad Libitum Diets", 
+                                                   Unique_BCodes = num_b_codes_with_ad_libitum, 
+                                                   Lost_BCodes = NA,
+                                                   Additional_Info = "Studies where at least one ingredient is ad libitum"))
+
+# Step 8: Missing digestibility/nutrition information
+total_diets <- n_distinct(complete_diet$A.Level.Name)
+prop_no_digestibility <- mean(diet_status$no_digestibility) * 100
+prop_no_nutrition <- mean(diet_status$no_nutrition) * 100
+prop_no_info <- mean(diet_status$no_info) * 100
+
+tracking_table <- rbind(tracking_table, data.frame(Step = "Diets with No Digestibility Info", 
+                                                   Unique_BCodes = NA, 
+                                                   Lost_BCodes = NA,
+                                                   Additional_Info = paste0(round(prop_no_digestibility, 1), "% of diets")))
+tracking_table <- rbind(tracking_table, data.frame(Step = "Diets with No Nutrition Info", 
+                                                   Unique_BCodes = NA, 
+                                                   Lost_BCodes = NA,
+                                                   Additional_Info = paste0(round(prop_no_nutrition, 1), "% of diets")))
+tracking_table <- rbind(tracking_table, data.frame(Step = "Diets with No Digestibility or Nutrition Info", 
+                                                   Unique_BCodes = NA, 
+                                                   Lost_BCodes = NA,
+                                                   Additional_Info = paste0(round(prop_no_info, 1), "% of diets")))
+
+# Display the tracking table interactively
+datatable(
+  tracking_table, 
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Comprehensive Tracking Table: Study Filtering and Data Loss"
+)
+
+
+
+```
+
