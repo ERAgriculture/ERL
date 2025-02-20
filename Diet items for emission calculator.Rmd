@@ -222,7 +222,7 @@ acceptable_units <- c("g/kg","g","%","ml","L","kg","g/L",
                       "kg/100kg body weight")
 
 # Filter rows to keep only acceptable units
-ingredients <- ingredients %>%
+ingredients_harmonized <- ingredients %>%
   filter(D.Unit.Amount %in% acceptable_units | is.na(D.Unit.Amount)) %>%
   mutate(D.Item = ifelse(is.na(D.Item), "Unspecified", D.Item))
 
@@ -237,7 +237,17 @@ Feedipedia is an online database that provides comprehensive information on feed
 
 ## download data from feedapedia (generated with the "feedapedia scrapping script available on github)
 
-feedipedia <- read_parquet("feedipedia/feedipedia.parquet")
+# Use the raw URL of the file on GitHub
+url <- "https://github.com/ERAgriculture/ERL/raw/main/downloaded_data/feedipedia.parquet"
+
+# Create a temporary file location with a .parquet extension
+temp_file <- tempfile(fileext = ".parquet")
+
+# Download the file in binary mode
+download.file(url, destfile = temp_file, mode = "wb")
+
+# Read the Parquet file
+feedipedia <- read_parquet(temp_file)
 
 ## download AOM with the correspondance between feedipedia codes and diet items 
 
@@ -255,16 +265,13 @@ mastersheet <- read_excel(temp_file, sheet = "AOM") %>%
 mastersheet$Feedipedia <- as.numeric(sub(".*node/", "", mastersheet$Feedipedia))
 
 
-
-
-
 ```
 
 
 ```{r,message=FALSE,warning=FALSE}
 
 # Merge the mastersheet feedipedia node numbers into the ingredients data
-ingredients <- ingredients %>%
+ingredients <- ingredients_harmonized %>%
   left_join(
     mastersheet %>% select(Edge_Value, Feedipedia),
     by = c("D.Item" = "Edge_Value")
@@ -276,7 +283,7 @@ ingredients <- ingredients %>%
 
 ## 4) Integrate basal diets 
 
-Basal diets in livestock experiments are often used as control and they serve as a base for other treatments. That means they are present in both the control and each one of the treatments where other ingredients are added. The goal of this section is to integrate basal diet ingredients into treatments and still keep the base diet. We also flagged the ingredient if they are coming from the basal diet.
+Basal diets serve as the control and foundation for all treatments in livestock experiments. They are present in both the control diet and in every treatment diet that includes additional ingredients. This section integrates basal diet ingredients into the treatment diets while preserving the original basal formulation, and it flags any ingredient that originates from the basal diet.
 
 ```{r,message=FALSE,warning=FALSE}
 # Identify basal diets
@@ -314,7 +321,7 @@ ingredients <- bind_rows(
 
 ## 5) Infer ingredient amount from feed intake data 
 
-Occasionally, the ingredient amounts may be missing from the ingredient table or simply noted as ad libitum feeding. However, since the actual intake is recorded in the outcome data, we can extract the feed intake value and infer it as the amount of the ingredient administered to the animal.
+Occasionally, the ingredient amounts may be missing from the ingredient table or simply noted as ad libitum feeding. However, since the actual intake is sometimes recorded in the outcome data, we can extract the feed intake value and infer it as the amount of the ingredient administered to the animal.
 
 ```{r,message=FALSE,warning=FALSE}
 
@@ -496,7 +503,7 @@ Nutrition_ingredient <- livestock_metadata$Animals.Diet.Comp %>%
 
 #### 3) Join to total_amounts
 
-ingredients <- ingredients %>%
+ingredients_dd_dc <- ingredients %>%
   left_join(Digestibility_ingredient, 
             by = c("B.Code", "D.Item"),
             suffix = c("", "_digest")) %>%
@@ -524,7 +531,7 @@ Nutrition_diet <- livestock_metadata$Animals.Diet.Comp %>%
 
 #### 3) Join to total_amounts
 
-complete_diet <- total_amounts %>%
+complete_diet_dd_dc <- total_amounts %>%
   left_join(Digestibility_diet, 
             by = c("B.Code", "A.Level.Name"),
             suffix = c("", "_digest")) %>%
@@ -668,7 +675,7 @@ feedipedia_long <- feedipedia %>%
   select(feedipedia_node, Variable, Unit, Avg, category)
 
 # Join the feedipedia data to the ingredients data by matching Feedipedia node number
-ingredients_feed <- ingredients %>%
+ingredients_feed <- ingredients_dd_dc %>%
   left_join(feedipedia_long, by = c("Feedipedia" = "feedipedia_node"))
 
 # For each ingredient (grouped by B.Code and Feedipedia), separate nutrition and digestibility rows,
@@ -676,33 +683,53 @@ ingredients_feed <- ingredients %>%
 nutr_long <- ingredients_feed %>%
   filter(category == "nutrition") %>%
   group_by(B.Code, Feedipedia) %>%
-  mutate(DC_row = row_number()) %>%
+  mutate(DC.row = row_number()) %>%
   ungroup() %>%
-  select(B.Code, Feedipedia, DC_row,
-         DC_Variable = Variable, DC_Value = Avg, DC_Unit = Unit)
+  select(B.Code, Feedipedia, DC.row,
+         DC.Variable = Variable, DC.Value = Avg, DC.Unit = Unit)
 
 dig_long <- ingredients_feed %>%
   filter(category == "digestibility") %>%
   group_by(B.Code, Feedipedia) %>%
-  mutate(DD_row = row_number()) %>%
+  mutate(DD.row = row_number()) %>%
   ungroup() %>%
-  select(B.Code, Feedipedia, DD_row,
-         DD_Variable = Variable, DD_Value = Avg, DD_Unit = Unit)
+  select(B.Code, Feedipedia, DD.row,
+         DD.Variable = Variable, DD.Value = Avg, DD.Unit = Unit)
 
 # Combine the nutrition and digestibility subsets by matching B.Code, Feedipedia, and the row numbers.
 combined_feed <- full_join(nutr_long, dig_long, 
-                           by = c("B.Code", "Feedipedia", "DC_row" = "DD_row")) %>%
-  select(-DC_row)  # remove the temporary row number
+                           by = c("B.Code", "Feedipedia", "DC.row" = "DD.row")) %>%
+  select(-DC.row)  # remove the temporary row number
 
 ### --- 3. Merge Combined Feedipedia Data Back with Ingredients and Pivot to Long Format ----
 
 # Merge the combined feed information back with the original ingredients data.
-ingredients <- ingredients %>%
+# Merge Feedipedia data into the existing ingredients dataset
+ingredients_dd_dc_feed <- ingredients_dd_dc %>%
   left_join(combined_feed, by = c("B.Code", "Feedipedia")) %>%
   mutate(
-    nutrition_source = if_else(!is.na(DC_Value), "feedipedia", NA_character_),
-    digestibility_source = if_else(!is.na(DD_Value), "feedipedia", NA_character_)
-  )
+    DC.Value = coalesce(DC.Value.x, DC.Value.y),
+    DC.Unit = coalesce(DC.Unit.x, DC.Unit.y),
+    DD.Value = coalesce(DD.Value.x, DD.Value.y),
+    DD.Unit = coalesce(DD.Unit.x, DD.Unit.y),
+
+    # Add Variables explicitly
+    DC.Variable = coalesce(DC.Variable.x, DC.Variable.y),
+    DD.Variable = coalesce(DD.Variable.x, DD.Variable.y),
+
+    nutrition_source = case_when(
+      !is.na(DC.Value.x) ~ "extraction",
+      !is.na(DC.Value.y) ~ "feedipedia",
+      TRUE ~ NA_character_
+    ),
+    digestibility_source = case_when(
+      !is.na(DD.Value.x) ~ "extraction",
+      !is.na(DD.Value.y) ~ "feedipedia",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  select(-ends_with(".x"), -ends_with(".y"))
+
 
 
 ```
@@ -714,36 +741,42 @@ ingredients <- ingredients %>%
 # -----------------------------
 # Impute missing nutrition values
 # -----------------------------
-nutrition_imputed <- ingredients %>%
+nutrition_imputed <- ingredients_dd_dc_feed %>%
   # Consider only rows with non-missing nutrition values (extracted from our data source)
-   filter(!is.na(DC_Value) & is.na(nutrition_source))%>%
-  group_by(D.Item,DC_Variable, DC_Unit) %>%  # Group by ingredient and its nutrition unit
-  summarise(mean_nutrition = mean(DC_Value, na.rm = TRUE))
+   filter(!is.na(DC.Value))%>%
+  filter(nutrition_source=="extraction")%>%
+  group_by(D.Item,DC.Variable, DC.Unit) %>%  # Group by ingredient and its nutrition unit
+  summarise(mean_nutrition = mean(DC.Value, na.rm = TRUE))
+
+
+
 # Merge back to the ingredients data and impute missing nutrition values
-ingredients <- ingredients %>%
-  left_join(nutrition_imputed, by = c("D.Item","DC_Variable", "DC_Unit" = "DC_Unit")) %>%
+ingredients_dd_dc_feed <- ingredients_dd_dc_feed %>%
+  left_join(nutrition_imputed, by = c("D.Item","DC.Variable","DC.Unit")) %>%
   mutate(
     # If DC_Value is missing, fill it with the computed mean
-    DC_Value = if_else(is.na(DC_Value), mean_nutrition, DC_Value),
+    DC.Value = if_else(is.na(DC.Value), mean_nutrition, DC.Value),
     # Flag the source as "extraction" if we imputed the value
-    nutrition_source = if_else(is.na(nutrition_source) & is.na(DC_Value) == FALSE, "extraction estimate", nutrition_source)
+    nutrition_source = if_else(is.na(nutrition_source) & is.na(DC.Value) == FALSE, "extraction estimate", nutrition_source)
   ) %>%
   select(-mean_nutrition)
 
 # -----------------------------
 # Impute missing digestibility values
 # -----------------------------
-digest_imputed <- ingredients %>%
-  filter(!is.na(DD_Value)) %>%
-  group_by(D.Item,DD_Variable, DD_Unit) %>%  # Group by ingredient and its digestibility unit
-  summarise(mean_digest = mean(DD_Value, na.rm = TRUE))
+digest_imputed <- ingredients_dd_dc_feed %>%
+  filter(!is.na(DD.Value)) %>%
+    filter(digestibility_source=="extraction")%>%
+
+  group_by(D.Item,DD.Variable, DD.Unit) %>%  # Group by ingredient and its digestibility unit
+  summarise(mean_digest = mean(DD.Value, na.rm = TRUE))
 
 # Merge back to the ingredients data and impute missing digestibility values
-ingredients <- ingredients %>%
-  left_join(digest_imputed, by = c("D.Item","DD_Variable", "DD_Unit" = "DD_Unit")) %>%
+ingredients_dd_dc_feed_complete <- ingredients_dd_dc_feed %>%
+  left_join(digest_imputed, by = c("D.Item","DD.Variable","DD.Unit")) %>%
   mutate(
-    DD_Value = if_else(is.na(DD_Value), mean_digest, DD_Value),
-    digestibility_source = if_else(is.na(digestibility_source) & is.na(DD_Value) == FALSE, "extraction estimate", digestibility_source)
+    DD.Value = if_else(is.na(DD.Value), mean_digest, DD.Value),
+    digestibility_source = if_else(is.na(digestibility_source) & is.na(DD.Value) == FALSE, "extraction estimate", digestibility_source)
   ) %>%
   select(-mean_digest)
 
@@ -753,119 +786,117 @@ ingredients <- ingredients %>%
 
 
 
-## 11) Tracking paper loss and ad libitum data 
+## 11) Tracking data table 
 ```{r,message=FALSE,warning=FALSE}
+# 1. Track the number of unique studies (B.Code) at each step
+initial <- n_distinct(livestock_metadata$Animals.Diet$B.Code)
+harmonized <- n_distinct(ingredients_harmonized$B.Code)
+consistent <- n_distinct(consistent_diets$B.Code)
 
+# 2. Percentage of studies with at least one ad libitum feeding
+b_codes_with_ad_lib <- unique(ingredients$B.Code[ingredients$D.Ad.lib == TRUE])
+# Calculate percentage
+ad_lib_percent <- (length(b_codes_with_ad_lib) / n_distinct(ingredients$B.Code)) * 100
 
-# Initialize the tracking table
-tracking_table <- data.frame(
-  Step = character(),
-  Unique_BCodes = integer(),
-  Lost_BCodes = integer(),
-  Additional_Info = character(),
-  stringsAsFactors = FALSE
-)
+# 3. Count the number of unique ingredients
+total_ingredients <- n_distinct(ingredients_dd_dc$D.Item)
 
-# Step 1: Initial unique B.Codes count
-initial_count <- length(unique(livestock_metadata$Animals.Diet$B.Code))
-tracking_table <- rbind(tracking_table, data.frame(Step = "Initial Dataset", 
-                                                   Unique_BCodes = initial_count, 
-                                                   Lost_BCodes = 0,
-                                                   Additional_Info = "Raw dataset before processing"))
-
-# Step 2: After harmonization
-post_harmonization <- length(unique(ingredients$B.Code))
-tracking_table <- rbind(tracking_table, data.frame(Step = "After Harmonization", 
-                                                   Unique_BCodes = post_harmonization, 
-                                                   Lost_BCodes = initial_count - post_harmonization,
-                                                   Additional_Info = "Standardized units across dataset"))
-
-# Step 3: After filtering acceptable units
-post_units_filter <- length(unique(ingredients$B.Code))
-tracking_table <- rbind(tracking_table, data.frame(Step = "After Filtering Acceptable Units", 
-                                                   Unique_BCodes = post_units_filter, 
-                                                   Lost_BCodes = post_harmonization - post_units_filter,
-                                                   Additional_Info = "Removed studies with inconsistent units"))
-
-# Step 4: After integrating basal diets
-post_basal_integration <- length(unique(ingredients$B.Code))
-tracking_table <- rbind(tracking_table, data.frame(Step = "After Integrating Basal Diets", 
-                                                   Unique_BCodes = post_basal_integration, 
-                                                   Lost_BCodes = post_units_filter - post_basal_integration,
-                                                   Additional_Info = "Integrated basal diets into experimental diets"))
-
-# Step 5: After filtering for consistent units
-post_consistent_units <- length(unique(consistent_diets$B.Code))
-tracking_table <- rbind(tracking_table, data.frame(Step = "After Filtering for Consistent Units", 
-                                                   Unique_BCodes = post_consistent_units, 
-                                                   Lost_BCodes = post_basal_integration - post_consistent_units,
-                                                   Additional_Info = "Removed diets with multiple inconsistent units"))
-
-# Step 6: After removing NA amounts for percentage calculation
-post_percentage_calc <- length(unique(total_amounts$B.Code))
-tracking_table <- rbind(tracking_table, data.frame(Step = "After Removing NA Amounts for Percentage Calculation", 
-                                                   Unique_BCodes = post_percentage_calc, 
-                                                   Lost_BCodes = post_consistent_units - post_percentage_calc,
-                                                   Additional_Info = "Filtered out missing diet proportions"))
-
-diet_status <- complete_diet %>%
-  group_by(A.Level.Name) %>%
-  summarize(
-    has_digestibility = any(!is.na(DD.Value)),  # TRUE if any DC.Value exists
-    has_nutrition = any(!is.na(DC.Value))       # TRUE if any DD.Value exists
+# 4. Calculate % of ingredients with nutrition and digestibility info
+ingredients_with_info <- ingredients_dd_dc %>%
+  group_by(D.Item) %>%
+  summarise(
+    has_nutrition = any(!is.na(DC.Value)),
+    has_digestibility = any(!is.na(DD.Value))
   ) %>%
-  mutate(
-    no_digestibility = !has_digestibility,  # TRUE if digestibility is missing
-    no_nutrition = !has_nutrition,          # TRUE if nutrition is missing
-    no_info = no_digestibility & no_nutrition # TRUE if both are missing
-  )
+  mutate(has_any_info = has_nutrition | has_digestibility)
 
+perc_nutrition_dd_dc <- (sum(ingredients_with_info$has_nutrition) / total_ingredients) * 100
+perc_digestibility_dd_dc <- (sum(ingredients_with_info$has_digestibility) / total_ingredients) * 100
+perc_both_dd_dc <- (sum(ingredients_with_info$has_any_info) / total_ingredients) * 100
 
+# 5. After Feedipedia Scraping
+ingredients_with_info_feed <- ingredients_dd_dc_feed %>%
+  group_by(D.Item) %>%
+  summarise(
+    has_nutrition = any(!is.na(DC.Value)),
+    has_digestibility = any(!is.na(DD.Value))
+  ) %>%
+  mutate(has_any_info = has_nutrition | has_digestibility)
 
-# Step 7: Number of studies with ad libitum diets
-b_codes_with_ad_libitum <- ingredients %>%
-  group_by(B.Code) %>%
-  filter(any(D.Ad.lib == "Yes", na.rm = TRUE)) %>%
-  distinct(B.Code)
+perc_nutrition_dd_dc_feed <- (sum(ingredients_with_info_feed$has_nutrition) / total_ingredients) * 100
+perc_digestibility_dd_dc_feed <- (sum(ingredients_with_info_feed$has_digestibility) / total_ingredients) * 100
+perc_both_dd_dc_feed <- (sum(ingredients_with_info_feed$has_any_info) / total_ingredients) * 100
 
-num_b_codes_with_ad_libitum <- length(unique(b_codes_with_ad_libitum$B.Code))
-tracking_table <- rbind(tracking_table, data.frame(Step = "Studies with Ad Libitum Diets", 
-                                                   Unique_BCodes = num_b_codes_with_ad_libitum, 
-                                                   Lost_BCodes = NA,
-                                                   Additional_Info = "Studies where at least one ingredient is ad libitum"))
+# 6. After Inferring from Own Data
+ingredients_with_info_complete <- ingredients_dd_dc_feed_complete %>%
+  group_by(D.Item) %>%
+  summarise(
+    has_nutrition = any(!is.na(DC.Value)),
+    has_digestibility = any(!is.na(DD.Value))
+  ) %>%
+  mutate(has_any_info = has_nutrition | has_digestibility)
 
-# Step 8: Missing digestibility/nutrition information
-total_diets <- n_distinct(complete_diet$A.Level.Name)
-prop_no_digestibility <- mean(diet_status$no_digestibility) * 100
-prop_no_nutrition <- mean(diet_status$no_nutrition) * 100
-prop_no_info <- mean(diet_status$no_info) * 100
+perc_nutrition_dd_dc_feed_complete <- (sum(ingredients_with_info_complete$has_nutrition) / total_ingredients) * 100
+perc_digestibility_dd_dc_feed_complete <- (sum(ingredients_with_info_complete$has_digestibility) / total_ingredients) * 100
+perc_both_dd_dc_feed_complete <- (sum(ingredients_with_info_complete$has_any_info) / total_ingredients) * 100
 
-tracking_table <- rbind(tracking_table, data.frame(Step = "Diets with No Digestibility Info", 
-                                                   Unique_BCodes = NA, 
-                                                   Lost_BCodes = NA,
-                                                   Additional_Info = paste0(round(prop_no_digestibility, 1), "% of diets")))
-tracking_table <- rbind(tracking_table, data.frame(Step = "Diets with No Nutrition Info", 
-                                                   Unique_BCodes = NA, 
-                                                   Lost_BCodes = NA,
-                                                   Additional_Info = paste0(round(prop_no_nutrition, 1), "% of diets")))
-tracking_table <- rbind(tracking_table, data.frame(Step = "Diets with No Digestibility or Nutrition Info", 
-                                                   Unique_BCodes = NA, 
-                                                   Lost_BCodes = NA,
-                                                   Additional_Info = paste0(round(prop_no_info, 1), "% of diets")))
+# 7. At the Diet Level
+total_diets <- n_distinct(complete_diet_dd_dc$A.Level.Name)
+
+diets_with_info <- complete_diet_dd_dc %>%
+  group_by(A.Level.Name) %>%
+  summarise(
+    has_nutrition = any(!is.na(DC.Value)),
+    has_digestibility = any(!is.na(DD.Value))
+  ) %>%
+  mutate(has_any_info = has_nutrition | has_digestibility)
+
+perc_nutrition_dd_dc_diet <- (sum(diets_with_info$has_nutrition) / total_diets) * 100
+perc_digestibility_dd_dc_diet <- (sum(diets_with_info$has_digestibility) / total_diets) * 100
+perc_both_dd_dc_diet <- (sum(diets_with_info$has_any_info) / total_diets) * 100
+
+# 8. Create and Display Tracking Table
+tracking_table <- data.frame(
+  Step = c(
+    "Initial Dataset",
+    "After Harmonization",
+    "After Filtering for Consistent Units",
+    "Studies with Ad Libitum Diets",
+    "% of Diets with No Nutrition Info",
+    "% of Diets with No Digestibility Info",
+    "% of Ingredients with No Nutrition Info",
+    "% of Ingredients with No Digestibility Info",
+    "% of Ingredients with No Nutrition Info After Feedipedia Inference",
+    "% of Ingredients with No Digestibility Info After Feedipedia Inference",
+    "% of Ingredients with No Nutrition Info After Feedipedia and Inference from Our Data",
+    "% of Ingredients with No Digestibility Info After Feedipedia and Inference from Our Data"
+  ),
+  Value = round(c(
+    initial,
+    harmonized,
+    consistent,
+    ad_lib_percent,
+    100 - perc_nutrition_dd_dc_diet,
+    100 - perc_digestibility_dd_dc_diet,
+    100 - perc_nutrition_dd_dc,
+    100 - perc_digestibility_dd_dc,
+    100 - perc_nutrition_dd_dc_feed,
+    100 - perc_digestibility_dd_dc_feed,
+    100 - perc_nutrition_dd_dc_feed_complete,
+    100 - perc_digestibility_dd_dc_feed_complete
+  ), 2) # Round to 2 decimals for readability
+)
 
 # Display the tracking table interactively
 datatable(
   tracking_table, 
   options = list(
-    pageLength = 10,         # Show 10 rows per page by default
-    scrollX = TRUE,          # Enable horizontal scrolling
-    autoWidth = TRUE,        # Adjust column width automatically
-    searchHighlight = TRUE   # Highlight search terms
+    pageLength = 10,         
+    scrollX = TRUE,          
+    autoWidth = TRUE,        
+    searchHighlight = TRUE   
   ),
-  caption = "Comprehensive Tracking Table: Study Filtering and Data Loss"
+  caption = "Tracking Table: Data Processing and Missing Info Percentage"
 )
 
-
-
 ```
-
