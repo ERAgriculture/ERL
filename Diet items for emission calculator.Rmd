@@ -24,8 +24,6 @@ output:
 
 ## Introduction
 
-### Background
-Livestock diet data provide vital insights into animal nutrition, feed efficiency, and environmental impacts. However, these data are often collected from diverse studies with inconsistent measurement units, missing values, and fragmented information. To enable robust cross-study comparisons and meta-analyses, it is essential to standardize, integrate, and enrich these datasets—especially by linking to external sources such as Feedapedia and using supplementary feed intake records.
 
 ### Objectives
 This analysis implements a comprehensive, automated workflow for processing livestock diet data with the following key goals:
@@ -92,6 +90,12 @@ if(!file.exists(save_path)){
 
 # Load the data
 livestock_metadata <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path))
+
+
+#total number of studies 
+total_studies<- length(unique(livestock_metadata$Animals.Diet$B.Code))
+total_ingredients<- length(unique(livestock_metadata$Animals.Diet$D.Item))
+total_diets<- length(unique(livestock_metadata$Animals.Diet$A.Level.Name))
 
 
 
@@ -226,6 +230,11 @@ ingredients_harmonized <- ingredients %>%
   filter(D.Unit.Amount %in% acceptable_units | is.na(D.Unit.Amount)) %>%
   mutate(D.Item = ifelse(is.na(D.Item), "Unspecified", D.Item))
 
+#tracking paper loss because of harmnozied units
+total_studies_harmonized<- length(unique(ingredients_harmonized$B.Code))
+total_ingredients_harmonized<- length(unique(ingredients_harmonized$D.Item))
+total_diets_harmonized<- length(unique(ingredients_harmonized$A.Level.Name))
+
 
 ```
 
@@ -278,6 +287,15 @@ ingredients <- ingredients_harmonized %>%
   )%>%
   distinct()
 
+#proportion of ingredients without feedapedia codes 
+missing_feedapedia <- ingredients %>%
+  filter(is.na(Feedipedia))%>%
+  pull(D.Item) %>%
+  unique() %>%
+  length()
+
+proportion_missing_feedipedia<-missing_feedapedia/length(unique(ingredients$D.Item))
+
 ```
 
 
@@ -325,6 +343,12 @@ Occasionally, the ingredient amounts may be missing from the ingredient table or
 
 ```{r,message=FALSE,warning=FALSE}
 
+#number of initial ingredient with diet amount 
+ingredient_amount_initial <- ingredients %>%
+  filter(!is.na(D.Amount)) %>%
+  nrow()
+
+
 # Extract feed intake data
 feed_intake <- livestock_metadata$Data.Out %>%
   select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, ED.Mean.T, ED.Error)
@@ -347,6 +371,10 @@ ingredients <- ingredients %>%
   ) %>%
   select(-ED.Mean.T) %>%  # Remove ED.Mean.T column after use
   distinct()  # Remove duplicates if any
+
+ingredient_amount_after_feed_intake <- ingredients %>%
+  filter(!is.na(D.Amount)) %>%
+  nrow()
 
 ```
 whats the unit of feed intake ??
@@ -394,7 +422,8 @@ consistent_diets <- ingredients %>%
   filter(Unit_Count <= 1) %>%
   ungroup()
 
-
+#porportion of inconsistent diets 
+proportion_inconsistent_diets<- length(unique(inconsistent_diets$A.Level.Name))/length(unique(ingredients$A.Level.Name))
 
 # Step 2: Sum total amounts per (B.Code, A.Level.Name, D.Unit.Amount)
 # Transform consistent_diets into a summary of totals, removing any NA in amount or unit
@@ -501,7 +530,7 @@ Digestibility_ingredient <- livestock_metadata$Animals.Diet.Digest %>%
 Nutrition_ingredient <- livestock_metadata$Animals.Diet.Comp %>%
   filter(is_entire_diet=="FALSE")
 
-#### 3) Join to total_amounts
+#### 3) Join to ingredients table
 
 ingredients_dd_dc <- ingredients %>%
   left_join(Digestibility_ingredient, 
@@ -548,124 +577,20 @@ complete_diet_dd_dc <- total_amounts %>%
 ```{r,message=FALSE,warning=FALSE}
 ### --- 1. Categorize Feedipedia Variables ----------------------------------
 
-# Define the digestibility variable names (from your digestibility list)
-digest_vars <- c(
-  "In vitro OM digestibility (pepsin)",
-  "In vitro DM digestibility (pepsin-cellulase)",
-  "OM digestibility, ruminants",
-  "Energy digestibility, ruminants",
-  "DE ruminants",
-  "ME ruminants",
-  "Nitrogen digestibility, ruminants",
-  "Dry matter degradability (effective, k=6%)",
-  "Dry matter degradability (effective, k=4%)",
-  "a (DM)",
-  "b (DM)",
-  "c (DM)",
-  "DE rabbit",
-  "MEn rabbit",
-  "Energy digestibility, rabbit",
-  "Nitrogen digestibility, rabbit",
-  "Starch (polarimetry)",
-  "Alanine",
-  "Arginine",
-  "Aspartic acid",
-  "Cystine",
-  "Glutamic acid",
-  "Glycine",
-  "Histidine",
-  "Isoleucine",
-  "Leucine",
-  "Lysine",
-  "Methionine",
-  "Methionine+cystine",
-  "Phenylalanine",
-  "Phenylalanine+tyrosine",
-  "Proline",
-  "Serine",
-  "Threonine",
-  "Tyrosine",
-  "Valine",
-  "Sodium",
-  "Sulfur",
-  "Manganese",
-  "Energy digestibility, growing pig",
-  "DE growing pig",
-  "MEn growing pig",
-  "NE growing pig",
-  "Nitrogen digestibility, growing pig",
-  "AMEn cockerel",
-  "AMEn broiler",
-  "Starch (enzymatic)",
-  "NDF",
-  "ADF",
-  "OM digestibility, Ruminant",
-  "Tryptophan",
-  "Tannins, condensed (eq. catechin)",
-  "a (N)",
-  "b (N)",
-  "c (N)",
-  "Nitrogen degradability (effective, k=4%)",
-  "Nitrogen degradability (effective, k=6%)",
-  "Total sugars",
-  "In vitro DM digestibility (pepsin)",
-  "ME ruminants (FAO, 1982)",
-  "Ether extract, HCl hydrolysis",
-  "DM digestibility, pepsin-cellulase",
-  "ME ruminants (gas production)",
-  "DE salmonids",
-  "Energy digestibility, salmonids",
-  "Nitrogen digestibility, salmonids",
-  "Water-soluble carbohydrates",
-  "OM digestibility, ruminants (gas production)",
-  "Specific viscosity (AFNOR)",
-  "Myristic acid C14:0",
-  "Palmitic acid C16:0",
-  "Stearic acid C18:0",
-  "Oleic acid C18:1",
-  "Linoleic acid C18:2",
-  "Linolenic acid C18:3",
-  "DM digestibility, pepsin",
-  "Xanthophylls",
-  "OM digestibility, pepsin-cellulase",
-  "Palmitoleic acid C16:1",
-  "OM digestibility, pepsin",
-  "Selenium",
-  "Ricinoleic acid C18:1 OH",
-  "Chlorine",
-  "Gossypol, free",
-  "AME poultry",
-  "AMEn poultry",
-  "TMEn poultry",
-  "TME poultry",
-  "Dry matter degradability, k=4%",
-  "DM degradability (effective, k=6%)",
-  "OM digestibility, cellulase",
-  "DM digestibility, ruminants",
-  "Lauric acid C12:0",
-  "Lactose",
-  "Pectins",
-  "Organic matter digestibility",
-  "Energy digestibility",
-  "Digestible energy",
-  "Metabolizable energy",
-  "Coumarin",
-  "Antitrypsic activity",
-  "Glucosinolates",
-  "Oxalates",
-  "Ether extract (hydrolysis)",
-  "Gamma-linolenic acid C18:3 w-6",
-  "Cell walls, water insoluble",
-  "Fructose",
-  "OM digestibility, horse",
-  "DM digestibility, horse",
-  "Energy digestibility, horse",
-  "DE horse"
+digestibility_keywords <- c(
+  "digestibility", "degradability", "energy digestibility", 
+  "DE", "ME", "NE", "AMEn", "OM digestibility", "DM digestibility",
+  "ruminants", "rabbit", "pig", "poultry", "horse", "salmonids",
+  "hydrolysis"
 )
 
-# Classify each row in feedipedia as "digestibility" if Variable is in digest_vars, otherwise "nutrition"
+# Assign category based on the presence of digestibility-related keywords
 feedipedia <- feedipedia %>%
-  mutate(category = if_else(Variable %in% digest_vars, "digestibility", "nutrition"))
+  mutate(category = if_else(
+    str_detect(Variable, regex(paste(digestibility_keywords, collapse = "|"), ignore_case = TRUE)), 
+    "digestibility", 
+    "nutrition"
+  ))
 
 ### --- 2. Prepare Long-Format Feedipedia Data for Each Ingredient ------------
 
@@ -788,10 +713,7 @@ ingredients_dd_dc_feed_complete <- ingredients_dd_dc_feed %>%
 
 ## 11) Tracking data table 
 ```{r,message=FALSE,warning=FALSE}
-# 1. Track the number of unique studies (B.Code) at each step
-initial <- n_distinct(livestock_metadata$Animals.Diet$B.Code)
-harmonized <- n_distinct(ingredients_harmonized$B.Code)
-consistent <- n_distinct(consistent_diets$B.Code)
+
 
 # 2. Percentage of studies with at least one ad libitum feeding
 b_codes_with_ad_lib <- unique(ingredients$B.Code[ingredients$D.Ad.lib == TRUE])
@@ -858,32 +780,26 @@ perc_both_dd_dc_diet <- (sum(diets_with_info$has_any_info) / total_diets) * 100
 # 8. Create and Display Tracking Table
 tracking_table <- data.frame(
   Step = c(
-    "Initial Dataset",
-    "After Harmonization",
-    "After Filtering for Consistent Units",
-    "Studies with Ad Libitum Diets",
-    "% of Diets with No Nutrition Info",
-    "% of Diets with No Digestibility Info",
-    "% of Ingredients with No Nutrition Info",
-    "% of Ingredients with No Digestibility Info",
-    "% of Ingredients with No Nutrition Info After Feedipedia Inference",
-    "% of Ingredients with No Digestibility Info After Feedipedia Inference",
-    "% of Ingredients with No Nutrition Info After Feedipedia and Inference from Our Data",
-    "% of Ingredients with No Digestibility Info After Feedipedia and Inference from Our Data"
+    "Total number of unique studies (B.Code) in the initial dataset",
+    "Total number of unique ingredients (D.Item) in the initial dataset",
+    "Total number of unique diets (A.Level.Name) in the initial dataset",
+    "Total number of unique studies after harmonization",
+    "Total number of unique ingredients after harmonization",
+    "Total number of unique diets after harmonization",
+    "Proportion of ingredients missing Feedipedia information",
+    "Proportion of diets with inconsistent units",
+    "Percentage of studies with at least one ad libitum diet"
   ),
   Value = round(c(
-    initial,
-    harmonized,
-    consistent,
-    ad_lib_percent,
-    100 - perc_nutrition_dd_dc_diet,
-    100 - perc_digestibility_dd_dc_diet,
-    100 - perc_nutrition_dd_dc,
-    100 - perc_digestibility_dd_dc,
-    100 - perc_nutrition_dd_dc_feed,
-    100 - perc_digestibility_dd_dc_feed,
-    100 - perc_nutrition_dd_dc_feed_complete,
-    100 - perc_digestibility_dd_dc_feed_complete
+    total_studies,
+    total_ingredients,
+    total_diets,
+    total_studies_harmonized,
+    total_ingredients_harmonized,
+    total_diets_harmonized,
+    proportion_missing_feedipedia,
+    proportion_inconsistent_diets,
+    ad_lib_percent
   ), 2) # Round to 2 decimals for readability
 )
 
@@ -897,6 +813,20 @@ datatable(
     searchHighlight = TRUE   
   ),
   caption = "Tracking Table: Data Processing and Missing Info Percentage"
+)
+
+tracking_table_nutrition_digestibility <- data.frame(
+  Category = c("Nutrition", "Digestibility"),
+  Initial = c(100 - perc_nutrition_dd_dc, 100 - perc_digestibility_dd_dc),
+  After_Feedipedia_Scraping = c(100 - perc_nutrition_dd_dc_feed, 100 - perc_digestibility_dd_dc_feed),
+  After_Inference_from_Data = c(100 - perc_nutrition_dd_dc_feed_complete, 100 - perc_digestibility_dd_dc_feed_complete)
+)
+
+# Display the second table
+datatable(
+  tracking_table_nutrition_digestibility, 
+  options = list(pageLength = 2, scrollX = TRUE, autoWidth = TRUE, searchHighlight = TRUE),
+  caption = "Tracking Table: Nutrition and Digestibility Improvements"
 )
 
 ```
