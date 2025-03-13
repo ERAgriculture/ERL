@@ -631,13 +631,13 @@ Unit harmonization is essential when studying livestock papers to ensure consist
 ```{r calculating meanT and variance,message=F,echo=T,collapse=FALSE}
 
 data_variance <- data %>%
-  group_by(Code, DOI, Country, Site.ID, CID, C.Descrip, M.Year, Units, MeanC, Tree.Feed, Out.SubInd, PrName) %>%
+  group_by(Code, DOI, Country, Site.ID, CID, C.Descrip, M.Year, Units, MeanC, Tree.Feed, Out.SubInd, PrName, Product.Simple) %>%
   mutate(VarianceT = var(MeanT, na.rm = TRUE)) %>%
   ungroup()
 
 # Now summarize with correct variance
 av_meanT <- data_variance %>%
-  group_by(Code, DOI, Country, Site.ID, CID, C.Descrip, M.Year, Units, MeanC, Tree.Feed, Out.SubInd, PrName) %>%
+  group_by(Code, DOI, Country, Site.ID, CID, C.Descrip, M.Year, Units, MeanC, Tree.Feed, Out.SubInd, PrName,Product.Simple) %>%
   summarise(
     TID = paste(unique(TID), collapse = ".."),
     T.Descrip = paste(unique(T.Descrip), collapse = ".."),
