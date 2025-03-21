@@ -628,6 +628,102 @@ Unit harmonization is essential when studying livestock papers to ensure consist
               ][Units=="kg/individual/day",c("MeanT","MeanC","Units"):=.(round(1000*MeanT,2),round(1000*MeanC,2),"g/individual/day")]
 ```
 
+<<<<<<< HEAD
+=======
+```{r calculating meanT and variance,message=F,echo=T,collapse=FALSE}
+
+#################TESTING
+
+data_variance_TEST <- data %>%
+  group_by(Code, DOI, Country, Site.ID, CID, C.Descrip, M.Year, Units, MeanC, 
+           Out.SubInd, PrName, Product.Simple) %>%  # Removed Tree.Feed from group_by
+  mutate(
+    VarianceT = var(MeanT, na.rm = TRUE)  # Compute variance of MeanT within each group
+  ) %>%
+  ungroup()
+
+# Now summarize with correct variance
+av_meanT_TEST <- data_variance_TEST %>%
+  group_by(Code, DOI, Country, Site.ID, CID, C.Descrip, M.Year, Units, MeanC, 
+           Out.SubInd, PrName, Product.Simple) %>%  # Still not grouping by Tree.Feed
+  summarise(
+    TID = paste(unique(TID), collapse = ".."),
+    T.Descrip = paste(unique(T.Descrip), collapse = ".."),
+    Tree.Feed = paste(unique(Tree.Feed), collapse = ".."),  # Aggregate Tree.Feed
+    MeanT = mean(MeanT, na.rm = TRUE),  # Take mean of MeanT
+    VarianceT = mean(VarianceT, na.rm = TRUE)  # Take mean of precomputed variance
+  ) %>%
+  ungroup()
+
+######################################################################################
+##Adding DM and CP to larger data
+
+data_1<- data
+
+# Step 1: Filter digest to only include "DM" and "CP"
+digest_filtered <- digest %>%
+  filter(DD.Variable %in% c("DM", "CP"))
+
+# Step 2: Merge control values using CID (only for DM and CP)
+data_1 <- data_1 %>%
+  left_join(
+    digest_filtered %>% select(B.Code, D.Item, DD.Value, DD.Unit, DD.Variable),
+    by = c("C.Descrip" = "D.Item", "Code" = "B.Code")
+  ) %>%
+  rename(DD.Value_Control = DD.Value,  # Rename to indicate control
+         DD.Unit_Control = DD.Unit, 
+         DD.Variable_Control = DD.Variable)  # Keep track of Variable type
+
+# Step 3: Merge treatment values using TID (only for DM and CP), ensuring a match on DD.Variable
+data_1 <- data_1 %>%
+  left_join(
+    digest_filtered %>% select(B.Code,D.Item, DD.Value, DD.Unit, DD.Variable),
+    by = c("T.Descrip" = "D.Item", "DD.Variable_Control" = "DD.Variable","Code" = "B.Code")  # Ensures DM matches DM, CP matches CP
+  ) %>%
+  rename(DD.Value_trt = DD.Value,  # Rename to indicate treatment
+         DD.Unit_trt = DD.Unit, 
+         DD.Variable_trt = DD.Variable_Control)  # Keep consistent variable naming
+
+check<-data_1 %>%
+  select(Code, DD.Value_Control,DD.Unit_Control, DD.Unit_trt,DD.Value_trt,DD.Unit_trt,T.Descrip,C.Descrip, DD.Variable_trt)
+
+#############################################################################################
+##Averaging and calculating 
+
+# Step 1: Calculate Variance and Summarize in `data_variance`
+data_variance <- data_1 %>%
+  group_by(Code, DOI, Country, Site.ID, CID, C.Descrip, M.Year, Units, MeanC, 
+           Out.SubInd, PrName, Product.Simple, DD.Variable_trt,
+           DD.Unit_Control, DD.Unit_trt, DD.Value_Control) %>%  # Include DD.Value_Control
+  mutate(
+    VarianceT = var(MeanT, na.rm = TRUE)  # Compute variance of MeanT within each group
+  ) %>%
+  ungroup()
+
+# Now summarize with correct variance
+av_meanT <- data_variance %>%
+  group_by(Code, DOI, Country, Site.ID, CID, C.Descrip, M.Year, Units, MeanC, 
+           Out.SubInd, PrName, Product.Simple, DD.Variable_trt,
+           DD.Unit_Control, DD.Unit_trt, DD.Value_Control) %>%  # Include DD.Value_Control
+  summarise(
+    TID = paste(unique(TID), collapse = ".."),
+    T.Descrip = paste(unique(T.Descrip), collapse = ".."),
+    Tree.Feed = paste(unique(Tree.Feed), collapse = ".."),  # Aggregate Tree.Feed
+    MeanT = mean(MeanT, na.rm = TRUE),  # Take mean of MeanT
+    VarianceT = mean(VarianceT, na.rm = TRUE),  # Take MEAN of precomputed variance (NOT var again!)
+    DD.Value_trt = mean(DD.Value_trt, na.rm = TRUE)  # Keep DD.Value_trt as mean
+  ) %>%
+  ungroup()
+
+# Display the first few rows of the new dataset
+head(av_meanT)
+write.csv(av_meanT,"diet_data/av_meanT_DM_CP.csv")
+
+
+
+```
+
+>>>>>>> 5a1fb4b5e028629b24c515a109644878d64b4a3a
 ### 2.3 Exploring the subsetted data
 
 After subsetting the data, you can explore the number of remaining papers that are within your research focus. The following table The table provides insights into the data coverage for different livestock practices, products, and outcomes. For example, "Feed Addition" applied to "Goat" for "Weight Gain" is reported in 15 studies with 48 observations from 6 countries. This information can help identify well-studied areas and data gaps in livestock research
@@ -923,6 +1019,10 @@ print(intake_WG_nut_dosage)
 write.csv(intake_WG_nut_dosage, "diet_data/feed_dosage.csv", row.names = FALSE)
 ```
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5a1fb4b5e028629b24c515a109644878d64b4a3a
 ## 4. Plotting simple figures
 ### 4.1 Plotting weight gain distribution with outliers 
 This script creates a Shiny app that allows users to visualize the weight gain distribution of three livestock categories: "Cattle," "Goat," and "Sheep," with outliers included. The dataset WG is filtered to include only rows where the P.Product column matches the selected animal.
