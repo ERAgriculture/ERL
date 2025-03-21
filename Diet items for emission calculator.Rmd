@@ -822,3 +822,73 @@ datatable(
 )
 
 ```
+
+#12) Number for emissions calculations on new extractions
+
+```{r}
+#total number of livestock papers 
+length(unique(livestock_metadata$Pub.Out$B.Code))
+
+
+# total number of cattle and sheeps and goats 
+prod_out <- livestock_metadata[["Prod.Out"]]
+
+# Filter and count unique b.code for Sheep, Goat, or Cattle
+library(dplyr)
+
+prod_out %>%
+  filter(P.Product %in% c("Sheep", "Goat", "Cattle")) %>%
+  distinct(B.Code) %>%
+  nrow()
+
+
+#gross energy papers
+
+
+# Step 1: Get b.codes for Sheep, Goat, or Cattle
+target_bcodes <- livestock_metadata[["Prod.Out"]] %>%
+  filter(P.Product %in% c("Sheep", "Goat", "Cattle")) %>%
+  pull(B.Code) %>%
+  unique()
+
+# Step 2: Filter other_table for those b.codes and variable == "GE", then count unique b.codes
+livestock_metadata$Animals.Diet.Comp %>%
+  filter(B.Code %in% target_bcodes, DC.Variable == "GE") %>%
+  distinct(B.Code) %>%
+  nrow()
+
+
+```
+
+
+
+
+
+#13 Number for emission calculations in courageous camel 
+
+```{r}
+
+
+# Set up connection to S3 bucket
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+era_s3 <- "s3://digital-atlas/era"
+
+# List the files in the s3 bucket
+files <- s3$dir_ls(file.path(era_s3,"data"))
+
+# Identify the latest skinny_cow_2022-YYYY-MM-DD.RData file
+files <- tail(grep(".RData", grep("courageous_camel_2024_draft_2025", files, value=TRUE), value=TRUE), 1)
+
+# Download to local if not already present
+save_path <- file.path(getwd(), basename(files))
+if(!file.exists(save_path)){
+  s3$file_download(files, save_path, overwrite = TRUE)
+}
+
+# Load the data
+courageous_camel <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path))
+
+```
+
+
+
