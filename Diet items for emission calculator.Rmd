@@ -781,22 +781,14 @@ perc_both_dd_dc_diet <- (sum(diets_with_info$has_any_info) / total_diets) * 100
 tracking_table <- data.frame(
   Step = c(
     "Total number of unique studies (B.Code) in the initial dataset",
-    "Total number of unique ingredients (D.Item) in the initial dataset",
-    "Total number of unique diets (A.Level.Name) in the initial dataset",
     "Total number of unique studies after harmonization",
-    "Total number of unique ingredients after harmonization",
-    "Total number of unique diets after harmonization",
     "Proportion of ingredients missing Feedipedia information",
     "Proportion of diets with inconsistent units",
     "Percentage of studies with at least one ad libitum diet"
   ),
   Value = round(c(
     total_studies,
-    total_ingredients,
-    total_diets,
     total_studies_harmonized,
-    total_ingredients_harmonized,
-    total_diets_harmonized,
     proportion_missing_feedipedia,
     proportion_inconsistent_diets,
     ad_lib_percent
