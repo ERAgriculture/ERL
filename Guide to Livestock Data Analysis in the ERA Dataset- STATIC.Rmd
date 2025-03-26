@@ -628,6 +628,8 @@ Unit harmonization is essential when studying livestock papers to ensure consist
               ][Units=="kg/individual/day",c("MeanT","MeanC","Units"):=.(round(1000*MeanT,2),round(1000*MeanC,2),"g/individual/day")]
 ```
 
+<<<<<<< HEAD
+=======
 ```{r calculating meanT and variance,message=F,echo=T,collapse=FALSE}
 
 #################TESTING
@@ -721,6 +723,7 @@ write.csv(av_meanT,"diet_data/av_meanT_DM_CP.csv")
 
 ```
 
+>>>>>>> 5a1fb4b5e028629b24c515a109644878d64b4a3a
 ### 2.3 Exploring the subsetted data
 
 After subsetting the data, you can explore the number of remaining papers that are within your research focus. The following table The table provides insights into the data coverage for different livestock practices, products, and outcomes. For example, "Feed Addition" applied to "Goat" for "Weight Gain" is reported in 15 studies with 48 observations from 6 countries. This information can help identify well-studied areas and data gaps in livestock research
@@ -1016,7 +1019,10 @@ print(intake_WG_nut_dosage)
 write.csv(intake_WG_nut_dosage, "diet_data/feed_dosage.csv", row.names = FALSE)
 ```
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 5a1fb4b5e028629b24c515a109644878d64b4a3a
 ## 4. Plotting simple figures
 ### 4.1 Plotting weight gain distribution with outliers 
 This script creates a Shiny app that allows users to visualize the weight gain distribution of three livestock categories: "Cattle," "Goat," and "Sheep," with outliers included. The dataset WG is filtered to include only rows where the P.Product column matches the selected animal.

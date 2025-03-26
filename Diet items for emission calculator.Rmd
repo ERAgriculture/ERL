@@ -69,8 +69,7 @@ library(DT)
 library(readxl)
 library(tidyr)
 library(arrow)
-
-
+library(ggplot2)
 
 # Set up connection to S3 bucket
 s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
@@ -343,41 +342,117 @@ Occasionally, the ingredient amounts may be missing from the ingredient table or
 
 ```{r,message=FALSE,warning=FALSE}
 
-#number of initial ingredient with diet amount 
+
+# Step 1: Count initial entries with diet amount
 ingredient_amount_initial <- ingredients %>%
   filter(!is.na(D.Amount)) %>%
   nrow()
 
-
-# Extract feed intake data
+# Step 2: Extract and filter feed intake data (ingredients only)
 feed_intake <- livestock_metadata$Data.Out %>%
-  select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, ED.Mean.T, ED.Error)
+  select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw,
+         ED.Mean.T, ED.Error, Out.Unit) %>%
+  mutate(
+    # Catch complex units before trying to split with "/"
+    is_complex_unit = str_detect(Out.Unit, "^g/kg body weight \\(0.75\\)/individual/day"),
+    
+    Out.Unit.Amount = case_when(
+      is_complex_unit ~ "g",
+      str_count(Out.Unit, "/") == 2 ~ word(Out.Unit, 1, sep = "/"),
+      TRUE ~ NA_character_
+    ),
+    Out.Unit.Animals = case_when(
+      is_complex_unit ~ "kg body weight (0.75)",
+      str_count(Out.Unit, "/") == 2 ~ word(Out.Unit, 2, sep = "/"),
+      TRUE ~ NA_character_
+    ),
+    Out.Unit.Time = case_when(
+      is_complex_unit ~ "day",
+      str_count(Out.Unit, "/") == 2 ~ word(Out.Unit, 3, sep = "/"),
+      TRUE ~ NA_character_
+    )
+  )
 
-# Filter feed intake data for ingredients only (not entire diet)
-feed_intake_ingredients <- feed_intake %>%
+
+feed_intake_ingredients<-feed_intake%>%
   filter(ED.Intake.Item != A.Level.Name)
 
-# Merge to fill missing D.Amount values
+# Step 3: Merge with ingredients and fill missing values
 ingredients <- ingredients %>%
-  left_join(feed_intake_ingredients %>% 
-              select(B.Code, A.Level.Name, ED.Intake.Item, ED.Mean.T), 
-            by = c("B.Code", "A.Level.Name", "D.Item" = "ED.Intake.Item")) %>%
-  mutate(
-    # Flag if the value is being inferred from feed intake
-    from_feed_intake = ifelse(is.na(D.Amount) & !is.na(ED.Mean.T), TRUE, FALSE),
-
-    # If D.Amount is missing, fill with ED.Mean.T
-    D.Amount = ifelse(is.na(D.Amount), ED.Mean.T, D.Amount)
+  left_join(
+    feed_intake_ingredients %>%
+      select(B.Code, A.Level.Name, ED.Intake.Item, ED.Mean.T,
+             Out.Unit, Out.Unit.Amount, Out.Unit.Animals, Out.Unit.Time),
+    by = c("B.Code", "A.Level.Name", "D.Item" = "ED.Intake.Item")
   ) %>%
-  select(-ED.Mean.T) %>%  # Remove ED.Mean.T column after use
-  distinct()  # Remove duplicates if any
+  mutate(
+    from_feed_intake = is.na(D.Amount) & !is.na(ED.Mean.T),
+    D.Amount = coalesce(D.Amount, ED.Mean.T),
 
+    D.Unit.Amount = case_when(
+      from_feed_intake & is.na(D.Unit.Amount) & !is.na(Out.Unit.Amount) ~ Out.Unit.Amount,
+      from_feed_intake & is.na(D.Unit.Amount) ~ Out.Unit,
+      TRUE ~ D.Unit.Amount
+    ),
+    D.Unit.Animals = if_else(from_feed_intake & is.na(D.Unit.Animals), Out.Unit.Animals, D.Unit.Animals),
+    D.Unit.Time = if_else(from_feed_intake & is.na(D.Unit.Time), Out.Unit.Time, D.Unit.Time)
+  ) %>%
+  select(-ED.Mean.T, -Out.Unit.Amount, -Out.Unit.Animals, -Out.Unit.Time, -Out.Unit) %>%
+  distinct()
+
+# Step 4: Harmonize DM units and flag dry matter, even if DM is not in final unit
+ingredients <- ingredients %>%
+  mutate(
+    # Check if DM was originally present
+    is_DM_unit = str_detect(D.Unit.Amount, regex("DM", ignore_case = TRUE)) |
+                 str_detect(D.Item.Root.Other.Comp.Proc_All, regex("DM", ignore_case = TRUE)) |
+                 str_detect(D.Unit.Amount, regex("^DM %", ignore_case = TRUE)),
+
+    # Clean and harmonize the unit
+    D.Unit.Amount = case_when(
+      is_DM_unit & str_detect(D.Unit.Amount, regex("^kg", ignore_case = TRUE)) ~ "kg",
+      is_DM_unit & str_detect(D.Unit.Amount, regex("^g", ignore_case = TRUE)) ~ "g",
+      is_DM_unit & str_detect(D.Unit.Amount, regex("%.*body", ignore_case = TRUE)) ~ "% body weight",
+      str_detect(D.Unit.Amount, regex("^DM % body weight", ignore_case = TRUE)) ~ "% body weight",
+      TRUE ~ D.Unit.Amount
+    ),
+
+    # Dry matter flag
+    DC.Is.Dry = if_else(is_DM_unit, "Yes", DC.Is.Dry)
+  ) %>%
+  select(-is_DM_unit)
+
+# Step 5: Count after fill
 ingredient_amount_after_feed_intake <- ingredients %>%
   filter(!is.na(D.Amount)) %>%
   nrow()
 
+ingredients <- ingredients %>%
+  mutate(
+    # Convert kg to g and update unit
+    D.Amount = case_when(
+      D.Unit.Amount == "kg" ~ D.Amount * 1000,
+      TRUE ~ D.Amount
+    ),
+    D.Unit.Amount = case_when(
+      D.Unit.Amount == "kg" ~ "g",
+      TRUE ~ D.Unit.Amount
+    )
+  )
+
+
 ```
-whats the unit of feed intake ??
+
+```{r}
+#take out unspecified ingredients 
+
+ingredients<- ingredients%>%filter(D.Item != "Unspecified")
+```
+
+
+
+
+
 
 ## 6) Table of all diet ingredients amounts within each diet 
 ```{r,message=FALSE,warning=FALSE}
@@ -781,6 +856,7 @@ perc_both_dd_dc_diet <- (sum(diets_with_info$has_any_info) / total_diets) * 100
 tracking_table <- data.frame(
   Step = c(
     "Total number of unique studies (B.Code) in the initial dataset",
+    "Total number of unique studies after harmonization",
     "Total number of unique ingredients (D.Item) in the initial dataset",
     "Total number of unique diets (A.Level.Name) in the initial dataset",
     "Total number of unique studies after harmonization",
@@ -792,6 +868,7 @@ tracking_table <- data.frame(
   ),
   Value = round(c(
     total_studies,
+    total_studies_harmonized,
     total_ingredients,
     total_diets,
     total_studies_harmonized,
@@ -830,3 +907,480 @@ datatable(
 )
 
 ```
+
+## 12) Emission calculations 
+
+### 12.1 Estimation of Enteric Methane Emissions Using IPCC Tier 2
+
+Enteric methane (CH₄) emissions were estimated using the **IPCC Tier 2** methodology, which incorporates animal-specific data such as **gross energy intake (GE)** and **methane conversion factors (Ym)**. This approach improves accuracy over Tier 1 by reflecting diet composition, feed intake, and species-specific differences.
+
+
+### 12.2 Estimation of Daily GE Intake per Animal
+
+For GE values reported at the **entire diet** level, daily gross energy intake per animal was calculated as:
+
+\[
+\text{GE}_{\text{daily}} = \text{GE}_{\text{diet}} \times \text{Diet Dry Amount}
+\]
+
+Where:
+
+- $\text{GE}_{\text{diet}}$ is the energy content of the complete diet (MJ/kg)
+- $\text{Diet Dry Amount}$ is the daily dry matter ingredient (kg/day/animal). We can also infer from feed intake if missing.Needs to be dry matter so we will use only data when DC.is.Dry=yes.
+
+**To do that we will have ton convert all feed intake data into kg/day/animal.**
+
+When GE values were reported at the **ingredient** level, and information on diet composition (ingredient proportions) was available, the diet-level GE was reconstructed as:
+
+\[
+\text{GE}_{\text{diet}} = \sum_{i=1}^{n} (\text{GE}_i \times p_i)
+\]
+
+Where:
+
+- $\text{GE}_i$ is the GE value of ingredient $i$
+- $p_i$ is the proportion of ingredient $i$ in the total diet
+
+Then, daily intake was computed using the same formula above.
+
+### 12.3. Methane Emissions Calculation (Tier 2)
+
+Annual methane emissions were calculated using the IPCC Tier 2 equation:
+
+\[
+\text{CH}_4 = \frac{\text{GE}_{\text{daily}} \times \text{Ym} \times 365}{55.65}
+\]
+
+Where:
+
+- $\text{CH}_4$ = annual enteric methane emissions (kg CH₄/animal/year)
+- $\text{GE}_{\text{daily}}$ = daily gross energy intake per animal (MJ/day)
+- $\text{Ym}$ = methane conversion factor:
+  - **Cattle**: 0.065 (6.5%)
+  - **Sheep and Goats**: 0.060 (6.0%)
+- 365 = days per year
+- 55.65 = energy content of methane (MJ/kg CH₄)
+
+
+### 12.4 Data Requirements and Supporting Tables
+
+**1. Table of Diet Composition Proportions**
+
+This table defines the proportion of each ingredient in the overall diet:
+
+```{r}
+
+# Create an interactive table for "total_amounts"
+datatable(
+  diet_percentages, 
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Interactive Table: Relative % of Ingredients"
+)
+```
+
+
+Used to compute reconstructed `GE_diet` from ingredient-level GE values:
+
+\[
+\text{GE}_{\text{diet}} = \sum_{i=1}^{n} (\text{GE}_i \times p_i)
+\]
+
+---
+
+**2. Table of Ingredient Dry Amounts**
+
+This table stores the amount of each ingredient fed per animal per day, already in or converted to dry matter:
+
+```{r}
+# This 'ingredients' now contains all diets + basal integrated.
+# Table 1: Final diet amounts with harmonized units (including basal)
+datatable(
+  ingredients, 
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Interactive Table: Diet Ingredients"
+)
+```
+
+
+Useful when GE is per ingredient and diet is not proportionally described.
+
+---
+
+**3. Table of Total Diet Dry Amounts**
+
+This is the total daily dry matter offered or consumed per animal, either directly from intake or inferred from ingredient sums:
+
+```{r}
+datatable(
+  total_amounts, 
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Interactive Table: Total Amounts of Diet Ingredients"
+)
+
+```
+
+
+\[
+\text{GE}_{\text{daily}} = \text{GE}_{\text{diet}} \times \text{Diet Dry Amount}
+\]
+
+
+
+### 12.5 Method Summary
+
+```{r}
+knitr::include_graphics("Emission calculation method.png")
+
+```
+
+
+```{r}
+
+# 1. Total papers per species
+species_counts <- livestock_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+GE_data <- livestock_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- livestock_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+
+```
+
+```{r}
+# Inspect the units used for GE
+Gross_energy <- livestock_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "")
+
+Gross_energy$DC.Value<-as.numeric(Gross_energy$DC.Value)
+
+# Harmonize only GE values and overwrite DC.Value
+Gross_energy <- Gross_energy %>%
+  mutate(
+    DC.Value = case_when(
+      DC.Unit %in% c("MJ/kg", "MJ/kg DM") ~ as.numeric(DC.Value),
+      DC.Unit == "kcal/kg" ~ as.numeric(DC.Value) / 239,
+      DC.Unit == "kcal/kg DM" ~ as.numeric(DC.Value) / 239,
+      DC.Unit == "kcal/g" ~ as.numeric(DC.Value) * 1000 / 239,
+      DC.Unit == "kcal/100g" ~ as.numeric(DC.Value) * 10 / 239,
+      DC.Unit == "kJ/g" ~ as.numeric(DC.Value),  # already MJ/kg
+      DC.Unit == "kJ/100g" ~ as.numeric(DC.Value) / 100,
+      DC.Unit == "kJ/kg DM" ~ as.numeric(DC.Value) / 1000,
+      DC.Unit == "KJ" ~ as.numeric(DC.Value) / 1000,
+      DC.Unit == "J/mg" ~ as.numeric(DC.Value) / 1e6,
+      DC.Unit == "MJ/100g" ~ as.numeric(DC.Value) * 10,
+      TRUE ~ NA_real_  # Flag invalid or unknown units
+    ),
+    DC.Unit = ifelse(DC.Unit %in% c("MJ/kg", "MJ/kg DM", "kcal/kg", "kcal/g", "kcal/100g",
+                                    "kJ/g", "kJ/100g", "kJ/kg DM", "KJ", "J/mg", "MJ/100g", "kcal/kg DM"),
+                     "MJ/kg", DC.Unit)
+  )
+
+
+
+```
+
+
+
+```{r}
+
+Gross_energy_entire <- Gross_energy %>%
+  filter(is_entire_diet == TRUE) %>%
+  left_join(total_amounts, by = c("B.Code" = "B.Code", "D.Item" = "A.Level.Name")) %>%
+  mutate(
+    # Convert Total_Amount and update unit if needed
+    Total_Amount = case_when(
+      D.Unit.Amount == "g" ~ Total_Amount / 1000,
+      D.Unit.Amount == "kg" ~ Total_Amount,
+      TRUE ~ NA_real_
+    ),
+    
+    # Update D.Unit.Amount to reflect that conversion happened
+    D.Unit.Amount = case_when(
+      D.Unit.Amount == "g" ~ "kg",
+      TRUE ~ D.Unit.Amount
+    ),
+    
+    # Add reason if conversion is not possible
+    reason_missing = case_when(
+      is.na(Total_Amount) & D.Unit.Amount %in% c("g/kg", "%", "% Diet") ~ "Cannot convert unit to kg",
+      TRUE ~ NA_character_
+    ),
+    
+    GE_daily = ifelse(
+      !is.na(Total_Amount) & !is.na(DC.Value),
+      DC.Value * Total_Amount,
+      NA_real_
+    )
+  )
+
+
+```
+
+```{r}
+# 1. Filter for valid feed intake data
+feed_intake_entire_diet <- feed_intake %>%
+  filter(
+    ED.Intake.Item.Raw == "Entire Diet",
+    Out.Unit %in% c("g DM/individual/day", "g/d/individual", "kg/individual")
+  ) %>%
+  mutate(
+    Intake_kg_day = case_when(
+      Out.Unit %in% c("g DM/individual/day", "g/d/individual") ~ ED.Mean.T / 1000,
+      Out.Unit == "kg/individual" ~ ED.Mean.T,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  select(B.Code, A.Level.Name, Intake_kg_day)
+
+# 2. Merge and compute GE and CH4
+GE_all <- Gross_energy_entire %>%
+  # Add species
+  left_join(livestock_metadata$`Prod.Out` %>% select(B.Code, P.Product), by = "B.Code") %>%
+  # Keep only ruminants
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  # Merge feed intake
+  left_join(feed_intake_entire_diet, by = c("B.Code", "D.Item" = "A.Level.Name")) %>%
+  # Compute CH4-related fields
+  mutate(
+    # Select Ym by species
+    Ym = case_when(
+      P.Product == "Cattle" ~ 0.065,
+      P.Product %in% c("Sheep", "Goat") ~ 0.060,
+      TRUE ~ NA_real_
+    ),
+
+    # Use D.Amount only when unit is kg
+    GE_daily = case_when(
+      !is.na(Total_Amount) & D.Unit.Amount == "kg" ~ DC.Value * Total_Amount,
+      is.na(Total_Amount) & !is.na(Intake_kg_day) ~ DC.Value * Intake_kg_day,
+      TRUE ~ NA_real_
+    ),
+
+    # CH4 calculation
+    CH4_kg_year = ifelse(!is.na(GE_daily) & !is.na(Ym),
+                         GE_daily * Ym * 365 / 55.65,
+                         NA_real_),
+
+    # Flag issues
+    CH4_flag = case_when(
+      is.na(DC.Value) ~ "missing_GE_value",
+      is.na(Ym) ~ "missing_Ym",
+      is.na(Total_Amount) & is.na(Intake_kg_day) ~ "missing_amount",
+      is.na(GE_daily) ~ "GE_not_calculated",
+      is.na(CH4_kg_year) ~ "CH4_not_calculated",
+      D.Unit.Amount != "kg" & is.na(Intake_kg_day) ~ "unsupported_unit_no_intake",
+      !is.na(Intake_kg_day) & (is.na(Total_Amount) | D.Unit.Amount != "kg") ~ "amount_inferred",
+      TRUE ~ "ok"
+    )
+  )
+
+```
+
+```{r}
+# Step 1: Prepare ingredient-level feed intake
+feed_intake_ingredients <- feed_intake %>%
+  filter(
+    ED.Intake.Item.Raw != "Entire Diet",
+    Out.Unit %in% c("g DM/individual/day", "g/d/individual", "kg/individual")
+  ) %>%
+  mutate(
+    Intake_kg_day = case_when(
+      Out.Unit %in% c("g DM/individual/day", "g/d/individual") ~ ED.Mean.T / 1000,
+      Out.Unit == "kg/individual" ~ ED.Mean.T,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  select(B.Code, A.Level.Name, Intake_kg_day)
+
+# Step 2: Sum ingredient intake per diet (to infer total amount)
+ingredient_intake_summed <- feed_intake_ingredients %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    Intake_kg_day = sum(Intake_kg_day, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Step 3: Reconstruct GE from ingredient-level GE and proportions
+GE_diet_reconstructed <- diet_percentages %>%
+  # Join GE values
+  left_join(
+    Gross_energy %>%
+      filter(is_entire_diet == FALSE) %>%
+      select(B.Code, D.Item, DC.Value),
+    by = c("B.Code", "D.Item")
+  ) %>%
+  filter(!is.na(DC.Value), !is.na(Percentage_of_Diet)) %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    GE_diet = sum(DC.Value * (Percentage_of_Diet/100)),
+    .groups = "drop"
+  ) %>%
+  
+  # Join total amount and intake
+  left_join(total_amounts, by = c("B.Code", "A.Level.Name")) %>%
+  left_join(ingredient_intake_summed, by = c("B.Code", "A.Level.Name")) %>%
+
+  # Harmonize units and amounts in-place
+  mutate(
+    # Harmonize Total_Amount to kg
+    Total_Amount = case_when(
+      D.Unit.Amount == "kg" ~ Total_Amount,
+      D.Unit.Amount %in% c("g", "g/individual") ~ Total_Amount / 1000,
+      TRUE ~ NA_real_
+    ),
+    
+    # Harmonize units to kg if conversion happened
+    D.Unit.Amount = case_when(
+      D.Unit.Amount %in% c("g", "g/individual") ~ "kg",
+      TRUE ~ D.Unit.Amount
+    ),
+
+    # Fill missing with inferred feed intake
+    Total_Amount = ifelse(is.na(Total_Amount), Intake_kg_day, Total_Amount),
+
+    # Compute GE
+    GE_daily = ifelse(!is.na(GE_diet) & !is.na(Total_Amount), GE_diet * Total_Amount, NA_real_)
+  ) %>%
+
+  # Step 4: Add species and compute CH4
+  left_join(livestock_metadata$`Prod.Out` %>% select(B.Code, P.Product), by = "B.Code") %>%
+  mutate(
+    Ym = case_when(
+      P.Product == "Cattle" ~ 0.065,
+      P.Product %in% c("Sheep", "Goat") ~ 0.060,
+      TRUE ~ NA_real_
+    ),
+    CH4_kg_year = ifelse(
+      !is.na(GE_daily) & !is.na(Ym),
+      GE_daily * Ym * 365 / 55.65,
+      NA_real_
+    ),
+
+    CH4_flag = case_when(
+      is.na(GE_diet) ~ "missing_GE_diet",
+      is.na(Ym) ~ "missing_Ym",
+      is.na(Total_Amount) & !is.na(Intake_kg_day) ~ "amount_inferred",
+      is.na(Total_Amount) & is.na(Intake_kg_day) ~ "missing_amount",
+      is.na(GE_daily) | is.na(CH4_kg_year) ~ "incomplete_data",
+      TRUE ~ "ok"
+    )
+  ) %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat"))
+
+
+```
+
+
+```{r}
+#combine
+# 1. Select relevant columns from both tables
+GE_all_clean <- GE_all %>%
+  mutate(source = "GE_all") %>%
+  select(
+    B.Code, 
+    D.Item, 
+    P.Product, 
+    GE_daily, 
+    CH4_kg_year,
+    Total_Amount,
+    D.Unit.Amount,
+    Intake_kg_day, 
+    CH4_flag, 
+    source
+  )
+
+GE_reconstructed_clean <- GE_diet_reconstructed %>%
+  mutate(source = "Reconstructed") %>%
+  rename(D.Item = A.Level.Name) %>%
+  select(
+    B.Code, 
+    D.Item, 
+    P.Product, 
+    GE_daily, 
+    CH4_kg_year, 
+    Total_Amount,
+    D.Unit.Amount,# from harmonized unit
+    Intake_kg_day, 
+    CH4_flag, 
+    source
+  )%>%
+  select(
+    B.Code, 
+    D.Item, 
+    P.Product, 
+    Total_Amount, 
+    D.Unit.Amount,
+    Intake_kg_day,
+    GE_daily, 
+    CH4_kg_year, 
+    CH4_flag, 
+    source
+  )
+
+# 2. Combine both tables and prioritize GE_all
+GE_combined <- bind_rows(GE_all_clean, GE_reconstructed_clean) %>%
+  arrange(B.Code, D.Item, desc(source)) %>%
+  distinct(B.Code, D.Item, .keep_all = TRUE)
+
+# Count unique B.Code with non-missing CH4 emissions
+n_CH4_codes <- GE_combined %>%
+  filter(!is.na(CH4_kg_year)) %>%
+  distinct(B.Code) %>%
+  nrow()
+
+n_CH4_codes
+
+
+```
+
+
+```{r}
+
+ggplot(GE_combined %>% filter(!is.na(CH4_kg_year)), 
+       aes(x = P.Product, y = CH4_kg_year, fill = P.Product)) +
+  geom_boxplot() +
+  labs(
+    title = "Methane Emissions per Animal per Year by Species",
+    x = "Species", y = "CH₄ Emissions (kg/year)"
+  )
+
+
+```
+
+
+
+
+
