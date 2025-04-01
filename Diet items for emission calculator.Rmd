@@ -1336,24 +1336,19 @@ GE_reconstructed_clean <- GE_diet_reconstructed %>%
     Intake_kg_day, 
     CH4_flag, 
     source
-  )%>%
-  select(
-    B.Code, 
-    D.Item, 
-    P.Product, 
-    Total_Amount, 
-    D.Unit.Amount,
-    Intake_kg_day,
-    GE_daily, 
-    CH4_kg_year, 
-    CH4_flag, 
-    source
   )
 
 # 2. Combine both tables and prioritize GE_all
 GE_combined <- bind_rows(GE_all_clean, GE_reconstructed_clean) %>%
-  arrange(B.Code, D.Item, desc(source)) %>%
-  distinct(B.Code, D.Item, .keep_all = TRUE)
+  # Add a flag to prioritize rows with CH4 data
+  mutate(has_CH4 = !is.na(CH4_kg_year)) %>%
+  # Arrange by B.Code, D.Item, and whether CH4 exists (TRUE comes first), then source
+  arrange(B.Code, D.Item, desc(has_CH4), desc(source)) %>%
+  # Keep only the best record for each diet
+  distinct(B.Code, D.Item, .keep_all = TRUE) %>%
+  # Drop helper column
+  select(-has_CH4)
+
 
 # Count unique B.Code with non-missing CH4 emissions
 n_CH4_codes <- GE_combined %>%
@@ -1380,7 +1375,13 @@ ggplot(GE_combined %>% filter(!is.na(CH4_kg_year)),
 
 ```
 
+Next steps : 
 
-
+- ad libitum data 
+- Amounts fed to animals
+- Run on courageous camel -> analyze emissions per practices 
+- Units harmonization should go somewhere else ? 
+- estimate gross energy from forage quality 
+- g/kg can we have somewhere the weight of the animal
 
 
