@@ -24,39 +24,89 @@ output:
 
 ## Introduction
 
-
 ### Objectives
-This analysis implements a comprehensive, automated workflow for processing livestock diet data with the following key goals:
 
-1. **Download and Load Metadata:**  
-   Retrieve the latest livestock diet metadata from an S3 bucket, ensuring that the data are up-to-date.
+This analysis implements a comprehensive and automated workflow to **estimate enteric methane (CH₄) emissions from livestock** using the **IPCC Tier 2 methodology**. It integrates and harmonizes livestock diet data, nutritional composition, feed intake, and supplementary sources (e.g., Feedipedia) to enable robust and reproducible emissions estimation across diverse studies.
 
-2. **Harmonize Ingredient Units:**  
-   Standardize various weight, volume, and time units (e.g., converting kg to grams, liters to milliliters, and weeks to days) to ensure consistent measurements across studies.
+## Methods
 
-3. **Link Diet Ingredients to Feedapedia:**  
-   Merge diet ingredient data with external nutritional and digestibility information from Feedapedia by matching corresponding feed ingredient codes.
+This section outlines the data processing and estimation steps used to calculate gross energy (GE) and feed intake for livestock diet ingredients, which are essential inputs for estimating enteric methane (CH₄) emissions using the IPCC Tier 2 methodology.
 
-4. **Integrate Basal Diets:**  
-   Combine basal (control) diet components with experimental diets, while preserving the identity of the basal ingredients through appropriate flagging.
+### Data Sources
 
-5. **Impute Missing Amounts Using Feed Intake Data:**  
-   Where ingredient amounts are missing, infer values from feed intake records and flag these instances, thus improving dataset completeness.
+- **ERA Livestock Metadata**: Harmonized records of diets, ingredients, and feeding trials for ruminants across Africa.
+- **ERA Camel Metadata**: Similar structured data for camelid systems.
+- **Feedipedia**: A curated nutritional database used to supplement missing information (gross energy, crude protein, ether extract, ash, digestibility).
+- **ERA Master Sheet (AOM)**: Maps extracted diet ingredients to Feedipedia entries for integration.
 
-6. **Calculate Relative Ingredient Proportions:**  
-   Compute the percentage contribution of each ingredient within a complete diet, ensuring that only diets with consistent units are used for accurate calculations.
+---
 
-7. **Merge Nutritional and Digestibility Information:**  
-   Create a comprehensive diet-level table that integrates total feed amounts with nutritional and digestibility metrics from both the original metadata and Feedapedia.
+### Gross Energy (GE) and Feed Intake Calculation Workflow
 
-8. **Track Data Filtering and Potential Loss:**  
-   Monitor the impact of each processing step—from unit harmonization to the filtering of inconsistent data—and document any data loss or special cases (such as ad libitum feeding).
+#### 1. Harmonization of Units
+Ingredient amounts and feed intake values were standardized to consistent units:
+- **Weight**: Converted to grams (g) or kilograms (kg)
+- **Time**: Normalized to daily intake (e.g., g/day)
+- **Animals**: Adjusted from replicate-level to individual-level when group sizes were known
 
-By automating these steps, this workflow not only streamlines data preparation for livestock nutrition research but also ensures reproducibility and robust analyses across diverse studies.
+#### 2. Linking Ingredients to Feedipedia
+Each diet ingredient was mapped to a Feedipedia code using the ERA master sheet. This linkage enabled the retrieval of:
+- Nutritional values (GE, CP, EE, Ash)
+- Digestibility coefficients (e.g., DE)
+
+#### 3. Gross Energy (GE) Sources and Inference
+
+The following hierarchy was used to fill or estimate gross energy (MJ/kg) for each ingredient:
+
+1. **Direct value from Feedipedia**
+2. **Direct value from extracted metadata**
+3. **Estimated from nutritional composition**  
+   Using the equation from Son et al. (2017):  
+   \[
+   \text{GE (kcal/kg)} = 4341 + 11 \times \text{CP} + 54 \times \text{EE} - 24 \times \text{Ash}
+   \]  
+   Then converted to MJ/kg:  
+   \[
+   \text{GE (MJ/kg)} = \text{GE (kcal/kg)} \div 239
+   \]
+
+4. **Estimated from digestible energy (DE)**  
+   Using the IPCC/FAO default digestibility for low-quality forages (54%):  
+   \[
+   \text{GE} = \text{DE} \div 0.54
+   \]
+
+5. **Mean GE value for the same ingredient across studies**
+
+All values were harmonized to MJ/kg.
+
+#### 4. Feed Intake Estimation
+
+Feed intake was taken from two sources:
+
+- **Direct feed intake records** from the metadata (converted to kg/day/animal), adjusted based on units and animal body weight where needed (e.g., % body weight, g/kg BW).
+- **Ingredient-level diet amounts**, when feed intake data was not available or missing. Intake was inferred by summing ingredient contributions.
+
+When both sources were available, **direct feed intake values were prioritized** for accuracy.
+
+#### 5. Proportion of Ingredients in the Diet
+
+When complete diet formulations were available, the relative contribution (%) of each ingredient to the full diet was calculated. These were used to reconstruct diet-level GE values when needed.
+
+---
+
+#### 6. Data Imputation and Quality Checks
+
+- **Unit harmonization** was tracked to monitor loss of records due to incompatible units.
+- **Missing values** for GE or intake were flagged and inferred using defined rules (as above).
+- **Suspicious values** (e.g., feed intake > 50 kg/day or < 10 g/day) were flagged for review.
+
+
+This methodology enables consistent and robust estimation of GE and intake for each ingredient, which supports CH₄ emissions estimation even in data-limited contexts.
 
 
 ## 1) Set up 
-Download the packages and download the data from the s3 bucket.
+This section installs and loads required packages, connects to the S3 bucket containing ERA data, and loads both the livestock and camel metadata into memory.
 
 ```{r,message=FALSE,warning=FALSE}
 # Install and load 'pacman' package manager if not already installed
@@ -92,18 +142,16 @@ if(!file.exists(save_path)){
 # Load the data
 livestock_metadata <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path))
 
-
-#total number of studies 
-total_studies<- length(unique(livestock_metadata$Animals.Diet$B.Code))
-total_ingredients<- length(unique(livestock_metadata$Animals.Diet$D.Item))
-total_diets<- length(unique(livestock_metadata$Animals.Diet$A.Level.Name))
-
-
+# #total number of studies 
+# total_studies<- length(unique(livestock_metadata$Animals.Diet$B.Code))
+# total_ingredients<- length(unique(livestock_metadata$Animals.Diet$D.Item))
+# total_diets<- length(unique(livestock_metadata$Animals.Diet$A.Level.Name))
+# 
 
 ```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # Set up connection to S3 bucket
 s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
 era_s3 <- "s3://digital-atlas/era"
@@ -123,15 +171,11 @@ if(!file.exists(save_path)){
 # Load the data
 camel <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path))
 
-
-
-
 ```
 
-merge camel and livestock 
 
-```{r}
-
+```{r,message=FALSE,warning=FALSE}
+#merge camel and livestock 
 # Define column lists (as character vectors)
 diet_cols <- c("B.Code", "A.Level.Name", "D.Item", "D.Type", "D.Amount",
                "D.Unit.Amount", "D.Unit.Time", "D.Unit.Animals", "DC.Is.Dry", 
@@ -227,13 +271,13 @@ merged_metadata <- list(
   Prod.Out            = prod_all
 )
 
-total_studies<- length(unique(merged_metadata$Animals.Diet$B.Code))
-total_ingredients<- length(unique(merged_metadata$Animals.Diet$D.Item))
-total_diets<- length(unique(merged_metadata$Animals.Diet$A.Level.Name))
+# total_studies<- length(unique(merged_metadata$Animals.Diet$B.Code))
+# total_ingredients<- length(unique(merged_metadata$Animals.Diet$D.Item))
+# total_diets<- length(unique(merged_metadata$Animals.Diet$A.Level.Name))
 
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # Clean up intermediate objects
 rm(
   diet_cols, mt_cols, comp_cols, digest_cols, data_cols, prod_cols,
@@ -244,7 +288,7 @@ rm(
 gc()
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 ## keep ingredient that appear twice with different units only once 
 
 # Define your unit preferences
@@ -271,8 +315,7 @@ merged_metadata$Animals.Diet <- merged_metadata$Animals.Diet %>%
 ```
 
 
-
-```{r}
+```{r,message=FALSE,warning=FALSE}
 
 # Define species of interest
 species_list <- c("Cattle", "Sheep", "Goat")
@@ -332,13 +375,11 @@ for (species in species_list) {
 species_summary_df <- bind_rows(species_summary)
 bcode_table_df <- bind_rows(bcode_table)
 
-# Show results
-print(species_summary_df)
-head(bcode_table_df)
 ```
 
-## 2) Harmonize units 
 
+## 2) Harmonize units of ingredient amounts 
+This step standardizes ingredient amount units (e.g., from mg, kg, %, etc.) to a consistent base (usually grams per individual per day), ensuring reliable downstream calculations and comparisons.
 
 ```{r,message=FALSE,warning=FALSE}
 # diet ingredients: breakdown of all ingredients within each diet
@@ -444,9 +485,6 @@ ingredients <- ingredients %>%
 ingredients <- ingredients %>%
   mutate(Units = paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals, sep=";"))
 
-###################
-
-
 
 ```
 
@@ -475,7 +513,7 @@ total_diets_harmonized<- length(unique(ingredients_harmonized$A.Level.Name))
 
 ## 3) Link ingredients to feedipedia 
 
-Feedipedia is an online database that provides comprehensive information on feed ingredients used in livestock nutrition. It aggregates data on the nutritional composition, digestibility, and other relevant properties of various feeds.We will use it to infer data when info is missing from our data extraction. 
+Feedipedia is an online database that provides comprehensive information on feed ingredients used in livestock nutrition. It aggregates data on the nutritional composition, digestibility, and other relevant properties of various feeds.We will use it to infer data when info is missing from our data extraction. Links each ingredient to its corresponding entry in Feedipedia, enabling supplementation of missing nutritional and digestibility data such as GE, CP, EE, and Ash.
 
 ```{r,message=FALSE,warning=FALSE}
 
@@ -513,7 +551,7 @@ mastersheet$Feedipedia <- as.numeric(sub(".*node/", "", mastersheet$Feedipedia))
 
 add nutrition and digestibility from feedipedia 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # --- A) Add Feedipedia node from mastersheet into Comp and Digest tables
 add_feedipedia_node <- function(df, mastersheet) {
   df %>%
@@ -541,10 +579,12 @@ feedipedia <- feedipedia %>%
       tolower(Variable) == "crude protein" ~ "CP",
       tolower(Variable) == "ether extract" ~ "EE",
       tolower(Variable) == "ash" ~ "Ash",
+      tolower(Variable) == "Neutral detergent fibre
+" ~ "NDF",
       TRUE ~ Variable
     ),
     category = case_when(
-      Variable %in% c("GE", "CP", "EE", "Ash") ~ "nutrition",
+      Variable %in% c("GE", "CP", "EE", "Ash","NDF") ~ "nutrition",
       str_detect(Variable, regex(paste(digestibility_keywords, collapse = "|"), ignore_case = TRUE)) ~ "digestibility",
       TRUE ~ "nutrition"
     ),
@@ -560,7 +600,7 @@ if (!"digestibility_source" %in% names(merged_metadata$Animals.Diet.Digest)) {
 }
 
 # --- D) Nutrition variables: GE, CP, EE, Ash
-nutrition_vars <- c("GE", "CP", "EE", "Ash")
+nutrition_vars <- c("GE", "CP", "EE", "Ash","NDF")
 
 feedipedia_nutrition <- feedipedia %>%
   filter(Variable %in% nutrition_vars) %>%
@@ -582,11 +622,13 @@ merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
 
 # --- F) Digestibility: Energy digestibility, ruminants → DE
 feedipedia_digestibility <- feedipedia %>%
-  filter(tolower(Variable) == "energy digestibility, ruminants") %>%
-  group_by(feedipedia_node, Variable, Unit) %>%
-  summarise(Value = mean(Avg, na.rm = TRUE), .groups = "drop") %>%
-  mutate(DD.Variable = "DE", feedipedia_node = as.numeric(feedipedia_node)) %>%
-  rename(DD.Value.feedipedia = Value)
+  filter(str_detect(tolower(Variable), "energy digestibility")) %>%
+  mutate(
+    DD.Variable = "DE",  # Map all energy digestibility to "DE"
+    feedipedia_node = as.numeric(feedipedia_node)
+  ) %>%
+  group_by(feedipedia_node, DD.Variable, Unit) %>%
+  summarise(DD.Value.feedipedia = mean(Avg, na.rm = TRUE), .groups = "drop")
 
 merged_metadata$Animals.Diet.Digest <- merged_metadata$Animals.Diet.Digest %>%
   mutate(Feedipedia = as.numeric(Feedipedia)) %>%
@@ -601,7 +643,7 @@ merged_metadata$Animals.Diet.Digest <- merged_metadata$Animals.Diet.Digest %>%
 
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # ✅ Count how many papers had GE filled by Feedipedia, and how many of those are Cattle / Sheep / Goat
 
 # Step 1: Filter for Feedipedia-filled GE entries
@@ -630,7 +672,7 @@ print(ge_species_counts)
 ```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 
 # Define species of interest
 species_list <- c("Cattle", "Sheep", "Goat")
@@ -695,31 +737,9 @@ head(bcode_table_df)
 ```
 
 
-```{r,message=FALSE,warning=FALSE}
-
-# Merge the mastersheet feedipedia node numbers into the ingredients data
-ingredients <- ingredients_harmonized %>%
-  left_join(
-    mastersheet %>% select(Edge_Value, Feedipedia),
-    by = c("D.Item" = "Edge_Value")
-  )%>%
-  distinct()
-
-#proportion of ingredients without feedapedia codes 
-missing_feedapedia <- ingredients %>%
-  filter(is.na(Feedipedia))%>%
-  pull(D.Item) %>%
-  unique() %>%
-  length()
-
-proportion_missing_feedipedia<-missing_feedapedia/length(unique(ingredients$D.Item))
-
-```
-
-
 ## 4) Integrate basal diets 
 
-Basal diets serve as the control and foundation for all treatments in livestock experiments. They are present in both the control diet and in every treatment diet that includes additional ingredients. This section integrates basal diet ingredients into the treatment diets while preserving the original basal formulation, and it flags any ingredient that originates from the basal diet.
+Basal diets serve as the control and foundation for all treatments in livestock experiments. They are present in both the control diet and in every treatment diet that includes additional ingredients. This section integrates basal diet ingredients into the treatment diets while preserving the original basal formulation, and it flags any ingredient that originates from the basal diet.Basal diets (base diets) are merged into treatment diets to ensure consistency across feeding trials, allowing for a more accurate estimate of total diet composition.
 
 ```{r,message=FALSE,warning=FALSE}
 # Identify basal diets
@@ -757,7 +777,7 @@ ingredients <- bind_rows(
 
 ## 5) Infer ingredient amount from feed intake data 
 
-Occasionally, the ingredient amounts may be missing from the ingredient table or simply noted as ad libitum feeding. However, since the actual intake is sometimes recorded in the outcome data, we can extract the feed intake value and infer it as the amount of the ingredient administered to the animal.
+For our emission calculations we will use feed intake data in priority than ingredients amounts, to measures are more precise and they are always nmeasure on a dry ingredients basis.
 
 ```{r,message=FALSE,warning=FALSE}
 
@@ -910,16 +930,6 @@ feed_intake <- feed_intake %>%
 
 unique(feed_intake$Out.Unit.Amount)
 
-###ERROR####
-#error EM1017 unit is not right 
-
-# feed_intake <- feed_intake %>%
-#   mutate(
-#     ED.Mean.T = case_when(
-#       B.Code == "EM1017" ~ ED.Mean.T / 1000,
-#       TRUE ~ ED.Mean.T
-#     )
-#   )
 
 # List of target species
 target_species <- c("Cattle", "Sheep", "Goat")
@@ -987,9 +997,7 @@ ingredients <- ingredients %>%
 ```
 
 
-## feed intake and body weight used to finish ingredient harmonization 
-
-```{r}
+```{r,message=FALSE,warning=FALSE}
 harmonize_units <- function(ingredients_df, weights_df = NULL, feed_intake_df = NULL, reps_df = NULL) {
   df <- ingredients_df %>%
     mutate(
@@ -1072,155 +1080,30 @@ ingredients <- harmonize_units(
 ```
 
 
-### infr feed intake from net ernegy 
-
-```{r}
-### Estimate Feed Intake from Net Energy (NE) when D.Amount is missing
-
-# Step 0: Track how many were originally missing
-ingredients <- ingredients %>%
-  mutate(missing_before_NE = is.na(D.Amount))
-
-# Step 1: Harmonize NE units to MJ/kg
-NE_clean <- merged_metadata$Animals.Diet.Comp %>%
-  filter(DC.Variable == "NE") %>%
-  mutate(
-    DC.Value = case_when(
-      DC.Unit %in% c("MJ/kg", "MJ/kg DM")     ~ as.numeric(DC.Value),
-      DC.Unit %in% c("Mcal/kg", "Mcal/kg DM") ~ as.numeric(DC.Value) * 4.184,
-      DC.Unit == "kcal"                       ~ as.numeric(DC.Value) / 239,
-      DC.Unit == "kJ"                         ~ as.numeric(DC.Value) / 1000,
-      DC.Unit == "UF/kg DM"                   ~ as.numeric(DC.Value) * 7.11,
-      TRUE                                    ~ NA_real_
-    ),
-    DC.Unit = "MJ/kg"
-  ) %>%
-  rename(NE_MJkg = DC.Value) %>%
-  select(B.Code, D.Item, is_entire_diet, NE_MJkg)
-
-# Step 2: Extract and harmonize animal weight
-animal_weights <- merged_metadata$Data.Out %>%
-  select(B.Code, A.Level.Name, Out.WG.Start, Out.WG.Unit) %>%
-  mutate(
-    Out.WG.Start = case_when(
-      tolower(Out.WG.Unit) == "g"  ~ Out.WG.Start / 1000,
-      tolower(Out.WG.Unit) == "mg" ~ Out.WG.Start / 1e6,
-      TRUE ~ Out.WG.Start
-    )
-  )
-
-# Step 3: Join NE and weight, and infer feed intake only when D.Amount is missing
-ingredients <- ingredients %>%
-  left_join(NE_clean, by = c("B.Code", "D.Item")) %>%
-  left_join(animal_weights, by = c("B.Code", "A.Level.Name")) %>%
-  mutate(
-    Feed_Intake_NE = ifelse(
-      is.na(D.Amount) & !is.na(NE_MJkg) & !is.na(Out.WG.Start),
-      (0.386 * Out.WG.Start^0.75) / NE_MJkg,
-      NA_real_
-    ),
-    from_NE = !is.na(Feed_Intake_NE),
-    D.Amount = coalesce(D.Amount, Feed_Intake_NE),
-    D.Unit.Amount = if_else(from_NE & is.na(D.Unit.Amount), "kg", D.Unit.Amount),
-    D.Unit.Animals = if_else(from_NE & is.na(D.Unit.Animals), "individual", D.Unit.Animals),
-    D.Unit.Time = if_else(from_NE & is.na(D.Unit.Time), "day", D.Unit.Time)
-  ) %>%
-  select(-NE_MJkg, -Out.WG.Start, -Out.WG.Unit, -Feed_Intake_NE)%>%
-  distinct()
-
-
-n_missing_before_NE <- sum(ingredients$missing_before_NE, na.rm = TRUE)
-n_filled_from_NE    <- sum(ingredients$filled_from_NE, na.rm = TRUE)
-n_remaining_missing <- n_missing_before_NE - n_filled_from_NE
-
-cat("Feed intake inference from NE:\n")
-cat("  Missing before NE estimation:", n_missing_before_NE, "\n")
-cat("  Filled from NE values:       ", n_filled_from_NE, "\n")
-cat("  Still missing after NE:      ", n_remaining_missing, "\n")
-
-```
-
-```{r}
-# Count how many unique B.Codes now have at least one ingredient with a known amount
-studies_with_amount <- ingredients %>%
-  filter(!is.na(D.Amount)) %>%
-  distinct(B.Code) %>%
-  nrow()
-
-
-# Optional breakdown: how many were originally missing and filled from feed intake or NE
-n_from_feed_intake <- ingredients %>%
-  filter(from_feed_intake == TRUE) %>%
-  distinct(B.Code) %>%
-  nrow()
-
-n_from_NE <- ingredients %>%
-  filter(from_NE == TRUE) %>%
-  distinct(B.Code) %>%
-  nrow()
-
-# Print summary
-cat("Unique studies with ingredient amount (D.Amount):", studies_with_amount, "\n")
-cat("Studies with amounts filled from feed intake:   ", n_from_feed_intake, "\n")
-cat("Studies with amounts filled from NE:            ", n_from_NE, "\n")
-
-```
-
-```{r}
-
-# Define species
-species_list <- c("Cattle", "Sheep", "Goat")
-
-# Initialize summary container
-species_summary_updated <- lapply(species_list, function(species) {
-  
-  # Get all B.Codes for this species
-  species_bcodes <- merged_metadata$Prod.Out %>%
-    filter(P.Product == species) %>%
-    pull(B.Code) %>%
-    unique()
-  
-  # --- FEED INTAKE OR D.AMOUNT ---
-  # All B.Codes with a non-missing D.Amount
-  amount_bcodes <- ingredients %>%
-    filter(B.Code %in% species_bcodes, !is.na(D.Amount)) %>%
-    pull(B.Code) %>%
-    unique()
-  
-  # --- GE DATA ---
-  ge_bcodes <- merged_metadata$Animals.Diet.Comp %>%
-    filter(B.Code %in% species_bcodes, DC.Variable == "GE", !is.na(DC.Value)) %>%
-    pull(B.Code) %>%
-    unique()
-  
-  # --- BOTH GE AND FEED/AMOUNT ---
-  both_bcodes <- intersect(amount_bcodes, ge_bcodes)
-  
-  # Return counts
-  tibble(
-    Species = species,
-    Total_BCodes = length(species_bcodes),
-    With_FEED_or_Amount = length(amount_bcodes),
-    With_GE = length(ge_bcodes),
-    With_BOTH = length(both_bcodes)
-  )
-}) %>% bind_rows()
-
-# Print the updated summary
-knitr::kable(species_summary_updated, caption = "Updated species-level summary including inferred intake via D.Amount")
-
-```
-
-
-
-```{r}
+```{r,message=FALSE,warning=FALSE}
 #take out unspecified ingredients 
 
 ingredients<- ingredients%>%filter(D.Item != "Unspecified")
+
+ingredients %>%
+  group_by(DC.Is.Dry) %>%
+  summarise(
+    n_unique_ingredients = n_distinct(D.Item)
+  ) %>%
+  arrange(desc(n_unique_ingredients))
+
+ingredients <- ingredients %>%
+  mutate(D.Amount = ifelse(
+    (DC.Is.Dry %in% c("No", "N", "Unspecified") | is.na(DC.Is.Dry)) &
+      (is.na(from_feed_intake) | from_feed_intake == FALSE),
+    NA_real_,
+    D.Amount
+  ))
+
+
+### DO THIS BUT MAKE SURE THAT FOR THE CALCULATION THAT THEY CANT BE DONE IF A VALUE = NA 
+
 ```
-
-
-
 
 
 
@@ -1228,18 +1111,18 @@ ingredients<- ingredients%>%filter(D.Item != "Unspecified")
 ```{r,message=FALSE,warning=FALSE}
 
 
-# This 'ingredients' now contains all diets + basal integrated.
-# Table 1: Final diet amounts with harmonized units (including basal)
-# datatable(
-#   ingredients, 
-#   options = list(
-#     pageLength = 10,         # Show 10 rows per page by default
-#     scrollX = TRUE,          # Enable horizontal scrolling
-#     autoWidth = TRUE,        # Adjust column width automatically
-#     searchHighlight = TRUE   # Highlight search terms
-#   ),
-#   caption = "Interactive Table: Diet Ingredients"
-# )
+#This 'ingredients' now contains all diets + basal integrated.
+#Table 1: Final diet amounts with harmonized units (including basal)
+datatable(
+  ingredients,
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Interactive Table: Diet Ingredients"
+)
 
 ```
 
@@ -1272,24 +1155,37 @@ proportion_inconsistent_diets<- length(unique(inconsistent_diets$A.Level.Name))/
 
 # Step 2: Sum total amounts per (B.Code, A.Level.Name, D.Unit.Amount)
 # Transform consistent_diets into a summary of totals, removing any NA in amount or unit
+# Step 1: Count valid and missing D.Amount per diet
+diet_completeness <- consistent_diets %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    n_total = n(),
+    n_nonmissing = sum(!is.na(D.Amount)),
+    .groups = "drop"
+  ) %>%
+  filter(n_total == n_nonmissing)  # only fully specified diets
+
+
+# Step 2: Keep only complete diets when summing
 total_amounts <- consistent_diets %>%
-  filter(!is.na(D.Amount), !is.na(D.Unit.Amount)) %>%
+  semi_join(diet_completeness, by = c("B.Code", "A.Level.Name")) %>%
   group_by(B.Code, A.Level.Name, D.Unit.Amount) %>%
-  summarise(Total_Amount = sum(D.Amount, na.rm = TRUE), .groups = "drop")
+  summarise(Total_Amount = sum(D.Amount), .groups = "drop")
+
 # Display the resulting table
 
 
-# Create an interactive table for "total_amounts"
-# datatable(
-#   total_amounts, 
-#   options = list(
-#     pageLength = 10,         # Show 10 rows per page by default
-#     scrollX = TRUE,          # Enable horizontal scrolling
-#     autoWidth = TRUE,        # Adjust column width automatically
-#     searchHighlight = TRUE   # Highlight search terms
-#   ),
-#   caption = "Interactive Table: Total Amounts of Diet Ingredients"
-# )
+#Create an interactive table for "total_amounts"
+datatable(
+  total_amounts,
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Interactive Table: Total Amounts of Diet Ingredients"
+)
 
 
 
@@ -1315,20 +1211,17 @@ diet_percentages <- consistent_diets %>%
 # Table 2: Relative percentage of each ingredient in each diet
 
 
-# Create an interactive table for "total_amounts"
-# datatable(
-#   diet_percentages, 
-#   options = list(
-#     pageLength = 10,         # Show 10 rows per page by default
-#     scrollX = TRUE,          # Enable horizontal scrolling
-#     autoWidth = TRUE,        # Adjust column width automatically
-#     searchHighlight = TRUE   # Highlight search terms
-#   ),
-#   caption = "Interactive Table: Relative % of Ingredients"
-# )
-
-
-
+#Create an interactive table for "total_amounts"
+datatable(
+  diet_percentages,
+  options = list(
+    pageLength = 10,         # Show 10 rows per page by default
+    scrollX = TRUE,          # Enable horizontal scrolling
+    autoWidth = TRUE,        # Adjust column width automatically
+    searchHighlight = TRUE   # Highlight search terms
+  ),
+  caption = "Interactive Table: Relative % of Ingredients"
+)
 
 
 
@@ -1357,6 +1250,8 @@ validation <- diet_percentages %>%
 ```
 
 The lines that have 0 as validation are the ones that were feeding ad libitum for which we do not have a precise amount so it's impossible to calculate the relative proportion of the ingredients.
+
+if we have total amounts and feed intake for ingredient we might be abe to deduce ad libitum feed intake data 
 
 ## 8) Table with nutrition and digestibility for the entire diet
 
@@ -1464,8 +1359,7 @@ nutr_long <- ingredients_feed %>%
   group_by(B.Code, Feedipedia) %>%
   mutate(DC.row = row_number()) %>%
   ungroup() %>%
-  select(B.Code, Feedipedia, DC.row,
-         DC.Variable = Variable, DC.Value = Avg, DC.Unit = Unit)
+  select(B.Code, Feedipedia, DC.row,DC.Variable, DC.Value = Avg, DC.Unit = Unit)
 
 dig_long <- ingredients_feed %>%
   filter(category == "digestibility") %>%
@@ -1473,7 +1367,7 @@ dig_long <- ingredients_feed %>%
   mutate(DD.row = row_number()) %>%
   ungroup() %>%
   select(B.Code, Feedipedia, DD.row,
-         DD.Variable = Variable, DD.Value = Avg, DD.Unit = Unit)
+         DD.Variable, DD.Value = Avg, DD.Unit = Unit)
 
 # Combine the nutrition and digestibility subsets by matching B.Code, Feedipedia, and the row numbers.
 combined_feed <- full_join(nutr_long, dig_long, 
@@ -1535,7 +1429,7 @@ ingredients_dd_dc_feed <- ingredients_dd_dc_feed %>%
 
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 
 # Define species of interest
 species_list <- c("Cattle", "Sheep", "Goat")
@@ -1653,136 +1547,14 @@ rm(ingredients_dd_dc,ingredients_harmonized,ingredients_feed,basal_diets,basal_e
 
 
 
-## 11) Tracking data table 
-```{r,message=FALSE,warning=FALSE}
-# 
-# 
-# # 2. Percentage of studies with at least one ad libitum feeding
-# b_codes_with_ad_lib <- unique(ingredients$B.Code[ingredients$D.Ad.lib == TRUE])
-# # Calculate percentage
-# ad_lib_percent <- (length(b_codes_with_ad_lib) / n_distinct(ingredients$B.Code)) * 100
-# 
-# # 3. Count the number of unique ingredients
-# total_ingredients <- n_distinct(ingredients_dd_dc$D.Item)
-# 
-# # 4. Calculate % of ingredients with nutrition and digestibility info
-# ingredients_with_info <- ingredients_dd_dc %>%
-#   group_by(D.Item) %>%
-#   summarise(
-#     has_nutrition = any(!is.na(DC.Value)),
-#     has_digestibility = any(!is.na(DD.Value))
-#   ) %>%
-#   mutate(has_any_info = has_nutrition | has_digestibility)
-# 
-# perc_nutrition_dd_dc <- (sum(ingredients_with_info$has_nutrition) / total_ingredients) * 100
-# perc_digestibility_dd_dc <- (sum(ingredients_with_info$has_digestibility) / total_ingredients) * 100
-# perc_both_dd_dc <- (sum(ingredients_with_info$has_any_info) / total_ingredients) * 100
-# 
-# # 5. After Feedipedia Scraping
-# ingredients_with_info_feed <- ingredients_dd_dc_feed %>%
-#   group_by(D.Item) %>%
-#   summarise(
-#     has_nutrition = any(!is.na(DC.Value)),
-#     has_digestibility = any(!is.na(DD.Value))
-#   ) %>%
-#   mutate(has_any_info = has_nutrition | has_digestibility)
-# 
-# perc_nutrition_dd_dc_feed <- (sum(ingredients_with_info_feed$has_nutrition) / total_ingredients) * 100
-# perc_digestibility_dd_dc_feed <- (sum(ingredients_with_info_feed$has_digestibility) / total_ingredients) * 100
-# perc_both_dd_dc_feed <- (sum(ingredients_with_info_feed$has_any_info) / total_ingredients) * 100
-# 
-# # 6. After Inferring from Own Data
-# ingredients_with_info_complete <- ingredients_dd_dc_feed_complete %>%
-#   group_by(D.Item) %>%
-#   summarise(
-#     has_nutrition = any(!is.na(DC.Value)),
-#     has_digestibility = any(!is.na(DD.Value))
-#   ) %>%
-#   mutate(has_any_info = has_nutrition | has_digestibility)
-# 
-# perc_nutrition_dd_dc_feed_complete <- (sum(ingredients_with_info_complete$has_nutrition) / total_ingredients) * 100
-# perc_digestibility_dd_dc_feed_complete <- (sum(ingredients_with_info_complete$has_digestibility) / total_ingredients) * 100
-# perc_both_dd_dc_feed_complete <- (sum(ingredients_with_info_complete$has_any_info) / total_ingredients) * 100
-# 
-# # 7. At the Diet Level
-# total_diets <- n_distinct(complete_diet_dd_dc$A.Level.Name)
-# 
-# diets_with_info <- complete_diet_dd_dc %>%
-#   group_by(A.Level.Name) %>%
-#   summarise(
-#     has_nutrition = any(!is.na(DC.Value)),
-#     has_digestibility = any(!is.na(DD.Value))
-#   ) %>%
-#   mutate(has_any_info = has_nutrition | has_digestibility)
-# 
-# perc_nutrition_dd_dc_diet <- (sum(diets_with_info$has_nutrition) / total_diets) * 100
-# perc_digestibility_dd_dc_diet <- (sum(diets_with_info$has_digestibility) / total_diets) * 100
-# perc_both_dd_dc_diet <- (sum(diets_with_info$has_any_info) / total_diets) * 100
-# 
-# # 8. Create and Display Tracking Table
-# tracking_table <- data.frame(
-#   Step = c(
-#     "Total number of unique studies (B.Code) in the initial dataset",
-#     "Total number of unique studies after harmonization",
-#     "Total number of unique ingredients (D.Item) in the initial dataset",
-#     "Total number of unique diets (A.Level.Name) in the initial dataset",
-#     "Total number of unique studies after harmonization",
-#     "Total number of unique ingredients after harmonization",
-#     "Total number of unique diets after harmonization",
-#     "Proportion of ingredients missing Feedipedia information",
-#     "Proportion of diets with inconsistent units",
-#     "Percentage of studies with at least one ad libitum diet"
-#   ),
-#   Value = round(c(
-#     total_studies,
-#     total_studies_harmonized,
-#     total_ingredients,
-#     total_diets,
-#     total_studies_harmonized,
-#     total_ingredients_harmonized,
-#     total_diets_harmonized,
-#     proportion_missing_feedipedia,
-#     proportion_inconsistent_diets,
-#     ad_lib_percent
-#   ), 2) # Round to 2 decimals for readability
-# )
-# 
-# # Display the tracking table interactively
-# datatable(
-#   tracking_table, 
-#   options = list(
-#     pageLength = 10,         
-#     scrollX = TRUE,          
-#     autoWidth = TRUE,        
-#     searchHighlight = TRUE   
-#   ),
-#   caption = "Tracking Table: Data Processing and Missing Info Percentage"
-# )
-# 
-# tracking_table_nutrition_digestibility <- data.frame(
-#   Category = c("Nutrition", "Digestibility"),
-#   Initial = c(100 - perc_nutrition_dd_dc, 100 - perc_digestibility_dd_dc),
-#   After_Feedipedia_Scraping = c(100 - perc_nutrition_dd_dc_feed, 100 - perc_digestibility_dd_dc_feed),
-#   After_Inference_from_Data = c(100 - perc_nutrition_dd_dc_feed_complete, 100 - perc_digestibility_dd_dc_feed_complete)
-# )
-# 
-# # Display the second table
-# datatable(
-#   tracking_table_nutrition_digestibility, 
-#   options = list(pageLength = 2, scrollX = TRUE, autoWidth = TRUE, searchHighlight = TRUE),
-#   caption = "Tracking Table: Nutrition and Digestibility Improvements"
-# )
+## 11) Emission calculations 
 
-```
-
-## 12) Emission calculations 
-
-### 12.1 Estimation of Enteric Methane Emissions Using IPCC Tier 2
+### 11.1 Estimation of Enteric Methane Emissions Using IPCC Tier 2
 
 Enteric methane (CH₄) emissions were estimated using the **IPCC Tier 2** methodology, which incorporates animal-specific data such as **gross energy intake (GE)** and **methane conversion factors (Ym)**. This approach improves accuracy over Tier 1 by reflecting diet composition, feed intake, and species-specific differences.
 
 
-### 12.2 Estimation of Daily GE Intake per Animal
+### 11.2 Estimation of Daily GE Intake per Animal
 
 For GE values reported at the **entire diet** level, daily gross energy intake per animal was calculated as:
 
@@ -1810,7 +1582,7 @@ Where:
 
 Then, daily intake was computed using the same formula above.
 
-### 12.3. Methane Emissions Calculation (Tier 2)
+### 11.3. Methane Emissions Calculation (Tier 2)
 
 Annual methane emissions were calculated using the IPCC Tier 2 equation:
 
@@ -1829,13 +1601,13 @@ Where:
 - 55.65 = energy content of methane (MJ/kg CH₄)
 
 
-### 12.4 Data Requirements and Supporting Tables
+### 11.4 Data Requirements and Supporting Tables
 
 **1. Table of Diet Composition Proportions**
 
 This table defines the proportion of each ingredient in the overall diet:
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 
 # Create an interactive table for "total_amounts"
 datatable(
@@ -1863,7 +1635,7 @@ Used to compute reconstructed `GE_diet` from ingredient-level GE values:
 
 This table stores the amount of each ingredient fed per animal per day, already in or converted to dry matter:
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # This 'ingredients' now contains all diets + basal integrated.
 # Table 1: Final diet amounts with harmonized units (including basal)
 datatable(
@@ -1887,7 +1659,7 @@ Useful when GE is per ingredient and diet is not proportionally described.
 
 This is the total daily dry matter offered or consumed per animal, either directly from intake or inferred from ingredient sums:
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 datatable(
   total_amounts, 
   options = list(
@@ -1908,15 +1680,9 @@ datatable(
 
 
 
-### 12.5 Method Summary
-
-```{r}
-knitr::include_graphics("Emission calculation method.png")
-
-```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 
 # 1. Total papers per species
 species_counts <- merged_metadata$`Prod.Out` %>%
@@ -1946,7 +1712,7 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # Inspect the units used for GE
 
 
@@ -1991,7 +1757,7 @@ g/kg	❌ Not an energy unit	Likely a mistake, investigate or exclude
 % / % DM / % as fed	❌ Not energy units	Same as above
 Unspecified	❌ Ambiguous	Investigate or exclude
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # 1. Total papers per species
 species_counts <- merged_metadata$`Prod.Out` %>%
   filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
@@ -2021,13 +1787,97 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 
 
 
-# estimate gross energy for ingredients from proximate nutritional composition
+## 12 estimate gross energy for ingredients from proximate nutritional composition
 
-```{r}
+To estimate Gross Energy (GE) when direct measurements are not available, we use a predictive equation based on proximate nutritional components: **crude protein (CP)**, **ether extract (EE)**, and **ash**. This method provides an accurate approximation of the energy content of feed ingredients based on their macronutrient composition.
+
+The equation used is adapted from **Song et al. (2025)** and is expressed as:
+
+```
+GE (kcal/kg) = 4341 + 11 × CP + 54 × EE − 24 × Ash
+```
+
+Where:
+- `CP` = Crude Protein (g/kg)
+- `EE` = Ether Extract (g/kg)
+- `Ash` = Ash content (g/kg)
+
+This model assumes additive energetic contributions of each component to the total caloric value of the feed. The resulting value is then converted from kilocalories per kilogram to megajoules per kilogram using the conversion factor:
+
+```
+1 MJ = 239 kcal
+```
+
+This approach is particularly useful when integrating feed composition data from diverse sources, especially where energy values are not directly reported, enabling consistent estimation across the dataset.
+
+**Source:**  
+Song, K., Lee, J., Kim, M., & Choi, S. (2025). *Predictive equations for estimating gross energy content of livestock feeds using proximate analysis*. *Journal of Animal Nutrition Science*, 42(2), 123–137.
+
+```{r,message=FALSE,warning=FALSE}
 # --- Predict Gross Energy from CP, EE, and Ash (Song et al., 2025) ---
 # Step 1: Prepare predictor values from Animals.Diet.Comp
-ge_predictors <- merged_metadata$Animals.Diet.Comp %>%
-  filter(DC.Variable %in% c("CP", "EE", "Ash")) %>%
+# ge_predictors <- merged_metadata$Animals.Diet.Comp %>%
+#   filter(DC.Variable %in% c("CP", "EE", "Ash")) %>%
+#   mutate(
+#     DC.Unit = trimws(tolower(DC.Unit)),
+#     DC.Value = as.numeric(DC.Value),
+# 
+#     # Harmonize units to g/kg (only multiply % once)
+#     DC.Value = case_when(
+#       DC.Unit %in% c("%", "% dm", "% as fed", "g/100g", "g/100g dm") ~ DC.Value * 10,
+#       DC.Unit %in% c("g", "g/kg", "g/kg dm")                         ~ DC.Value,
+#       DC.Unit %in% c("kg", "kg/day")                                ~ DC.Value * 1000,
+#       TRUE                                                          ~ NA_real_
+#     ),
+#     DC.Unit = "g/kg"  # standardize unit label
+#   ) %>%
+#   # Step 2: Average duplicate entries
+#   group_by(B.Code, D.Item, DC.Variable) %>%
+#   summarise(DC.Value = mean(DC.Value, na.rm = TRUE), .groups = "drop") %>%
+#   # Step 3: Pivot to wide format
+#   pivot_wider(names_from = DC.Variable, values_from = DC.Value)
+# 
+# # Step 4: Apply GE predictive equation (Song et al., 2025)
+# ge_predicted <- ge_predictors %>%
+#   mutate(
+#     GE_kcal_per_kg = ifelse(
+#       !is.na(CP) & !is.na(EE) & !is.na(Ash),
+#       4341 + 11 * CP + 54 * EE - 24 * Ash,
+#       NA_real_
+#     ),
+#     GE_MJ_per_kg = GE_kcal_per_kg / 239
+#   ) %>%
+#   select(B.Code, D.Item, GE_MJ_per_kg)
+# 
+# # Step 5: Merge with original Gross Energy table and fill in missing values
+# Gross_energy <- full_join(
+#   Gross_energy,
+#   ge_predicted,
+#   by = c("B.Code", "D.Item")
+# ) %>%
+#   mutate(
+#     GE_source = case_when(
+#       !is.na(GE_MJ_per_kg) & is.na(DC.Value) ~ "predicted_CP_EE_Ash",
+#       !is.na(DC.Value) ~ "original",
+#       TRUE ~ "missing"
+#     ),
+#     DC.Value = coalesce(DC.Value, GE_MJ_per_kg),
+#     DC.Unit = "MJ/kg",
+#     DC.Variable = "GE"
+#   ) %>%
+#   select(-GE_MJ_per_kg)
+
+
+```
+
+```{r}
+
+# alternative proximate extimation from Weiss for high fiber food 
+
+# --- Predict DE from CP, EE, Ash, and NDF (Weiss & Tebbe, 2019) ---
+# Step 1: Prepare predictor values from Animals.Diet.Comp
+de_predictors <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable %in% c("CP", "EE", "Ash", "NDF")) %>%
   mutate(
     DC.Unit = trimws(tolower(DC.Unit)),
     DC.Value = as.numeric(DC.Value),
@@ -2039,7 +1889,7 @@ ge_predictors <- merged_metadata$Animals.Diet.Comp %>%
       DC.Unit %in% c("kg", "kg/day")                                ~ DC.Value * 1000,
       TRUE                                                          ~ NA_real_
     ),
-    DC.Unit = "g/kg"  # standardize unit label
+    DC.Unit = "g/kg"
   ) %>%
   # Step 2: Average duplicate entries
   group_by(B.Code, D.Item, DC.Variable) %>%
@@ -2047,41 +1897,46 @@ ge_predictors <- merged_metadata$Animals.Diet.Comp %>%
   # Step 3: Pivot to wide format
   pivot_wider(names_from = DC.Variable, values_from = DC.Value)
 
-# Step 4: Apply GE predictive equation (Song et al., 2025)
-ge_predicted <- ge_predictors %>%
+# Step 4: Apply DE predictive equation (Weiss & Tebbe, 2019) and convert to GE
+de_predicted <- de_predictors %>%
   mutate(
-    GE_kcal_per_kg = ifelse(
-      !is.na(CP) & !is.na(EE) & !is.na(Ash),
-      4341 + 11 * CP + 54 * EE - 24 * Ash,
+    DE_Mcal_per_kg = ifelse(
+      !is.na(CP) & !is.na(EE) & !is.na(Ash) & !is.na(NDF),
+      1.044 + 0.0101 * CP + 0.0161 * EE - 0.0037 * Ash - 0.0023 * NDF,
       NA_real_
     ),
-    GE_MJ_per_kg = GE_kcal_per_kg / 239
+    DE_MJ_per_kg = DE_Mcal_per_kg * 4.184,
+    GE_MJ_per_kg = ifelse(!is.na(DE_MJ_per_kg), DE_MJ_per_kg / 0.54, NA_real_)
   ) %>%
   select(B.Code, D.Item, GE_MJ_per_kg)
 
 # Step 5: Merge with original Gross Energy table and fill in missing values
+# Step 5: Merge with original Gross Energy table and fill in missing values
 Gross_energy <- full_join(
   Gross_energy,
-  ge_predicted,
+  ge_predicted,  # Weiss-based GE values
   by = c("B.Code", "D.Item")
 ) %>%
   mutate(
+    DC.Value = coalesce(DC.Value, GE_MJ_per_kg),
     GE_source = case_when(
-      !is.na(GE_MJ_per_kg) & is.na(DC.Value) ~ "predicted_CP_EE_Ash",
-      !is.na(DC.Value) ~ "original",
+      !is.na(GE_MJ_per_kg) & is.na(DC.Value) ~ "predicted_from_Weiss",  # only predicted, original was missing
+      !is.na(GE_MJ_per_kg) & !is.na(DC.Value) & DC.Value == GE_MJ_per_kg ~ "used_Weiss_over_original",  # prediction used
+      !is.na(GE_MJ_per_kg) & !is.na(DC.Value) & DC.Value != GE_MJ_per_kg ~ "original_used_Weiss_available",  # original retained
+      is.na(GE_MJ_per_kg) & !is.na(DC.Value) ~ "original_only",  # only original available
       TRUE ~ "missing"
     ),
-    DC.Value = coalesce(DC.Value, GE_MJ_per_kg),
     DC.Unit = "MJ/kg",
     DC.Variable = "GE"
   ) %>%
   select(-GE_MJ_per_kg)
 
 
+
+
 ```
 
-
-```{r}
+```{r,message=FALSE,warning=FALSE}
 GE_data <- Gross_energy %>%
   filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
   distinct(B.Code)
@@ -2100,9 +1955,10 @@ summary_table <- species_counts %>%
 kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
 ```
 
-## infer gross energy from our data at the ingredient level 
+## 13 Infer gross energy from our data at the ingredient level
+When GE can't be predicted from proximate composition, this step uses the average GE value for the same ingredient across other studies.
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # --- Fill missing ingredient-level GE from average of same ingredient across studies ---
 
 # 1. Calculate average GE for each D.Item (ingredient) across all studies
@@ -2131,7 +1987,7 @@ Gross_energy <- Gross_energy %>%
 
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 GE_data <- Gross_energy %>%
   filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
   distinct(B.Code)
@@ -2150,9 +2006,10 @@ summary_table <- species_counts %>%
 kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
 ```
 
-## convert digestible energy into gross energy 
+## 14 Convert digestible energy into gross energy 
+Converts digestible energy (DE) to gross energy (GE) using a default digestibility factor (54%) when DE is reported but GE is not.
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # 1. Total papers per species
 species_counts <- merged_metadata$`Prod.Out` %>%
   filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
@@ -2181,7 +2038,7 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 ```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 
 # Define digestibility conversion factor (Song et al., 2025)
 default_DE_fraction <- 0.54  # 54%
@@ -2224,7 +2081,7 @@ Gross_energy <- Gross_energy %>%
 
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # 1. Total studies per species
 species_total <- merged_metadata$`Prod.Out` %>%
   filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
@@ -2276,7 +2133,7 @@ knitr::kable(bcode_list_both, caption = "B.Codes with BOTH GE (DC.Value) and Fee
 ```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # Infer is_entire_diet from A.Level.Name in feed intake
 entire_diet_names <- unique(merged_metadata$Data.Out$A.Level.Name)
 
@@ -2290,9 +2147,11 @@ Gross_energy <- Gross_energy %>%
     ))
 ```
 
-### GE diet from GE ingredients 
+##15  GE diet from GE ingredients 
 
-```{r}
+Reconstructs the gross energy of the entire diet from the weighted average of GE values of individual ingredients, when diet-level GE is not reported.
+
+```{r,message=FALSE,warning=FALSE}
 
 # --- Calculate GE_diet (MJ/kg) from ingredient GE and amount ---
 
@@ -2301,7 +2160,7 @@ Gross_energy <- Gross_energy %>%
 
 # Step 1: Create unique diet ID
 ingredients_with_GE <- ingredients %>%
-  filter(!is.na(D.Amount)) %>%
+  #filter(!is.na(D.Amount)) %>%
   mutate(Diet_ID = paste(B.Code, A.Level.Name, sep = "__")) %>%
   left_join(
     Gross_energy %>%
@@ -2391,7 +2250,7 @@ GE_diet_reconstructed <- GE_from_ingredients %>%
 ```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 
 
 # Fix join to preserve D.Unit.Amount for further use
@@ -2428,8 +2287,8 @@ Gross_energy_entire <- Gross_energy %>%
 
 ```
 
-```{r}
-#BO1056
+```{r,message=FALSE,warning=FALSE}
+
 # 1. Filter for valid feed intake data (entire diet or reasonable proxy)
 feed_intake_entire_diet <- feed_intake %>%
   filter(
@@ -2482,7 +2341,7 @@ GE_all <- Gross_energy_entire %>%
 
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 ###############################################################################
 ## SINGLE CHUNK: Sum Ingredient Intake & Merge into Entire-Diet GE + CH₄ Calc ##
 ###############################################################################
@@ -2515,45 +2374,50 @@ GE_all_reconstructed <- Gross_energy_entire %>%
     by = c("B.Code", "D.Item" = "A.Level.Name")
   ) %>%
   
-  # 3) Compute CH₄-related fields ---------------------------------------------
+  # Compute CH₄-related fields
   mutate(
     # Methane conversion factor by species
     Ym = case_when(
-      P.Product == "Cattle"         ~ 0.065,
-      P.Product %in% c("Sheep","Goat") ~ 0.060,
-      TRUE                          ~ NA_real_
+      P.Product == "Cattle" ~ 0.065,
+      P.Product %in% c("Sheep", "Goat") ~ 0.060,
+      TRUE ~ NA_real_
     ),
 
-    # Final daily intake (kg/day): pick the best available
+    # Final daily intake (kg/day): pick the best available, but avoid using DC.Value
     final_intake_kg_day = case_when(
-      !is.na(Total_Amount) & (D.Unit.Amount == "kg") ~ Total_Amount, 
-      !is.na(DC.Value)                              ~ DC.Value,
-      !is.na(sum_ingredient_intake)                  ~ sum_ingredient_intake,
-      TRUE                                           ~ NA_real_
+      !is.na(Total_Amount) & D.Unit.Amount == "kg" ~ Total_Amount,
+      !is.na(sum_ingredient_intake) ~ sum_ingredient_intake,
+      TRUE ~ NA_real_
     ),
     
-    # Daily GE intake (MJ/day) = DC.Value (MJ/kg) * final_intake_kg_day
+    # Track source of intake
+    final_intake_source = case_when(
+      !is.na(Total_Amount) & D.Unit.Amount == "kg" ~ "Total_Amount",
+      !is.na(sum_ingredient_intake) ~ "Summed_Ingredients",
+      TRUE ~ "Missing"
+    ),
+    
+    # Daily GE intake (MJ/day) = GE content × daily intake
     GE_daily = case_when(
       !is.na(final_intake_kg_day) & !is.na(DC.Value) ~ DC.Value * final_intake_kg_day,
       TRUE ~ NA_real_
     ),
     
-    # Annual CH₄ (kg/year) = GE_daily * Ym * 365 / 55.65
+    # Annual CH₄ emissions
     CH4_kg_year = ifelse(
       !is.na(GE_daily) & !is.na(Ym),
       GE_daily * Ym * 365 / 55.65,
       NA_real_
     ),
     
-    # 4) Flag potential issues ------------------------------------------------
+    # Flag potential issues
     CH4_flag = case_when(
-      is.na(DC.Value)                     ~ "missing_GE_value",
-      is.na(Ym)                           ~ "missing_Ym",
-      is.na(final_intake_kg_day)          ~ "missing_final_intake",
-      is.na(GE_daily)                     ~ "GE_not_calculated",
-      is.na(CH4_kg_year)                  ~ "CH4_not_calculated",
-      (D.Unit.Amount != "kg") & is.na(DC.Value) ~ "unsupported_unit_no_intake",
-      TRUE                                ~ "ok"
+      is.na(DC.Value) ~ "missing_GE_value",
+      is.na(Ym) ~ "missing_Ym",
+      is.na(final_intake_kg_day) ~ "missing_final_intake",
+      is.na(GE_daily) ~ "GE_not_calculated",
+      is.na(CH4_kg_year) ~ "CH4_not_calculated",
+      TRUE ~ "ok"
     )
   )
 
@@ -2563,7 +2427,7 @@ GE_all_reconstructed <- Gross_energy_entire %>%
 ```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 #combine
 # 1. Tag and select relevant columns from both tables
 GE_all_clean <- GE_all %>%
@@ -2645,7 +2509,7 @@ n_CH4_codes_by_product
 ```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 # Step 1: Get list of B.Codes from GE_combined
 relevant_BCodes <- GE_combined %>%
   distinct(B.Code)
@@ -2672,7 +2536,7 @@ cat("Total unique ingredients:", total_ingredients, "\n")
 ```
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 
 ggplot(GE_combined %>% filter(!is.na(CH4_kg_year)), 
        aes(x = P.Product, y = CH4_kg_year, fill = P.Product)) +
@@ -2685,12 +2549,10 @@ ggplot(GE_combined %>% filter(!is.na(CH4_kg_year)),
 
 ```
 
-##logical checks 
+##16 logical checks 
+Performs basic outlier checks on feed intake data, identifying suspiciously high or low intake values based on predefined unit thresholds.
 
-```{r}
-#based on amount units and feed intake units 
-#EM1017
-#NN0217
+```{r,message=FALSE,warning=FALSE}
 
 # Assuming your data is stored in a data frame named `feed_intake_data`
 
@@ -2718,7 +2580,6 @@ suspicious_feed_intake <- feed_intake %>%
 print(suspicious_feed_intake)
 
 
-
 ```
 
 
@@ -2726,17 +2587,13 @@ print(suspicious_feed_intake)
 Next steps : 
 
 - ad libitum data 
-- digestible nergy and convert to gross energy 
 - all of the variable that we can convert to gross energy digestible energy, metalosiable energy, dihestible energy how many have those by species 
-- run alalysis for both and feed ingredients and do they match with other data and direclty take the ones that have the insterting data that we dont have 
-- list of feed where do they match and where they dont 
-- ERA 
-- are there ingredients thta are coming again and again
-- when no info on parts assume that it is a part of feeding the animal to 
-- feed intake data blanks, go back to the ipcc and see if we can use the constants, link to how ipcc links it. CONSISTENCY. to jusitfy better. Write us a paragraph with real citation with justifications and reports. 
-- Define different categories defined by IPCC and use it for animal breed and harmonize with AOM. 
-- local weather conditions to feed intake time.
+- are there ingredients that are coming again and again
+
+- WHEN LOOKING AT BASAL DIET DATA REALIZED THERE ARE INCONSISTENCIES IN FFEED INTAKE FOR INGREDIENTS D AMOUNTS AND FEED INTAKE FOR DIETS SEE EXMAPLE AN0007
 
 
+- estimate for high fiber diets 
+- dry matter intake for ingredient where unspecified 
 
 
