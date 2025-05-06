@@ -107,7 +107,7 @@ diet_cols <- c("B.Code", "A.Level.Name", "D.Item", "D.Type", "D.Amount",
                "D.Unit.Amount", "D.Unit.Time", "D.Unit.Animals", "DC.Is.Dry", 
                "D.Ad.lib", "D.Is.Group")
 
-mt_cols <- c("B.Code", "A.Level.Name", "T.Animals")
+mt_cols <- c("B.Code", "A.Level.Name", "T.Animals","T.Name")
 
 comp_cols <- c("B.Code", "D.Item", "is_entire_diet", "DC.Variable", 
                "DC.Value", "DC.Unit")
@@ -130,6 +130,12 @@ prod_livestock   <- livestock_metadata$Prod.Out[, ..prod_cols][, Source := "live
 
 # Extract camel tables and rename columns to match livestock structure
 diet_camel <- camel$Animal.Diet[, ..diet_cols][, Source := "camel"]
+
+#merge Mt and Data to ave A.Level.Name in data 
+
+camel$Data.Out<-merge(x=camel$Data.Out,
+y= camel$MT.Out[,.(B.Code,T.Name,A.Level.Name)],by=c("B.Code","T.Name"),all.x=T,sort=F)
+
 
 # Construct MT.Out for camel: get A.Level.Name and T.Animals from Herd
 mt_camel <- camel$Herd.Out[, .(
@@ -162,7 +168,7 @@ herd_weight <- camel$Herd.Out[, .(
 data_camel <- camel$Data.Out[
   , .(B.Code, ED.Intake.Item, 
       ED.Intake.Item.Raw = ED.Intake.Item, 
-      A.Level.Name= T.Name,  # Temporarily keep this as-is for now
+      A.Level.Name,  # Temporarily keep this as-is for now
       ED.Mean.T, ED.Error, Out.Unit,Out.Subind)
 ][
   herd_weight, 
@@ -203,6 +209,8 @@ merged_metadata <- list(
   Prod.Out            = prod_all
 )
 
+
+
 ```
 
 ```{r,message=FALSE,warning=FALSE}
@@ -215,6 +223,77 @@ rm(
 # (Optional) Run gc() to free memory
 gc()
 ```
+
+## 1.1) Correct A.Level.Name
+Some feed intake entries are not matched to any ingredient data due to discrepancies in A.Level.Name between the feed intake and ingredient datasets for the same study codes. In this section, we build a table to flag studies where diet names do not align, helping to identify cases that may require manual review or correction.
+
+
+```{r}
+# Step 1: Prepare cleaned input
+ingredient_levels <- merged_metadata$Animals.Diet %>%
+  distinct(B.Code, A.Level.Name) %>%
+  mutate(Source = "Ingredient")
+
+feedintake_levels <- merged_metadata$Data.Out %>%
+  filter(Out.Subind == "Feed Intake", !is.na(A.Level.Name)) %>%
+  distinct(B.Code, A.Level.Name) %>%
+  mutate(Source = "FeedIntake")
+
+# Step 2: Create mismatch table
+combined_levels <- bind_rows(ingredient_levels, feedintake_levels)
+
+comparison_table <- combined_levels %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    Sources = paste(sort(unique(Source)), collapse = " & "),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Match_Status = case_when(
+      Sources == "FeedIntake & Ingredient" ~ "Match",
+      Sources == "Ingredient" ~ "Only in Ingredient",
+      Sources == "FeedIntake" ~ "Only in FeedIntake",
+      TRUE ~ "Unknown"
+    )
+  )
+
+# Step 3: Identify B.Codes with exactly 1 unmatched in both
+to_correct <- comparison_table %>%
+  filter(Match_Status %in% c("Only in Ingredient", "Only in FeedIntake")) %>%
+  group_by(B.Code) %>%
+  summarise(
+    n_ing = sum(Match_Status == "Only in Ingredient"),
+    n_feed = sum(Match_Status == "Only in FeedIntake"),
+    Ingredient_Name = A.Level.Name[Match_Status == "Only in Ingredient"][1],
+    FeedIntake_Name = A.Level.Name[Match_Status == "Only in FeedIntake"][1],
+    .groups = "drop"
+  ) %>%
+  filter(n_ing == 1, n_feed == 1)
+
+# Step 4: Apply the corrections to Data.Out (rename unmatched FeedIntake names)
+merged_metadata$Data.Out <- merged_metadata$Data.Out %>%
+  left_join(to_correct, by = c("B.Code", "A.Level.Name" = "FeedIntake_Name")) %>%
+  mutate(
+    A.Level.Name = coalesce(Ingredient_Name, A.Level.Name)
+  ) %>%
+  select(-Ingredient_Name)
+
+
+rm(ingredient_levels,feedintake_levels,to_correct,combined_levels,comparison_table)
+
+# Get merged stats
+merged_stats <- list(
+  papers = length(unique(merged_metadata$Animals.Diet$B.Code)),
+  diets = length(unique(merged_metadata$Animals.Diet$A.Level.Name)),
+  ingredients = length(unique(merged_metadata$Animals.Diet$D.Item))
+)
+
+
+```
+
+
+## 1.2) Correct ingredient units 
+
 Some ingredients appear multiple times with amounts reported in different units. In this section, we prioritize entries that are already in preferred units to minimize the need for conversions.
 
 ```{r,message=FALSE,warning=FALSE}
@@ -240,6 +319,8 @@ merged_metadata$Animals.Diet <- merged_metadata$Animals.Diet %>%
   slice_min(order_by = priority, with_ties = FALSE) %>%
   ungroup() %>%
   select(-priority)  # optional: drop helper column
+
+rm(preferred_units,preferred_time,preferred_animals)
 
 ```
 
@@ -425,12 +506,14 @@ ingredients <- ingredients %>%
 ingredients <- ingredients %>%
   mutate(Units = paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals, sep=";"))
 
+rm(harmonize_units)
 
 ```
 
-### 2.1) suspicious dry amounts
+### 2.1) Suspicious dry amounts
 
 This step identifies ingredients where DC.Is.Dry is marked as NA or unspecified. We cross-check these with moisture values from the composition table to infer whether the ingredient is likely dry or wet. We also flag inconsistencies between the ingredient name (e.g., containing "dried") and the recorded dry status.
+
 
 
 ```{r}
@@ -482,27 +565,43 @@ dry_name_match <- ingredients %>%
       "\\bdry\\b|\\bdried\\b|\\bmeal\\b|\\bground\\b|\\bmilled\\b|\\bflour\\b"
     ) & !str_detect(name_lower, "fish meal boiled")
   ) %>%
-  select(B.Code, D.Item, Dry_by_name)
+  select(B.Code, A.Level.Name,D.Item, Dry_by_name)
 
 
 extra_dry <- ingredients %>%
   filter(
-    D.Type %in% c("Non-ERA Feed", "Other Feed","Other Ingredients"),
+    D.Type %in% c("Non-ERA Feed", "Other Feed","Other Ingredients","Supplement"),
     !str_detect(str_to_lower(D.Item), "water|oil")
   ) %>%
+  select(B.Code,A.Level.Name, D.Item) 
+
+# Remove A.Level.Name from extra_dry before combining
+extra_dry <- extra_dry %>%
   select(B.Code, D.Item) %>%
+  distinct() %>%
   mutate(DC.Is.Dry = "Yes")
 
+
 # --- 3. Combine predictions ---
-dry_prediction_final <- full_join(dry_classified, dry_name_match,extra_dry, by = c("B.Code", "D.Item")) %>%
-  mutate(
-    Final_Prediction = coalesce(Dry_by_name, FALSE) |
-                       coalesce(Dry_Prediction_Moisture, FALSE) |
-                       coalesce(Dry_Prediction_DM, FALSE)
-  ) %>%
-  filter(Final_Prediction) %>%
-  mutate(DC.Is.Dry = "Yes") %>%
-  select(B.Code, D.Item, DC.Is.Dry)
+# Combine dry predictions from DM/moisture, name-based detection, and extra rules
+dry_prediction_final <- bind_rows(
+  dry_classified %>%
+    mutate(Prediction_Source = "Moisture_or_DM") %>%
+    filter(Dry_Prediction_Moisture == TRUE | Dry_Prediction_DM == TRUE) %>%
+    select(B.Code, D.Item) %>%
+    mutate(DC.Is.Dry = "Yes"),
+  
+  dry_name_match %>%
+    filter(Dry_by_name) %>%
+    select(B.Code, D.Item) %>%
+    mutate(DC.Is.Dry = "Yes", Prediction_Source = "Name_match"),
+  
+  extra_dry %>%
+    select(B.Code, D.Item) %>%
+    mutate(DC.Is.Dry = "Yes", Prediction_Source = "Extra_rule")
+) %>%
+  distinct(B.Code, D.Item, .keep_all = TRUE)
+
 
 
 
@@ -536,6 +635,8 @@ ingredients <- ingredients %>%
 ingredients<-ingredients%>%
   filter(D.Item!="Water")
 
+rm(dry_classified,dry_name_match,dry_prediction_final,extra_dry)
+
 ```
 
 
@@ -565,7 +666,7 @@ ingredients <- ingredients %>%
 #total_ingredients_harmonized<- length(unique(ingredients_harmonized$D.Item))
 #total_diets_harmonized<- length(unique(ingredients_harmonized$A.Level.Name))
 
-
+rm(acceptable_units)
 ```
 
 ### 2.3) Convert body weight units by linking animals weight to data
@@ -621,7 +722,6 @@ ingredients <- ingredients %>%
   )
 
 
-
 ```
 
 ### 2.4) Estimate amounts using feed intake
@@ -648,6 +748,7 @@ feed_intake <- merged_metadata$Data.Out %>%
   select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw,
          ED.Mean.T, ED.Error, Out.Unit, Out.Subind,is_entire_diet) %>%
   filter(Out.Subind == "Feed Intake") %>%
+  filter(!is.na(ED.Mean.T))%>%
   mutate(
     Out.Unit = tolower(trimws(Out.Unit)),
 
@@ -864,6 +965,10 @@ ingredients <- ingredients %>%
 
 ```
 
+
+
+
+
 ## 3) Integrate basal diets 
 
 Basal diets serve as the control and foundation for all treatments in livestock experiments. They are present in both the control diet and in every treatment diet that includes additional ingredients. This section integrates basal diet ingredients into the treatment diets while preserving the original basal formulation, and it flags any ingredient that originates from the basal diet.Basal diets (base diets) are merged into treatment diets to ensure consistency across feeding trials, allowing for a more accurate estimate of total diet composition.
@@ -898,7 +1003,7 @@ ingredients <- bind_rows(
   basal_diets        # keep the purely basal diet for control
 )
 
-
+rm(basal_expanded,basal_diets,non_basal_diets)
 
 ```
 
@@ -942,7 +1047,8 @@ We prioritize feed intake data over the amounts reported in the methods section,
 ```{r,message=FALSE,warning=FALSE}
 # Step 5: Remove feed intake entries that are actually full-diet labels
 feed_intake_ingredients <- feed_intake %>%
-  filter(ED.Intake.Item != A.Level.Name | ED.Intake.Item != "Entire Diet")
+  filter(ED.Intake.Item != A.Level.Name | ED.Intake.Item != "Entire Diet")%>%
+  filter(!is.na(ED.Mean.T))
 
 
 
@@ -1030,73 +1136,79 @@ ingredients <- ingredients %>%
 ```
 
 
-now for ingredient if there is only one missing in the diet (not taking water into account) and that we have the total feed intake we can deduce it form the total feed intake by the other ingredients amounts 
 
-TO DO 
 
-## 5) Suspicious mismatch between ingredient diet names and feed intake diet names
+grazing 
 
-Some feed intake entries are not matched to any ingredient data due to discrepancies in A.Level.Name between the feed intake and ingredient datasets for the same study codes. In this section, we build a table to flag studies where diet names do not align, helping to identify cases that may require manual review or correction.
+try to take out the diet for which grazing is involved d type = grazing and see the loss of papers 
 
 ```{r}
-# Extract unique combinations
-ingredient_levels <- ingredients %>%
+
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+papers_before <- ingredients %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_before")
+
+# Step 1: Identify A.Level.Name (diet) that include Grazing
+grazing_diets <- ingredients %>%
+  filter(D.Type == "Grazing") %>%
+  distinct(B.Code, A.Level.Name)
+
+length(unique(grazing_diets$B.Code))
+
+# Step 2: Count how many non-grazing diets exist per B.Code
+nongrazing_counts <- ingredients %>%
+  filter(!(D.Type == "Grazing")) %>%
   distinct(B.Code, A.Level.Name) %>%
-  mutate(Source = "Ingredient")
-
-feedintake_levels <- feed_intake %>%
-  distinct(B.Code, A.Level.Name) %>%
-  mutate(Source = "FeedIntake")
-
-# Combine both
-combined_levels <- bind_rows(ingredient_levels, feedintake_levels)
-
-# Count presence in each source
-comparison_table <- combined_levels %>%
-  group_by(B.Code, A.Level.Name) %>%
-  summarise(
-    Sources = paste(sort(unique(Source)), collapse = " & "),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    Match_Status = case_when(
-      Sources == "FeedIntake & Ingredient" ~ "Match",
-      Sources == "Ingredient" ~ "Only in Ingredient",
-      Sources == "FeedIntake" ~ "Only in FeedIntake",
-      TRUE ~ "Unknown"
-    )
-  )
-
-
-
-# Step 1: Find B.Codes with both statuses
-
-bcode_dual_mismatch <- comparison_table %>%
-  filter(Match_Status %in% c("Only in Ingredient", "Only in FeedIntake")) %>%
   group_by(B.Code) %>%
-  summarise(n_status = n_distinct(Match_Status), .groups = "drop") %>%
-  filter(n_status == 2) %>%
-  pull(B.Code)
+  summarise(n_nongrazing = n(), .groups = "drop")
 
-# Step 2: Subset to those B.Codes and remove the matches
-comparison_table_subset <- comparison_table %>%
-  filter(B.Code %in% bcode_dual_mismatch) %>%
-  filter(Match_Status != "Match")
+length(unique(nongrazing_counts$B.Code))
 
 
-#write.csv(comparison_table_subset, "Diet_name_match.csv", row.names = FALSE)
+# Step 3: Keep only diets that are not marked as Grazing AND are in B.Codes with at least one non-grazing diet
+ingredients <- ingredients %>%
+  anti_join(grazing_diets, by = c("B.Code", "A.Level.Name")) %>%  # remove all diets that were grazing
+  semi_join(nongrazing_counts, by = "B.Code")  # keep only papers with at least one non-grazing diet
 
 
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+papers_after <- ingredients %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_after")
 ```
 
 
-## 6) Subset for Dry data 
+
+## 5) Subset for Dry data 
 
 When feed intake data is missing and we rely on ingredient-level amounts, we need to ensure that the quantities used refer to the dry form of the ingredient. To do this, we subset the data to include only ingredients identified as dried—based on either the declared DC.Is.Dry value or our earlier flagging using ingredient names and moisture content predictions. This ensures consistency and accuracy in downstream calculations. 
 ```{r,message=FALSE,warning=FALSE}
-#take out unspecified ingredients 
+#take out unspecified ingredients
 
-length(unique(ingredients$A.Level.Name))
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+papers_before <- ingredients %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_before")
+length(unique(ingredients$B.Code))
 
 
 # Step 1: Identify A.Level.Name groups with at least one ingredient NOT dry
@@ -1110,11 +1222,24 @@ ingredients <- ingredients %>%
 
 length(unique(ingredients$A.Level.Name))
 
+rm(non_dry_diets)
+
+length(unique(ingredients$B.Code))
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+papers_after <- ingredients %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_after")
 
 ```
 
 
-## 7) Complete the nutrition and digestibility papers
+## 6) Complete the nutrition and digestibility papers
 
 Not all ingredients and diets are currently included in the digestibility and composition tables—only those for which data is available. We aim to add the missing ones to help complete the dataset and enable more comprehensive analysis.
 
@@ -1196,9 +1321,29 @@ digest_completion <- merged_metadata$Animals.Diet.Digest %>%
 merged_metadata$Animals.Diet.Comp <- bind_rows(merged_metadata$Animals.Diet.Comp, comp_completion)
 merged_metadata$Animals.Diet.Digest <- bind_rows(merged_metadata$Animals.Diet.Digest, digest_completion)
 
+rm(comp_completion,comp_missing,digest_completion,digest_missing)
+
 ```
 
-## 8) Link ingredients to feedipedia 
+
+```{r}
+# Step 1: Get species for each B.Code
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  distinct(B.Code, P.Product)
+
+# Step 2: Filter Comp table for GE values
+ge_papers <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value)) %>%
+  distinct(B.Code) %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_with_GE")
+
+# View result
+ge_papers
+
+```
+
+## 7) Link ingredients to feedipedia 
 
 Feedipedia is an online database that provides comprehensive information on feed ingredients used in livestock nutrition. It aggregates data on the nutritional composition, digestibility, and other relevant properties of various feeds.We will use it to infer data when info is missing from our data extraction. Links each ingredient to its corresponding entry in Feedipedia, enabling supplementation of missing nutritional and digestibility data such as GE, CP, EE, and Ash.
 
@@ -1221,7 +1366,7 @@ feedipedia <- read_parquet(temp_file)
 ## download AOM with the correspondance between feedipedia codes and diet items 
 
 # Define the raw URL for the Excel file
-url <- "https://raw.githubusercontent.com/peetmate/era_codes/main/era_master_sheet.xlsx"
+url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(4).xlsx"
 
 # Download the file to a temporary location
 temp_file <- tempfile(fileext = ".xlsx")
@@ -1331,50 +1476,71 @@ merged_metadata$Animals.Diet.Digest <- merged_metadata$Animals.Diet.Digest %>%
 ```
 
 
-## 9) Infer nutritional and digestibility data from raw data and feedipedia  
+```{r}
+# Step 1: Get species for each B.Code
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  distinct(B.Code, P.Product)
+
+# Step 2: Filter Comp table for GE values
+ge_papers <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value)) %>%
+  distinct(B.Code) %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_with_GE")
+
+# View result
+ge_papers
+
+```
+
+
+## 8) Infer nutritional and digestibility data from raw data and feedipedia  
 
 
 Now that we have both raw and Feedipedia data, we can use them to infer missing values. If some instances of an ingredient have nutritional or digestibility data while others do not, we can impute the missing values using the average of the available ones.
 
-### 9.1) Nutritional composition inferrence
+### 8.1) Nutritional composition inferrence
 
 ```{r}
 # --- Standardize Units in Animals.Diet.Comp ---
 merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
-  mutate(
-    DC.Unit = trimws(tolower(DC.Unit)),
-    DC.Value = as.numeric(DC.Value),
-    
-    DC.Value = case_when(
-      DC.Variable == "GE" ~ case_when(
-        DC.Unit %in% c("mj/kg", "mj/kg dm") ~ DC.Value,
-        DC.Unit == "kcal/kg" ~ DC.Value / 239,
-        DC.Unit == "kcal/kg dm" ~ DC.Value / 239,
-        DC.Unit == "kcal/g" ~ DC.Value * 1000 / 239,
-        DC.Unit == "kcal/100g" ~ DC.Value * 10 / 239,
-        DC.Unit == "cal/g" ~ DC.Value / 239,
-        DC.Unit == "mj/g" ~ DC.Value * 1000,
-        DC.Unit == "mcal/kg" ~ DC.Value * 4.184,
-        DC.Unit %in% c("kj/g", "kj/100g", "kj/100g dm", "kj/100 g dm") ~ DC.Value / 100,
-        DC.Unit == "kj/kg dm" ~ DC.Value / 1000,
-        DC.Unit == "kj" ~ DC.Value / 1000,
-        DC.Unit == "j/mg" ~ DC.Value / 1e6,
-        DC.Unit == "mj/100g" ~ DC.Value * 10,
-        TRUE ~ NA_real_
-      ),
-      # All other nutrients → g/kg
-      TRUE ~ case_when(
-        DC.Unit %in% c("%", "% dm", "% as fed", "g/100g", "g/100g dm") ~ DC.Value * 10,
-        DC.Unit %in% c("g", "g/kg", "g/kg dm") ~ DC.Value,
-        DC.Unit %in% c("kg", "kg/day") ~ DC.Value * 1000,
-        TRUE ~ NA_real_
-      )
+mutate(
+  DC.Unit = trimws(tolower(DC.Unit)),
+  DC.Value = as.numeric(DC.Value),
+
+  DC.Value = case_when(
+    # --- GE conversions (to MJ/kg) ---
+    DC.Variable == "GE" ~ case_when(
+      DC.Unit %in% c("mj/kg", "mj/kg dm") ~ DC.Value,
+      DC.Unit %in% c("kcal/kg", "kcal/kg dm") ~ DC.Value * 0.004184,
+      DC.Unit == "kcal/g" ~ DC.Value * 4.184,
+      DC.Unit == "kcal/100g" ~ DC.Value * 0.4184,
+      DC.Unit == "cal/g" ~ DC.Value * 0.000004184,
+      DC.Unit == "mcal/kg" ~ DC.Value * 4.184,
+      DC.Unit %in% c("kj/kg", "kj/kg dm") ~ DC.Value / 1000,
+      DC.Unit %in% c("kj/g") ~ DC.Value,  # Already MJ/kg if value is per g * 1000
+      DC.Unit %in% c("kj/100g", "kj/100g dm", "kj/100 g dm") ~ DC.Value * 0.01,
+      DC.Unit == "mj/100g" ~ DC.Value * 10,
+      DC.Unit == "j/mg" ~ DC.Value / 1e6,
+      TRUE ~ NA_real_  # unknown unit
     ),
-    DC.Unit = case_when(
-      DC.Variable == "GE" ~ "MJ/kg",
-      TRUE ~ "g/kg"
+
+    # --- All other nutrient variables: convert to g/kg ---
+    TRUE ~ case_when(
+      DC.Unit %in% c("%", "% dm", "% as fed", "g/100g", "g/100g dm") ~ DC.Value * 10,
+      DC.Unit %in% c("g", "g/kg", "g/kg dm") ~ DC.Value,
+      DC.Unit %in% c("kg", "kg/day") ~ DC.Value * 1000,
+      TRUE ~ NA_real_  # unknown unit
     )
+  ),
+
+  # --- Harmonize final units ---
+  DC.Unit = case_when(
+    DC.Variable == "GE" ~ "MJ/kg",
+    TRUE ~ "g/kg"
   )
+)
+
 
 # --- Compute Mean Value Per Ingredient and Variable ---
 ingredient_means <- merged_metadata$Animals.Diet.Comp %>%
@@ -1402,7 +1568,7 @@ merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
 
 ```
 
-### 9.2) Digestibility inferrence
+### 8.2) Digestibility inferrence
 ```{r}
 
 # --- B) Compute Mean Digestibility Per Ingredient and Variable ---
@@ -1461,7 +1627,22 @@ cat("📌 Of those, species breakdown:\n")
 print(ge_species_counts)
 
 ```
+```{r}
+# Step 1: Get species for each B.Code
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  distinct(B.Code, P.Product)
 
+# Step 2: Filter Comp table for GE values
+ge_papers <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value)) %>%
+  distinct(B.Code) %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_with_GE")
+
+# View result
+ge_papers
+
+```
 
 ```{r,message=FALSE,warning=FALSE}
 
@@ -1528,7 +1709,7 @@ head(bcode_table_df)
 ```
 
 
-## 10) Relative % of each ingredient in the diet
+## 9) Relative % of each ingredient in the diet
 
 This table presents the relative percentage of each ingredient within a diet. To ensure accurate proportion calculations, we first filtered the dataset to include only diets with consistent units. Diets with incompatible or non-harmonizable units were excluded, as their proportions could not be reliably determined.
 
@@ -1625,7 +1806,7 @@ datatable(
   caption = "Interactive Table: Relative % of Ingredients"
 )
 
-
+rm(inconsistent_diets,consistent_diets,diet_completeness)
 
 ```
 
@@ -1657,9 +1838,9 @@ if we have total amounts and feed intake for ingredient we might be abe to deduc
 
 
 
-## 11) Emission calculations 
+## 10) Emission calculations 
 
-### 11.1 Estimation of Enteric Methane Emissions Using IPCC Tier 2
+### 10.1 Estimation of Enteric Methane Emissions Using IPCC Tier 2
 
 Enteric methane (CH₄) emissions were estimated using the **IPCC Tier 2** methodology, which incorporates animal-specific data such as **gross energy intake (GE)** and **methane conversion factors (Ym)**. This approach improves accuracy over Tier 1 by reflecting diet composition, feed intake, and species-specific differences.
 
@@ -1692,7 +1873,7 @@ Where:
 
 Then, daily intake was computed using the same formula above.
 
-### 11.3. Methane Emissions Calculation (Tier 2)
+### 10.3. Methane Emissions Calculation (Tier 2)
 
 Annual methane emissions were calculated using the IPCC Tier 2 equation:
 
@@ -1711,7 +1892,7 @@ Where:
 - 55.65 = energy content of methane (MJ/kg CH₄)
 
 
-### 11.4 Data Requirements and Supporting Tables
+### 10.4 Data Requirements and Supporting Tables
 
 **1. Table of Diet Composition Proportions**
 
@@ -1790,8 +1971,6 @@ datatable(
 
 
 
-
-
 ```{r,message=FALSE,warning=FALSE}
 
 # 1. Total papers per species
@@ -1823,9 +2002,40 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 ```
 
 
-## 12) Gross energy data 
+## 11) Gross energy data 
 
-## 12.1) Gross energy harmonization
+## 11.1) Gross energy harmonization
+
+```{r}
+# 1. Total papers per species
+species_counts <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+GE_data <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE") %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+
+```
+
 
 ```{r,message=FALSE,warning=FALSE}
 # Inspect the units used for GE
@@ -1842,21 +2052,21 @@ unique(Gross_energy$DC.Unit)
 Gross_energy <- Gross_energy %>%
   mutate(
     DC.Value = case_when(
-      DC.Unit %in% c("MJ/kg", "MJ/kg DM") ~ as.numeric(DC.Value),
-      DC.Unit == "kcal/kg" ~ as.numeric(DC.Value) / 239,
-      DC.Unit == "kcal/kg DM" ~ as.numeric(DC.Value) / 239,
-      DC.Unit == "kcal/g" ~ as.numeric(DC.Value) * 1000 / 239,
-      DC.Unit == "kcal/100g" ~ as.numeric(DC.Value) * 10 / 239,
-      DC.Unit == "cal/g" ~ as.numeric(DC.Value) / 239,  # new
-      DC.Unit == "MJ/g" ~ as.numeric(DC.Value) * 1000,  # new
-      DC.Unit == "Mcal/kg" ~ as.numeric(DC.Value) * 4.184,  # new
-      DC.Unit %in% c("kJ/g", "kJ/100g", "kJ/100g DM","KJ/100 g DM") ~ as.numeric(DC.Value) / 100,  # already partly handled
-      DC.Unit == "kJ/kg DM" ~ as.numeric(DC.Value) / 1000,
-      DC.Unit == "KJ" ~ as.numeric(DC.Value) / 1000,
-      DC.Unit == "J/mg" ~ as.numeric(DC.Value) / 1e6,
-      DC.Unit == "MJ/100g" ~ as.numeric(DC.Value) * 10,
-      TRUE ~ NA_real_
-    ),
+    # --- GE conversions (to MJ/kg) ---
+    DC.Variable == "GE" ~ case_when(
+      DC.Unit %in% c("mj/kg", "mj/kg dm") ~ DC.Value,
+      DC.Unit %in% c("kcal/kg", "kcal/kg dm") ~ DC.Value * 0.004184,
+      DC.Unit == "kcal/g" ~ DC.Value * 4.184,
+      DC.Unit == "kcal/100g" ~ DC.Value * 0.4184,
+      DC.Unit == "cal/g" ~ DC.Value * 0.000004184,
+      DC.Unit == "mcal/kg" ~ DC.Value * 4.184,
+      DC.Unit %in% c("kj/kg", "kj/kg dm") ~ DC.Value / 1000,
+      DC.Unit %in% c("kj/g") ~ DC.Value,  # Already MJ/kg if value is per g * 1000
+      DC.Unit %in% c("kj/100g", "kj/100g dm", "kj/100 g dm") ~ DC.Value * 0.01,
+      DC.Unit == "mj/100g" ~ DC.Value * 10,
+      DC.Unit == "j/mg" ~ DC.Value / 1e6,
+      TRUE ~ NA_real_  # unknown unit
+    )),
     DC.Unit = ifelse(!is.na(DC.Value), "MJ/kg", DC.Unit)
   )
 
@@ -1913,7 +2123,7 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 ```
 
 
-## 12.2 Gross energy data check 
+## 11.2 Gross energy data check 
 
 ```{r}
 
@@ -1926,7 +2136,7 @@ Gross_energy_check <- Gross_energy %>%
 
 
 
-## 13) Estimate gross energy for ingredients from proximate nutritional composition
+## 12) Estimate gross energy for ingredients from proximate nutritional composition
 
 To estimate Gross Energy (GE) when direct measurements are not available, we use a predictive equation based on proximate nutritional components: **crude protein (CP)**, **ether extract (EE)**, and **ash**. This method provides an accurate approximation of the energy content of feed ingredients based on their macronutrient composition.
 
@@ -2002,7 +2212,36 @@ Gross_energy <- Gross_energy %>%
 ```
 
 
-## 14) Infer gross energy from data 
+```{r}
+# 1. Total papers per species
+species_counts <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+GE_data <- Gross_energy %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+```
+
+
+## 13) Infer gross energy from data 
 As we did in 9) we are inferring again GE data after estimation by proximal nutritional composition. 
 
 ```{r}
@@ -2029,7 +2268,36 @@ Gross_energy <- Gross_energy %>%
 ```
 
 
-## 15) Estimate Digestible energy from procimate nutritional composition
+```{r}
+# 1. Total papers per species
+species_counts <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+GE_data <- Gross_energy %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+```
+
+
+## 14) Estimate Digestible energy from proximate nutritional composition
 
 ```{r}
 # --- STEP 4: Prepare predictors for Weiss DE equation ---
@@ -2110,7 +2378,7 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 
 We dont get more papers seems logical because probably the same ingredient as the equation  for GE. 
 
-## 16) Convert digestible energy into gross energy 
+## 15) Convert digestible energy into gross energy 
 Converts digestible energy (DE) to gross energy (GE) using a default digestibility factor (54%) when DE is reported but GE is not.
 
 ```{r,message=FALSE,warning=FALSE}
@@ -2243,9 +2511,30 @@ knitr::kable(bcode_list_both, caption = "B.Codes with BOTH GE (DC.Value) and Fee
 
 
 
-## 17) Calculation of CH4 emissions
+## 16) Calculation of CH4 emissions
 
-### Ym estimations 
+To estimate enteric methane emissions, a methane conversion factor (Ym) is applied to the gross energy (GE) intake of livestock. Ym represents the proportion of the animal’s gross energy intake that is converted to methane and varies based on the species, productivity level, and diet composition. The IPCC (2019) provides updated Ym values based on feed digestibility and forage content. Below is the logic applied:
+
+
+```{r}
+library(knitr)
+kable(
+  data.frame(
+    Category = c("Dairy Cattle (High)", "Dairy Cattle (Medium)", "Dairy Cattle (Low)", "Dairy Cattle (Unknown)",
+                 "Meat Cattle (>75% forage)", "Meat Cattle (15–75% forage)", "Meat Cattle (<15% forage)", "Meat Cattle (Unknown)",
+                 "Sheep", "Lambs", "Goats"),
+    Ym_Percent = c(5.7, 6.3, 6.5, 6.0, 7.0, 6.3, 4.0, 6.5, 6.7, 4.5, 5.5),
+    Condition = c("> 8500 kg milk/year", "5000–8500 kg milk/year", "< 5000 kg milk/year", "Unknown milk yield",
+                  "Forage > 75%", "Forage 15–75%", "Forage < 15%", "Unknown forage %", 
+                  "Default for Sheep", "If 'lamb' in Herd.Stage", "Default for Goats")
+  ),
+  caption = "Assigned Ym Values Based on IPCC 2019 Guidelines and Available Data"
+)
+
+```
+
+
+### 16.1) Ym estimations 
 
 ```{r}
 # Step 1: Identify purpose of each B.Code from the production output table
@@ -2341,8 +2630,9 @@ ingredients_cleaned <- ingredients %>%
 # Step 3: Keep only diets where all units are now consistent (all in kg)
 diet_valid_units <- ingredients_cleaned %>%
   group_by(B.Code, A.Level.Name) %>%
-  filter(n_distinct(D.Unit.Amount) == 1) %>%
+  filter(n_distinct(D.Unit.Amount, na.rm = TRUE) == 1) %>%
   ungroup()
+
 
 # Step 2: Tag forage types (you can expand this list as needed)
 forage_types <- c("Forage Trees", "Crop Byproduct", 
@@ -2373,9 +2663,9 @@ forage_proportions <- diet_valid_units %>%
 ```
 
 
-
-### 17.1) Reconstruct Gross Energy at the diet level from ingredient data 
+### 16.2) Reconstruct Gross Energy at the diet level from ingredient data 
 Reconstructs the gross energy of the entire diet from the weighted average of GE values of individual ingredients, when diet-level GE is not reported.
+
 
 ```{r,message=FALSE,warning=FALSE}
 
@@ -2490,7 +2780,7 @@ GE_diet_reconstructed <- GE_from_ingredients %>%
 ```
 
 
-### 17.2) Gross energy at the entire diet level 
+### 16.3) Gross energy at the entire diet level 
 ```{r,message=FALSE,warning=FALSE}
 
 Gross_energy_entire <- Gross_energy %>%
@@ -2544,7 +2834,7 @@ Gross_energy_entire <- Gross_energy %>%
 
 ```
 
-### 17.3) Merge GE data with feed intake 
+### 16.4) Merge GE data with feed intake 
 
 ```{r,message=FALSE,warning=FALSE}
   # Make sure 'purpose_by_code' is unique per B.Code
@@ -2611,6 +2901,8 @@ Ym = case_when(
 
 
 ```
+
+
 
 ```{r,message=FALSE,warning=FALSE}
 ###############################################################################
@@ -2711,7 +3003,7 @@ Ym = case_when(
 
 
 
-### 17.4) Final calculation
+### 16.5) Final calculation
 
 ```{r,message=FALSE,warning=FALSE}
 #combine
@@ -2842,12 +3134,12 @@ cat("Total unique ingredients:", total_ingredients, "\n")
 
 
 
-## 19) Link emissions to productivity data 
+## 17) Link emissions to productivity data 
 
 here we will have the same issue as with feed intake data since the Alevel in the data tab dont always latch the ones in the diet tab 
 
 
-### 19.1) Merge yield and emission data 
+### 17.1) Merge yield and emission data 
 
 ```{r}
 
@@ -2866,7 +3158,7 @@ yield_with_emissions <- yield_data %>%
 
 ```
 
-
+### 17.2) Plot the data
 ```{r}
 
 # Filter meat yield data and drop missing values
@@ -2903,6 +3195,7 @@ ggplot(yield_meat, aes(x = ED.Mean.T, y = CH4_kg_year, color = P.Product)) +
 
 
 ```
+
 ```{r}
 # Filter meat yield data and drop missing values
 yield_milk <- yield_with_emissions %>%
@@ -2951,6 +3244,129 @@ ggplot(emissions_by_species, aes(x = P.Product, y = CH4_kg_year, fill = P.Produc
   ) +
   theme_minimal() +
   theme(legend.position = "none")  # remove redundant legend
+
+```
+```{r}
+# Filter and clean data for Goat and Sheep only
+emissions_by_species <- yield_with_emissions %>%
+  filter(!is.na(CH4_kg_year), P.Product %in% c("Goat", "Sheep"))
+
+# Boxplot with transparent points for Goat and Sheep
+ggplot(emissions_by_species, aes(x = P.Product, y = CH4_kg_year, fill = P.Product)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.4) +
+  geom_jitter(width = 0.2, alpha = 0.5, color = "black", size = 2) +
+  labs(
+    title = "Annual CH4 Emissions: Goat vs. Sheep",
+    x = "Species",
+    y = "Annual CH4 Emissions (kg)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+```
+```{r}
+
+ingredients_cleaned <- ingredients %>%
+  mutate(
+    D.Amount = ifelse(D.Unit.Amount == "g", D.Amount / 1000, D.Amount),
+    D.Unit.Amount = ifelse(D.Unit.Amount == "g", "kg", D.Unit.Amount)
+  )
+
+# Step 3: Keep only diets where all units are now consistent (all in kg)
+diet_valid_units <- ingredients_cleaned %>%
+  group_by(B.Code, A.Level.Name) %>%
+  filter(n_distinct(D.Unit.Amount, na.rm = TRUE) == 1) %>%
+  ungroup()
+
+# Step 2: Tag forage types (you can expand this list as needed)
+forage_types <- c("Forage Trees", "Crop Byproduct", 
+                  "Herbaceous Fodders", "Agroforestry Fodders")
+
+forage_proportions <- diet_valid_units %>%
+  left_join(merged_metadata$Prod.Out, by = "B.Code") %>%
+  filter(D.Type != "Entire Diet") %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    any_na = any(is.na(D.Amount)),
+    total_diet = ifelse(any_na, NA_real_, sum(D.Amount, na.rm = TRUE)),
+    total_forage = ifelse(any_na, NA_real_, sum(D.Amount[D.Type %in% forage_types], na.rm = TRUE)),
+    n_ingredients = n(),
+    is_forage = all(D.Type %in% forage_types),
+    D.Type.first = D.Type[1],
+    D.Unit.Amount = first(D.Unit.Amount),
+    P.Product = first(P.Product), 
+    forage_prop = case_when(
+      n_ingredients == 1 & D.Type.first %in% forage_types ~ 1,
+      n_ingredients == 1 & !(D.Type.first %in% forage_types) ~ 0,
+      total_diet > 0 ~ total_forage / total_diet,
+      TRUE ~ NA_real_
+    ),
+    .groups = "drop"
+  )
+
+
+# Step 1: Join forage proportion with CH₄ emissions and species info
+forage_emission_species <- forage_proportions %>%
+  left_join(GE_combined %>% select(B.Code, D.Item, CH4_kg_year),
+            by = c("B.Code", "A.Level.Name" = "D.Item")) %>%
+  filter(!is.na(forage_prop), !is.na(CH4_kg_year)) %>%
+  group_by(B.Code) %>%
+  filter(n() > 1) %>%  # Keep only B.Codes with more than one diet
+  ungroup()
+
+# Step 2: Calculate relative *decrease* in CH₄ emissions when forage proportion is reduced
+rel_decrease <- forage_emission_species %>%
+  group_by(B.Code) %>%
+  arrange(forage_prop, .by_group = TRUE) %>%
+  summarise(
+    min_forage = first(forage_prop),
+    max_forage = last(forage_prop),
+    min_CH4 = first(CH4_kg_year),
+    max_CH4 = last(CH4_kg_year),
+    P.Product = first(P.Product),
+    .groups = "drop"
+  ) %>%
+  filter(max_CH4 > 0) %>%
+  mutate(
+    rel_decrease_CH4 = (max_CH4 - min_CH4) / max_CH4 * 100  # % decrease in CH₄ when forage is reduced
+  )
+
+# Step 3: Plot relative CH₄ decrease by species
+ggplot(rel_decrease, aes(x = P.Product, y = rel_decrease_CH4, fill = P.Product)) +
+  geom_boxplot(alpha = 0.5) +
+  geom_jitter(width = 0.2, alpha = 0.7, size = 2) +
+  labs(
+    title = "Relative Decrease in CH4 Emissions with Lower Forage Proportion",
+    x = "Livestock Species",
+    y = "Relative Decrease in CH4 (%)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+```
+
+```{r}
+# Step 1: Join forage proportions with CH₄ emissions and species info
+forage_emission_continuous <- forage_proportions %>%
+  left_join(
+    GE_combined %>% select(B.Code, D.Item, CH4_kg_year),
+    by = c("B.Code", "A.Level.Name" = "D.Item")
+  ) %>%
+  filter(!is.na(forage_prop), !is.na(CH4_kg_year), !is.na(P.Product))
+
+# Step 2: Plot the continuous relationship with smoothing
+ggplot(forage_emission_continuous, aes(x = forage_prop, y = CH4_kg_year, color = P.Product)) +
+  geom_point(alpha = 0.6, size = 2.5) +
+  geom_smooth(method = "lm", se = TRUE, linetype = "dashed", size = 1) +
+  labs(
+    title = "Relationship Between Forage Proportion and CH₄ Emissions",
+    x = "Forage Proportion in Diet",
+    y = "Annual CH₄ Emissions (kg)",
+    color = "Species"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
 
 ```
 
