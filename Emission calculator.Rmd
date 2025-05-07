@@ -116,7 +116,7 @@ digest_cols <- c("B.Code", "D.Item", "is_entire_diet", "DD.Variable",
                  "DD.Value", "DD.Unit")
 
 data_cols <- c("B.Code", "A.Level.Name","Out.Code.Joined", "ED.Intake.Item", "ED.Intake.Item.Raw", 
-               "ED.Mean.T", "ED.Error","Out.Subind", "Out.Unit", "Out.WG.Start", "Out.WG.Unit","is_entire_diet")
+               "ED.Mean.T", "ED.Error","Out.Subind", "Out.Unit", "Out.WG.Start", "Out.WG.Unit","is_entire_diet","T.Animals")
 
 prod_cols <- c("B.Code", "P.Product")
 
@@ -131,7 +131,7 @@ prod_livestock   <- livestock_metadata$Prod.Out[, ..prod_cols][, Source := "live
 # Extract camel tables and rename columns to match livestock structure
 diet_camel <- camel$Animal.Diet[, ..diet_cols][, Source := "camel"]
 
-#merge Mt and Data to ave A.Level.Name in data 
+#merge Mt and Data to have A.Level.Name in data 
 
 camel$Data.Out<-merge(x=camel$Data.Out,
 y= camel$MT.Out[,.(B.Code,T.Name,A.Level.Name)],by=c("B.Code","T.Name"),all.x=T,sort=F)
@@ -159,27 +159,35 @@ digest_camel <- camel$Animal.Diet.Digest[, .(
 )][, Source := "camel"]
 
 # Join Data.Out from camel with Herd to get weight info
-herd_weight <- camel$Herd.Out[, .(
-  B.Code, A.Level.Name = Herd.Level.Name, 
-  Out.WG.Start = Herd.Start.Weight, 
-  Out.WG.Unit = Herd.Start.Weight.Unit
+# Create herd_info with renamed T.Animals
+herd_info <- camel$Herd.Out[, .(
+  B.Code,
+  A.Level.Name = Herd.Level.Name,
+  Out.WG.Start = Herd.Start.Weight,
+  Out.WG.Unit = Herd.Start.Weight.Unit,
+  T.Animals = Herd.N  # Rename here
 )]
 
+# Merge into Data.Out
 data_camel <- camel$Data.Out[
   , .(B.Code, ED.Intake.Item, 
       ED.Intake.Item.Raw = ED.Intake.Item, 
-      A.Level.Name,  # Temporarily keep this as-is for now
-      ED.Mean.T, ED.Error, Out.Unit,Out.Subind)
+      A.Level.Name,
+      ED.Mean.T, ED.Error, Out.Unit, Out.Subind)
 ][
-  herd_weight, 
-  on = .(B.Code), 
-  `:=`(P.Product = i.A.Level.Name, 
-       Out.WG.Start = i.Out.WG.Start, 
-       Out.WG.Unit = i.Out.WG.Unit)
+  herd_info,
+  on = .(B.Code),
+  `:=`(
+    P.Product = i.A.Level.Name,
+    Out.WG.Start = i.Out.WG.Start,
+    Out.WG.Unit = i.Out.WG.Unit,
+    T.Animals = i.T.Animals
+  )
 ][
   , .(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, 
-      ED.Mean.T, ED.Error, Out.Unit,Out.Subind, Out.WG.Start, Out.WG.Unit)
+      ED.Mean.T, ED.Error, Out.Unit, Out.Subind, Out.WG.Start, Out.WG.Unit, T.Animals)
 ][, Source := "camel"]
+
 
 
 # Extract product info from Herd table in camel
@@ -321,6 +329,22 @@ merged_metadata$Animals.Diet <- merged_metadata$Animals.Diet %>%
   select(-priority)  # optional: drop helper column
 
 rm(preferred_units,preferred_time,preferred_animals)
+
+
+### correct extraction errors 
+
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  mutate(
+    DC.Value = ifelse(
+      B.Code == "BO1006" &
+      DC.Variable == "Ash" &
+      D.Item == "Ration 2" & 
+      as.numeric(DC.Value) == 628,
+      6.28,
+      DC.Value
+    )
+  )
+
 
 ```
 
@@ -633,7 +657,8 @@ ingredients <- ingredients %>%
 
 #take out water 
 ingredients<-ingredients%>%
-  filter(D.Item!="Water")
+filter(D.Item != "Water" | is.na(D.Item))
+
 
 rm(dry_classified,dry_name_match,dry_prediction_final,extra_dry)
 
@@ -746,7 +771,7 @@ missing_unit_feed_intake<- merged_metadata$Data.Out %>%
 ```{r}
 feed_intake <- merged_metadata$Data.Out %>%
   select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw,
-         ED.Mean.T, ED.Error, Out.Unit, Out.Subind,is_entire_diet) %>%
+         ED.Mean.T, ED.Error, Out.Unit, Out.Subind,is_entire_diet,T.Animals) %>%
   filter(Out.Subind == "Feed Intake") %>%
   filter(!is.na(ED.Mean.T))%>%
   mutate(
@@ -764,12 +789,7 @@ feed_intake <- merged_metadata$Data.Out %>%
 
 
 # Step 3: Convert replicate-level intake to individual-level when possible
-# Step 3: Convert replicate-level intake to individual-level when possible
 feed_intake <- feed_intake %>%
-  left_join(
-    merged_metadata$MT.Out %>% select(B.Code, A.Level.Name, T.Animals),
-    by = c("B.Code", "A.Level.Name")
-  ) %>%
   mutate(
     # Ensure numeric type
     ED.Mean.T = as.numeric(ED.Mean.T),
@@ -974,36 +994,36 @@ ingredients <- ingredients %>%
 Basal diets serve as the control and foundation for all treatments in livestock experiments. They are present in both the control diet and in every treatment diet that includes additional ingredients. This section integrates basal diet ingredients into the treatment diets while preserving the original basal formulation, and it flags any ingredient that originates from the basal diet.Basal diets (base diets) are merged into treatment diets to ensure consistency across feeding trials, allowing for a more accurate estimate of total diet composition.
 
 ```{r,message=FALSE,warning=FALSE}
-# Identify basal diets
-basal_diets <- ingredients %>%
-  filter(tolower(str_trim(A.Level.Name)) == "base") %>%
-  mutate(from_basal = TRUE)
-
-
-# Identify non-basal diets
-non_basal_diets <- ingredients %>%
-  filter(tolower(str_trim(A.Level.Name)) != "base") %>%
-  mutate(from_basal = FALSE)
-
-# Duplicate basal diets for each non-basal diet within the same B.Code
-basal_expanded <- non_basal_diets %>%
-  dplyr::select(B.Code, A.Level.Name) %>%
-  distinct() %>%
-  inner_join(basal_diets, by="B.Code") %>%
-  mutate(
-    A.Level.Name = A.Level.Name.x, # carry over the non-basal A.Level.Name
-    from_basal   = TRUE
-  ) %>%
-  dplyr::select(-A.Level.Name.x, -A.Level.Name.y)
-
-# Combine everything into one integrated dataset
-ingredients <- bind_rows(
-  non_basal_diets,   # original non-basal
-  basal_expanded,    # basal items added to each non-basal diet
-  basal_diets        # keep the purely basal diet for control
-)
-
-rm(basal_expanded,basal_diets,non_basal_diets)
+# # Identify basal diets
+# basal_diets <- ingredients %>%
+#   filter(tolower(str_trim(A.Level.Name)) == "base") %>%
+#   mutate(from_basal = TRUE)
+# 
+# 
+# # Identify non-basal diets
+# non_basal_diets <- ingredients %>%
+#   filter(tolower(str_trim(A.Level.Name)) != "base") %>%
+#   mutate(from_basal = FALSE)
+# 
+# # Duplicate basal diets for each non-basal diet within the same B.Code
+# basal_expanded <- non_basal_diets %>%
+#   dplyr::select(B.Code, A.Level.Name) %>%
+#   distinct() %>%
+#   inner_join(basal_diets, by="B.Code") %>%
+#   mutate(
+#     A.Level.Name = A.Level.Name.x, # carry over the non-basal A.Level.Name
+#     from_basal   = TRUE
+#   ) %>%
+#   dplyr::select(-A.Level.Name.x, -A.Level.Name.y)
+# 
+# # Combine everything into one integrated dataset
+# ingredients <- bind_rows(
+#   non_basal_diets,   # original non-basal
+#   basal_expanded,    # basal items added to each non-basal diet
+#   basal_diets        # keep the purely basal diet for control
+# )
+# 
+# rm(basal_expanded,basal_diets,non_basal_diets)
 
 ```
 
@@ -1093,6 +1113,9 @@ ingredients <- ingredients %>%
 
 
 ### 4.2) Feed intake at the diet level  
+
+
+TO do : See BO1070 we ewant the full diet to be included form feed intake which is not the case now see feed intake data the goal would be to add rows in ingredient to add info at the entire diet level have a close look to make it the smae format as entire diets alreayd in ingredients 
 
 ```{r}
 # Step: Extract feed intake entries that refer to the entire diet
@@ -1755,6 +1778,31 @@ total_amounts <- consistent_diets %>%
   group_by(B.Code, A.Level.Name, D.Unit.Amount) %>%
   summarise(Total_Amount = sum(D.Amount), .groups = "drop")
 
+# Step 1: Standardize feed intake units to grams (g)
+feed_intake_diet_g <- feed_intake_diet %>%
+  mutate(
+    Intake_Amount_g = case_when(
+      Out.Unit.Amount == "kg" ~ ED.Mean.T * 1000,
+      Out.Unit.Amount == "g" ~ ED.Mean.T,
+      TRUE ~ NA_real_
+    ),
+    D.Unit.Amount = "g"
+  ) %>%
+  select(B.Code, A.Level.Name, Intake_Amount_g, D.Unit.Amount)
+
+# Step 2: Join with total_amounts — right_join ensures all feed intake rows are retained
+total_amounts<- full_join(
+  total_amounts %>% rename(Total_Amount_orig = Total_Amount),
+  feed_intake_diet_g,
+  by = c("B.Code", "A.Level.Name", "D.Unit.Amount")
+) %>%
+  mutate(
+    # Keep original total amount if available, otherwise use feed intake
+    Total_Amount = coalesce(Total_Amount_orig, Intake_Amount_g)
+  ) %>%
+  select(B.Code, A.Level.Name, D.Unit.Amount, Total_Amount)
+
+
 # Display the resulting table
 
 
@@ -1788,7 +1836,6 @@ diet_percentages <- consistent_diets %>%
     D.Amount,
     D.Unit.Amount,
     Percentage_of_Diet,
-    from_basal
   )
 
 # Table 2: Relative percentage of each ingredient in each diet
@@ -2713,7 +2760,8 @@ GE_from_ingredients <- ingredients_with_GE %>%
 # 4. Use GE_diet when full diet-level GE is missing
 # Join forage proportions into GE_diet_reconstructed
 GE_diet_reconstructed <- GE_from_ingredients %>%
-  left_join(total_amounts %>% select(B.Code, A.Level.Name, Total_Amount, D.Unit.Amount),
+  left_join(total_amounts %>%
+              select(B.Code, A.Level.Name, Total_Amount, D.Unit.Amount),
             by = c("B.Code", "A.Level.Name")) %>%
   left_join(merged_metadata$Prod.Out %>% select(B.Code, P.Product, Herd.Stage), by = "B.Code") %>%
   left_join(purpose_by_code, by = "B.Code") %>%
@@ -2727,31 +2775,22 @@ GE_diet_reconstructed <- GE_from_ingredients %>%
       D.Unit.Amount == "kg" ~ Total_Amount,
       TRUE ~ NA_real_
     ),
+    D.Unit.Amount = "kg",  # <- FORCE ALL TO BE KG
     
-    # Assign Ym using purpose and forage info
     Ym = case_when(
-  # --- Dairy cattle based on productivity ---
-  P.Product == "Cattle" & Purpose == "Dairy" & milk_kg_year > 8500 ~ 0.057,
-  P.Product == "Cattle" & Purpose == "Dairy" & milk_kg_year >= 5000 ~ 0.063,
-  P.Product == "Cattle" & Purpose == "Dairy" & milk_kg_year < 5000 ~ 0.065,
-  P.Product == "Cattle" & Purpose == "Dairy" & is.na(milk_kg_year)  ~ 0.06,
-  
-  # --- Meat cattle based on forage proportions ---
-  P.Product == "Cattle" & Purpose == "Meat" & forage_prop > 0.75 ~ 0.07,
-  P.Product == "Cattle" & Purpose == "Meat" & forage_prop > 0.15 ~ 0.063,
-  P.Product == "Cattle" & Purpose == "Meat" & forage_prop >= 0 ~ 0.04,
-  P.Product == "Cattle" & Purpose == "Meat" & is.na(forage_prop) ~ 0.065,
-
-  # --- Sheep & Lambs ---
-  P.Product == "Sheep" & grepl("lamb", Herd.Stage, ignore.case = TRUE) ~ 0.045,
-  P.Product == "Sheep" ~ 0.067,
-
-  # --- Goats ---
-  P.Product == "Goat" ~ 0.055,
-  
-  TRUE ~ NA_real_
-)
-,
+      P.Product == "Cattle" & Purpose == "Dairy" & milk_kg_year > 8500 ~ 0.057,
+      P.Product == "Cattle" & Purpose == "Dairy" & milk_kg_year >= 5000 ~ 0.063,
+      P.Product == "Cattle" & Purpose == "Dairy" & milk_kg_year < 5000 ~ 0.065,
+      P.Product == "Cattle" & Purpose == "Dairy" & is.na(milk_kg_year)  ~ 0.06,
+      P.Product == "Cattle" & Purpose == "Meat" & forage_prop > 0.75 ~ 0.07,
+      P.Product == "Cattle" & Purpose == "Meat" & forage_prop > 0.15 ~ 0.063,
+      P.Product == "Cattle" & Purpose == "Meat" & forage_prop >= 0 ~ 0.04,
+      P.Product == "Cattle" & Purpose == "Meat" & is.na(forage_prop) ~ 0.065,
+      P.Product == "Sheep" & grepl("lamb", Herd.Stage, ignore.case = TRUE) ~ 0.045,
+      P.Product == "Sheep" ~ 0.067,
+      P.Product == "Goat" ~ 0.055,
+      TRUE ~ NA_real_
+    ),
     
     GE_daily = ifelse(!is.na(GE_diet) & !is.na(Total_Amount_kg),
                       GE_diet * Total_Amount_kg,
@@ -2775,7 +2814,8 @@ GE_diet_reconstructed <- GE_from_ingredients %>%
   rename(D.Item = A.Level.Name) %>%
   select(B.Code, D.Item, P.Product, Herd.Stage, GE_daily, CH4_kg_year, 
          Total_Amount = Total_Amount_kg, D.Unit.Amount, ED.Mean.T = Total_Amount_kg, 
-         CH4_flag,Ym, source)
+         CH4_flag, Ym, source)
+
 
 ```
 
@@ -3193,7 +3233,6 @@ ggplot(yield_meat, aes(x = ED.Mean.T, y = CH4_kg_year, color = P.Product)) +
 
 
 
-
 ```
 
 ```{r}
@@ -3228,6 +3267,8 @@ ggplot(yield_milk, aes(x = ED.Mean.T, y = CH4_kg_year, color = P.Product)) +
   theme(legend.position = "bottom")
 
 ```
+
+
 ```{r}
 # Filter and clean data
 emissions_by_species <- yield_with_emissions %>%
@@ -3246,6 +3287,8 @@ ggplot(emissions_by_species, aes(x = P.Product, y = CH4_kg_year, fill = P.Produc
   theme(legend.position = "none")  # remove redundant legend
 
 ```
+
+
 ```{r}
 # Filter and clean data for Goat and Sheep only
 emissions_by_species <- yield_with_emissions %>%
@@ -3264,6 +3307,8 @@ ggplot(emissions_by_species, aes(x = P.Product, y = CH4_kg_year, fill = P.Produc
   theme(legend.position = "none")
 
 ```
+
+
 ```{r}
 
 ingredients_cleaned <- ingredients %>%
@@ -3278,95 +3323,214 @@ diet_valid_units <- ingredients_cleaned %>%
   filter(n_distinct(D.Unit.Amount, na.rm = TRUE) == 1) %>%
   ungroup()
 
-# Step 2: Tag forage types (you can expand this list as needed)
-forage_types <- c("Forage Trees", "Crop Byproduct", 
-                  "Herbaceous Fodders", "Agroforestry Fodders")
 
-forage_proportions <- diet_valid_units %>%
-  left_join(merged_metadata$Prod.Out, by = "B.Code") %>%
-  filter(D.Type != "Entire Diet") %>%
-  group_by(B.Code, A.Level.Name) %>%
+forage_types    <- c("Forage Trees", "Herbaceous Fodders", "Agroforestry Fodders")
+forage_keywords <- c("hay", "straw", "stover","silage","grass")
+
+
+forage_summary <- ingredients %>% 
+  
+  # 1. Harmonise units and flag forage ------------------------------
+  mutate(
+    D.Amount_kg = if_else(D.Unit.Amount == "g", D.Amount / 1000, D.Amount),
+    
+    is_forage   =  D.Type %in% forage_types  |                        # exact match in D.Type
+                   str_detect(str_to_lower(D.Item),
+                              str_c(forage_keywords, collapse = "|")) # keyword in D.Item
+  ) %>% 
+  
+  # 2. Keep diets that use one single mass‑unit ----------------------
+  group_by(B.Code, A.Level.Name) %>% 
+  filter(n_distinct(D.Unit.Amount, na.rm = TRUE) == 1) %>% 
+  
+  # 3. Compute forage proportion ------------------------------------
   summarise(
-    any_na = any(is.na(D.Amount)),
-    total_diet = ifelse(any_na, NA_real_, sum(D.Amount, na.rm = TRUE)),
-    total_forage = ifelse(any_na, NA_real_, sum(D.Amount[D.Type %in% forage_types], na.rm = TRUE)),
+    forage_prop   = sum(D.Amount_kg[is_forage]) / sum(D.Amount_kg),
     n_ingredients = n(),
-    is_forage = all(D.Type %in% forage_types),
-    D.Type.first = D.Type[1],
-    D.Unit.Amount = first(D.Unit.Amount),
-    P.Product = first(P.Product), 
-    forage_prop = case_when(
-      n_ingredients == 1 & D.Type.first %in% forage_types ~ 1,
-      n_ingredients == 1 & !(D.Type.first %in% forage_types) ~ 0,
-      total_diet > 0 ~ total_forage / total_diet,
-      TRUE ~ NA_real_
-    ),
-    .groups = "drop"
+    .groups       = "drop"
   )
 
 
-# Step 1: Join forage proportion with CH₄ emissions and species info
-forage_emission_species <- forage_proportions %>%
-  left_join(GE_combined %>% select(B.Code, D.Item, CH4_kg_year),
-            by = c("B.Code", "A.Level.Name" = "D.Item")) %>%
-  filter(!is.na(forage_prop), !is.na(CH4_kg_year)) %>%
-  group_by(B.Code) %>%
-  filter(n() > 1) %>%  # Keep only B.Codes with more than one diet
+# 4. Attach CH₄ data and keep diets that appear ≥ 2 times ----------
+forage_ch4 <- forage_summary %>% 
+  inner_join(
+    GE_combined %>% select(B.Code, D.Item, CH4_kg_year),
+    by = c("B.Code", "A.Level.Name" = "D.Item")
+  ) %>% 
+  left_join(
+    merged_metadata$Prod.Out %>% select(B.Code, P.Product),   #  ⇦ add this line
+    by = "B.Code"
+  ) %>% 
+  group_by(B.Code) %>% 
+  filter(n() >= 2) %>% 
   ungroup()
 
-# Step 2: Calculate relative *decrease* in CH₄ emissions when forage proportion is reduced
-rel_decrease <- forage_emission_species %>%
-  group_by(B.Code) %>%
-  arrange(forage_prop, .by_group = TRUE) %>%
+
+# 5A. *Relative* change in CH₄ within each diet --------------------
+relative_change <- forage_ch4 %>% 
+  group_by(B.Code) %>% 
   summarise(
-    min_forage = first(forage_prop),
-    max_forage = last(forage_prop),
-    min_CH4 = first(CH4_kg_year),
-    max_CH4 = last(CH4_kg_year),
-    P.Product = first(P.Product),
-    .groups = "drop"
-  ) %>%
-  filter(max_CH4 > 0) %>%
-  mutate(
-    rel_decrease_CH4 = (max_CH4 - min_CH4) / max_CH4 * 100  # % decrease in CH₄ when forage is reduced
+    rel_decrease_ch4 = 100 * diff(range(CH4_kg_year)) / max(CH4_kg_year),
+    min_forage       = min(forage_prop),
+    max_forage       = max(forage_prop),
+    P.Product        = first(P.Product),
+    .groups          = "drop"
   )
 
-# Step 3: Plot relative CH₄ decrease by species
-ggplot(rel_decrease, aes(x = P.Product, y = rel_decrease_CH4, fill = P.Product)) +
-  geom_boxplot(alpha = 0.5) +
-  geom_jitter(width = 0.2, alpha = 0.7, size = 2) +
-  labs(
-    title = "Relative Decrease in CH4 Emissions with Lower Forage Proportion",
-    x = "Livestock Species",
-    y = "Relative Decrease in CH4 (%)"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "none")
+# 5B. *Slope* (ΔCH₄ / Δforage) within each diet -------------------
+#   – sometimes more interpretable than % change
+slopes <- forage_ch4 %>% 
+  group_by(B.Code) %>% 
+  summarise(
+    slope_ch4 = {
+      ok <- complete.cases(forage_prop, CH4_kg_year)
+      if (sum(ok) >= 2) coef(lm(CH4_kg_year[ok] ~ forage_prop[ok]))[2] else NA_real_
+    },
+    r2 = {
+      ok <- complete.cases(forage_prop, CH4_kg_year)
+      if (sum(ok) >= 2) summary(lm(CH4_kg_year[ok] ~ forage_prop[ok]))$r.squared else NA_real_
+    },
+    P.Product = first(P.Product),
+    .groups   = "drop"
+  )
 
+ggplot(slopes,
+       aes(P.Product, slope_ch4, fill = P.Product)) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_boxplot(alpha = 0.4, outlier.shape = NA) +
+  geom_jitter(width = 0.15, alpha = 0.7, size = 2) +
+  labs(
+    title = "Within‑diet slope of CH₄ vs. forage proportion",
+    y = "Slope (kg CH₄ per unit forage proportion)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none")
 
 ```
 
-```{r}
-# Step 1: Join forage proportions with CH₄ emissions and species info
-forage_emission_continuous <- forage_proportions %>%
-  left_join(
-    GE_combined %>% select(B.Code, D.Item, CH4_kg_year),
-    by = c("B.Code", "A.Level.Name" = "D.Item")
-  ) %>%
-  filter(!is.na(forage_prop), !is.na(CH4_kg_year), !is.na(P.Product))
 
-# Step 2: Plot the continuous relationship with smoothing
-ggplot(forage_emission_continuous, aes(x = forage_prop, y = CH4_kg_year, color = P.Product)) +
-  geom_point(alpha = 0.6, size = 2.5) +
-  geom_smooth(method = "lm", se = TRUE, linetype = "dashed", size = 1) +
+
+```{r}
+## 1) Live‑weight table --------------------------------------------------------
+bw_tbl <- weights_unique %>% 
+  select(B.Code, LiveWeight_kg = Out.WG.Start) %>% 
+  filter(!is.na(LiveWeight_kg))
+
+## 2) Merge with CH₄ and keep P.Product already present -----------------------
+ch4_vs_bw <- GE_combined %>%                       # contains P.Product
+  filter(!is.na(CH4_kg_year)) %>% 
+  left_join(bw_tbl, by = "B.Code") %>% 
+  filter(!is.na(LiveWeight_kg) & LiveWeight_kg > 0)
+
+## 3) Plot ---------------------------------------------------------------------
+##########################################################
+## CH4 vs. live‑weight with 95 % confidence intervals   ##
+##########################################################
+
+ggplot(ch4_vs_bw,
+       aes(x = LiveWeight_kg, y = CH4_kg_year, colour = P.Product)) +
+  geom_point(alpha = 0.65, size = 2.3) +
+  geom_smooth(method  = "lm",
+              formula = y ~ log10(x),  # linear in log‑weight
+              se      = TRUE,          # << confidence ribbon
+              linetype = "dashed",
+              linewidth = 1) +
+  scale_x_log10(breaks = scales::log_breaks(), labels = scales::comma) +
   labs(
-    title = "Relationship Between Forage Proportion and CH₄ Emissions",
-    x = "Forage Proportion in Diet",
-    y = "Annual CH₄ Emissions (kg)",
-    color = "Species"
+    title  = "Annual CH4 emissions vs. live weight",
+    x      = "Body weight (kg, log scale)",
+    y      = "CH₄  (kg animal⁻¹ year⁻¹)",
+    colour = "Species"
   ) +
-  theme_minimal() +
+  theme_minimal(base_size = 13) +
   theme(legend.position = "bottom")
+
+
+
+```
+```{r}
+########################################################
+## % concentrate (strict rule) vs. CH₄ g kg⁻¹ DMI     ##
+########################################################
+
+## 1)  Tag forage and concentrate ------------------------------------------------
+forage_types    <- c("Forage Trees", "Herbaceous Fodders",
+                     "Agroforestry Fodders", "Pasture", "Crop Byproduct")
+forage_keywords <- c("hay", "straw", "stover", "silage", "grass")
+
+ingredients_fc <- ingredients %>%
+  mutate(
+    name_lc        = str_to_lower(D.Item),
+    
+    is_forage      = D.Type %in% forage_types |
+                     str_detect(name_lc, str_c(forage_keywords, collapse = "|")),
+    
+    is_concentrate = str_detect(name_lc, "concentrate") |
+                     D.Type == "Concentrate",
+    
+    category       = case_when(
+                       is_forage      ~ "Forage",
+                       is_concentrate ~ "Concentrate",
+                       TRUE           ~ "Other"
+                     )
+  )
+
+## 2)  Compute % concentrate per diet ------------------------------------------
+fc_ratio <- ingredients_fc %>%
+  mutate(D.Amount_kg = if_else(D.Unit.Amount == "g", D.Amount / 1000, D.Amount)) %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    kg_conc   = sum(D.Amount_kg[category == "Concentrate"], na.rm = TRUE),
+    kg_total  = sum(D.Amount_kg,                         na.rm = TRUE),
+    pct_conc  = if_else(kg_total > 0, kg_conc / kg_total * 100, NA_real_),
+    .groups   = "drop"
+  )
+
+## 3)  Bring in intake (kg DMI d‑¹) and CH₄ (kg y‑¹) ---------------------------
+intake_tbl <- feed_intake_diet %>%
+  select(B.Code, A.Level.Name, DMI_kg_d = ED.Mean.T)
+
+ch4_tbl <- GE_combined %>%
+  rename(A.Level.Name = D.Item) %>%
+  select(B.Code, A.Level.Name, CH4_kg_year)
+
+fc_full <- fc_ratio %>%
+  left_join(intake_tbl, by = c("B.Code", "A.Level.Name")) %>%
+  left_join(ch4_tbl,   by = c("B.Code", "A.Level.Name")) %>%
+  left_join(
+    merged_metadata$Prod.Out %>% select(B.Code, P.Product),
+    by = "B.Code"
+  ) %>%
+  mutate(
+    CH4_g_kgDMI = CH4_kg_year * 1000 / (DMI_kg_d * 365)
+  ) %>%
+  filter(!is.na(pct_conc), !is.na(CH4_g_kgDMI), !is.na(P.Product))
+
+## 4)  Plot % concentrate vs CH₄ intensity -------------------------------------
+ggplot(fc_full,
+       aes(x = pct_conc, y = CH4_g_kgDMI, colour = P.Product)) +
+  geom_point(alpha = 0.7, size = 2.3) +
+  geom_smooth(method = "lm", se = TRUE, linetype = "dashed") +
+  labs(
+    title  = "Concentrate proportion vs. CH₄ intensity",
+    x      = "% concentrate in diet (DM basis)",
+    y      = "CH₄ (g kg⁻¹ DMI)",
+    colour = "Species"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "bottom")
+
+## 5)  Species‑level slopes -----------------------------------------------------
+fc_slopes <- fc_full %>%
+  group_by(P.Product) %>%
+  summarise(
+    slope_gCH4_per_pctC = coef(lm(CH4_g_kgDMI ~ pct_conc))[2],
+    r2                  = summary(lm(CH4_g_kgDMI ~ pct_conc))$r.squared,
+    n_diets             = n(),
+    .groups = "drop"
+  )
+
+print(fc_slopes)
 
 ```
 
