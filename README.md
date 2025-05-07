@@ -11,7 +11,7 @@ Explore the rendered HTML files for detailed documentation:
 
 - [Update of 2024-2025 Livestock Extraction](https://eragriculture.github.io/ERL/Update-of-2024_2025-Livestock-Extraction.html)
 
-- [Diet items for emission calculator](https://eragriculture.github.io/ERL/Diet-items-for-emission-calculator.html)
+- [Diet items for emission calculator](https://eragriculture.github.io/ERL/emission-calculator.html)
 ---
 
 ## Key Features
