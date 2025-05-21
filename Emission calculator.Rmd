@@ -107,7 +107,7 @@ diet_cols <- c("B.Code", "A.Level.Name", "D.Item", "D.Type", "D.Amount",
                "D.Unit.Amount", "D.Unit.Time", "D.Unit.Animals", "DC.Is.Dry", 
                "D.Ad.lib", "D.Is.Group")
 
-mt_cols <- c("B.Code", "A.Level.Name", "T.Animals","T.Name")
+mt_cols <- c("B.Code", "A.Level.Name", "T.Animals","T.Name","T.Control")
 
 comp_cols <- c("B.Code", "D.Item", "is_entire_diet", "DC.Variable", 
                "DC.Value", "DC.Unit")
@@ -907,27 +907,53 @@ Performs basic outlier checks on feed intake data, identifying suspiciously high
 
 # Filter for units that imply kg/day/individual and check if ED.Mean.T > 50
 # Identify suspicious feed intake values
-suspicious_feed_intake <- feed_intake %>%
-  filter(
-    # Suspiciously high intake in kg/day/individual
-    (
-      Out.Unit.Amount %in% c("kg", "kg dm") & 
-      ED.Mean.T > 50 &
-      Out.Unit.Time == "day" &
-      Out.Unit.Animals == "individual"
-    ) |
-    
-    # Suspiciously low intake in g or g dm (regardless of time/animal units)
-    (
-      Out.Unit.Amount %in% c("g", "g dm") &
-      ED.Mean.T >= 1 & ED.Mean.T <= 20
-    )
-  ) %>%
-  select(B.Code, A.Level.Name, ED.Mean.T, Out.Unit.Amount, Out.Unit.Time, Out.Unit.Animals)
+## ---- detect_suspicious_feed_intake -----------------------------------------
+# Thresholds
+high_kg <- 50      # > 50 kg d-1 animal-1  ⟹ unrealistically high
+low_kg  <- 0.1     # < 0.1 kg d-1 animal-1 ⟹ unrealistically low
+low_g_min <- 1     # 1–20 g range unlikely for daily intake
+low_g_max <- 20
 
-# View suspicious entries
+suspicious_feed_intake <- feed_intake %>% 
+  mutate(
+    flag = case_when(
+      Out.Unit.Amount %in% c("kg", "kg dm") &
+      Out.Unit.Time   == "day"              &
+      Out.Unit.Animals == "individual" & ED.Mean.T >  high_kg ~ "too_high_kg",
+
+      Out.Unit.Amount %in% c("kg", "kg dm") &
+      Out.Unit.Time   == "day"              &
+      Out.Unit.Animals == "individual" & ED.Mean.T <  low_kg  ~ "too_low_kg",
+
+      Out.Unit.Amount %in% c("g",  "g dm")  &
+      ED.Mean.T >= low_g_min & ED.Mean.T <= low_g_max          ~ "implausibly_low_g",
+
+      TRUE ~ NA_character_
+    )
+  ) %>% 
+  filter(!is.na(flag)) %>% 
+  select(B.Code, A.Level.Name, ED.Mean.T,
+         Out.Unit.Amount, Out.Unit.Time, Out.Unit.Animals, flag)
+
 print(suspicious_feed_intake)
 
+
+low_intake_codes <- feed_intake %>% 
+  filter(
+    # (a) < 0.1 kg / day / individual
+    (Out.Unit.Amount %in% c("kg", "kg dm") &
+     Out.Unit.Time   == "day" &
+     Out.Unit.Animals == "individual" &
+     ED.Mean.T < 0.1) |
+    
+    # (b) 1–20 g reported in gram units
+    (Out.Unit.Amount %in% c("g", "g dm") &
+     ED.Mean.T >= 1 & ED.Mean.T <= 20)
+  ) %>% 
+  distinct(B.Code) %>%           # keep each code only once
+  pull()                         # return as a plain character vector
+
+low_intake_codes
 
 
 ```
@@ -1057,6 +1083,25 @@ ingredients <- ingredients %>%
 
 ```
 
+
+
+add if treatments are control or not 
+
+```{r}
+
+
+# 1 ── Build a one-row-per-diet key from MT.Out ---------------------------
+ctrl_key <- merged_metadata$MT.Out %>% 
+  select(B.Code, A.Level.Name, T.Control) %>%      # keep only what we need
+  distinct()                                       # drop any accidental duplicates
+# If some diets still appear more than once (rare) choose one value:
+#   distinct() above is usually enough; otherwise replace it with:
+#   group_by(B.Code, A.Level.Name) %>% summarise(T.Control = first(T.Control), .groups = "drop")
+
+# 2 ── Add T.Control to the ingredients table ----------------------------
+ingredients <- ingredients %>% 
+  left_join(ctrl_key, by = c("B.Code", "A.Level.Name"))
+```
 
 ## 4) Replace feed intake data where available
 
@@ -1526,43 +1571,45 @@ Now that we have both raw and Feedipedia data, we can use them to infer missing 
 
 ```{r}
 # --- Standardize Units in Animals.Diet.Comp ---
-merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
-mutate(
-  DC.Unit = trimws(tolower(DC.Unit)),
-  DC.Value = as.numeric(DC.Value),
-
-  DC.Value = case_when(
-    # --- GE conversions (to MJ/kg) ---
-    DC.Variable == "GE" ~ case_when(
-      DC.Unit %in% c("mj/kg", "mj/kg dm") ~ DC.Value,
-      DC.Unit %in% c("kcal/kg", "kcal/kg dm") ~ DC.Value * 0.004184,
-      DC.Unit == "kcal/g" ~ DC.Value * 4.184,
-      DC.Unit == "kcal/100g" ~ DC.Value * 0.4184,
-      DC.Unit == "cal/g" ~ DC.Value * 0.000004184,
-      DC.Unit == "mcal/kg" ~ DC.Value * 4.184,
-      DC.Unit %in% c("kj/kg", "kj/kg dm") ~ DC.Value / 1000,
-      DC.Unit %in% c("kj/g") ~ DC.Value,  # Already MJ/kg if value is per g * 1000
-      DC.Unit %in% c("kj/100g", "kj/100g dm", "kj/100 g dm") ~ DC.Value * 0.01,
-      DC.Unit == "mj/100g" ~ DC.Value * 10,
-      DC.Unit == "j/mg" ~ DC.Value / 1e6,
-      TRUE ~ NA_real_  # unknown unit
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>% 
+  mutate(
+    # 1) normalise text --------------------------------------------------------
+    DC.Unit     = tolower(trimws(DC.Unit)),
+    DC.Value    = as.numeric(DC.Value)
+  ) %>% 
+  
+  # 2) convert values ----------------------------------------------------------
+  mutate(
+    DC.Value = case_when(
+      # --- gross energy → MJ kg-1 -------------------------------------------
+      DC.Variable == "GE" ~ case_when(
+        DC.Unit %in% c("mj/kg", "mj/kg dm")                       ~ DC.Value,
+        DC.Unit %in% c("kcal/kg", "kcal/kg dm")                   ~ DC.Value * 0.004184,
+        DC.Unit ==  "kcal/g"                                      ~ DC.Value * 4.184,
+        DC.Unit ==  "kcal/100g"                                   ~ DC.Value * 0.04184,   # fixed
+        DC.Unit ==  "cal/g"                                       ~ DC.Value * 0.004184,  # fixed
+        DC.Unit ==  "mcal/kg"                                     ~ DC.Value * 4.184,
+        DC.Unit %in% c("kj/kg", "kj/kg dm")                       ~ DC.Value / 1000,
+        DC.Unit ==  "kj/g"                                        ~ DC.Value,             # already MJ/kg
+        DC.Unit %in% c("kj/100g", "kj/100g dm", "kj/100 g dm")    ~ DC.Value * 0.01,
+        DC.Unit ==  "mj/100g"                                     ~ DC.Value * 10,
+        DC.Unit ==  "j/mg"                                        ~ DC.Value,             # fixed
+        TRUE                                                      ~ NA_real_
+      ),
+      
+      # --- everything else → g kg-1 -----------------------------------------
+      TRUE ~ case_when(
+        DC.Unit %in% c("%", "% dm", "% as fed", "g/100g", "g/100g dm") ~ DC.Value * 10,
+        DC.Unit %in% c("g", "g/kg", "g/kg dm")                         ~ DC.Value,
+        DC.Unit %in% c("kg", "kg/day")                                 ~ DC.Value * 1000,
+        TRUE                                                           ~ NA_real_
+      )
     ),
-
-    # --- All other nutrient variables: convert to g/kg ---
-    TRUE ~ case_when(
-      DC.Unit %in% c("%", "% dm", "% as fed", "g/100g", "g/100g dm") ~ DC.Value * 10,
-      DC.Unit %in% c("g", "g/kg", "g/kg dm") ~ DC.Value,
-      DC.Unit %in% c("kg", "kg/day") ~ DC.Value * 1000,
-      TRUE ~ NA_real_  # unknown unit
-    )
-  ),
-
-  # --- Harmonize final units ---
-  DC.Unit = case_when(
-    DC.Variable == "GE" ~ "MJ/kg",
-    TRUE ~ "g/kg"
+    
+    # 3) harmonised unit labels ----------------------------------------------
+    DC.Unit = if_else(DC.Variable == "GE" & !is.na(DC.Value), "MJ/kg", "g/kg")
   )
-)
+
 
 
 # --- Compute Mean Value Per Ingredient and Variable ---
@@ -1729,6 +1776,59 @@ bcode_table_df <- bind_rows(bcode_table)
 # Show results
 print(species_summary_df)
 head(bcode_table_df)
+```
+## Tagg practices 
+In this section we are going to compare control treatments and treatment and define whether ingredients were substituted or added and what type of ingredient was changed. 
+
+```{r}
+
+classify_diet_changes_detailed <- function(df) {
+  df %>%
+    group_by(B.Code) %>%
+    group_split() %>%
+    purrr::map_dfr(~{
+      trial <- .x
+      ctrl_tbl <- trial %>% filter(T.Control == "Yes")
+      ctrl_items <- unique(ctrl_tbl$D.Item)
+
+      trt_diets <- trial %>%
+        filter(T.Control == "No") %>%
+        group_by(A.Level.Name) %>%
+        summarise(items = list(unique(D.Item)), .groups = "drop")
+
+      if (length(ctrl_items) == 0 || nrow(trt_diets) == 0) return(NULL)
+
+      trt_diets %>%
+        rowwise() %>%
+        mutate(
+          added   = list(setdiff(items, ctrl_items)),
+          removed = list(setdiff(ctrl_items, items)),
+          practice_type = case_when(
+            length(added) == length(removed) & length(added) > 0 ~ "substitution",
+            length(added) > 0                                     ~ "addition",
+            TRUE                                                  ~ NA_character_
+          )
+        ) %>%
+        ungroup() %>%
+        mutate(B.Code = unique(trial$B.Code)) %>%
+        pivot_longer(cols = c(added, removed),
+                     names_to = "change_type",
+                     values_to = "D.Item") %>%
+        unnest(D.Item) %>%
+        left_join(
+          df %>% select(B.Code, A.Level.Name, D.Item, D.Type) %>% distinct(),
+          by = c("B.Code", "A.Level.Name", "D.Item")
+        ) %>%
+        select(B.Code, A.Level.Name, D.Item, D.Type, change_type, practice_type)
+    })
+}
+
+
+
+# ── example call ─────────────────────────────────────────
+practice <- classify_diet_changes_detailed(ingredients)
+
+
 ```
 
 
@@ -2096,26 +2196,39 @@ Gross_energy$DC.Value<-as.numeric(Gross_energy$DC.Value)
 unique(Gross_energy$DC.Unit)
 
 # Harmonize only GE values and overwrite DC.Value
-Gross_energy <- Gross_energy %>%
+## ---- harmonise_gross_energy_to_MJkg -----------------------------------------
+Gross_energy <- Gross_energy %>% 
+  mutate(
+    ## 1) lower-case + trim once ----------------------------------------------
+    unit_raw    = tolower(trimws(DC.Unit))
+  ) %>% 
+  
+  ## 2) convert GE values to MJ/kg --------------------------------------------
   mutate(
     DC.Value = case_when(
-    # --- GE conversions (to MJ/kg) ---
-    DC.Variable == "GE" ~ case_when(
-      DC.Unit %in% c("mj/kg", "mj/kg dm") ~ DC.Value,
-      DC.Unit %in% c("kcal/kg", "kcal/kg dm") ~ DC.Value * 0.004184,
-      DC.Unit == "kcal/g" ~ DC.Value * 4.184,
-      DC.Unit == "kcal/100g" ~ DC.Value * 0.4184,
-      DC.Unit == "cal/g" ~ DC.Value * 0.000004184,
-      DC.Unit == "mcal/kg" ~ DC.Value * 4.184,
-      DC.Unit %in% c("kj/kg", "kj/kg dm") ~ DC.Value / 1000,
-      DC.Unit %in% c("kj/g") ~ DC.Value,  # Already MJ/kg if value is per g * 1000
-      DC.Unit %in% c("kj/100g", "kj/100g dm", "kj/100 g dm") ~ DC.Value * 0.01,
-      DC.Unit == "mj/100g" ~ DC.Value * 10,
-      DC.Unit == "j/mg" ~ DC.Value / 1e6,
-      TRUE ~ NA_real_  # unknown unit
-    )),
-    DC.Unit = ifelse(!is.na(DC.Value), "MJ/kg", DC.Unit)
-  )
+      DC.Variable == "GE" ~ case_when(
+        unit_raw %in% c("mj/kg", "mj/kg dm")                       ~ DC.Value,
+        unit_raw %in% c("kcal/kg", "kcal/kg dm")                   ~ DC.Value * 0.004184,
+        unit_raw ==  "kcal/g"                                      ~ DC.Value * 4.184,
+        unit_raw ==  "kcal/100g"                                   ~ DC.Value * 0.04184,  # 1 kcal = 0.004184 MJ, ×10 (100 g→kg)
+        unit_raw ==  "cal/g"                                       ~ DC.Value * 0.004184, # 1 cal g⁻¹ → 0.004184 MJ kg⁻¹
+        unit_raw ==  "mcal/kg"                                     ~ DC.Value * 4.184,
+        unit_raw %in% c("kj/kg", "kj/kg dm")                       ~ DC.Value / 1000,
+        unit_raw ==  "kj/g"                                        ~ DC.Value,            # already MJ kg⁻¹ (kJ g⁻¹ ×1000)
+        unit_raw %in% c("kj/100g", "kj/100g dm", "kj/100 g dm")    ~ DC.Value * 0.01,
+        unit_raw ==  "mj/100g"                                     ~ DC.Value * 10,
+        unit_raw ==  "j/mg"                                        ~ DC.Value,            # J mg⁻¹ → MJ kg⁻¹ (10⁻⁶ / 10⁻⁶)
+        TRUE                                                       ~ NA_real_
+      ),
+      TRUE ~ DC.Value  # non-GE rows stay intact
+    ),
+    
+    ## 3) update unit label ----------------------------------------------------
+    DC.Unit = if_else(DC.Variable == "GE" & !is.na(DC.Value), "MJ/kg", unit_raw)
+  ) %>% 
+  
+  ## 4) tidy up ---------------------------------------------------------------
+  select(-unit_raw)
 
 
 
@@ -3109,6 +3222,10 @@ non_emitting_stages <- c(
 GE_combined <- GE_combined %>%
   filter(!(Herd.Stage %in% non_emitting_stages))
 
+GE_combined <- GE_combined %>%
+  left_join(ctrl_key, by = c("B.Code", "D.Item" = "A.Level.Name"))
+
+
 
 GE_data <- GE_combined %>%
   filter(!is.na(GE_daily) & GE_daily != "") %>%
@@ -3172,6 +3289,100 @@ cat("Total unique ingredients:", total_ingredients, "\n")
 
 
 
+total number of codes that have ge and have both treatment and control 
+
+```{r}
+# Identify B.Codes that contain both control and treatment diets
+b_codes_with_both_ctrl_and_trt <- GE_combined %>%
+  filter(T.Control %in% c("Yes", "No")) %>%   # Only if T.Control is properly labeled
+  group_by(B.Code) %>%
+  summarise(n_control_status = n_distinct(T.Control), .groups = "drop") %>%
+  filter(n_control_status > 1)   # Keep only those with both Yes and No
+
+# Count of such B.Codes
+n_both_ctrl_and_trt <- nrow(b_codes_with_both_ctrl_and_trt)
+cat("Number of B.Codes with both control and treatment diets:", n_both_ctrl_and_trt, "\n")
+
+```
+
+
+
+filter ge combined with only papers with both control and treatments 
+
+```{r}
+GE_combined <- GE_combined %>%
+  semi_join(b_codes_with_both_ctrl_and_trt, by = "B.Code")
+
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+
+# Count unique B.Code with non-missing CH4 emissions
+n_CH4_codes <- GE_combined %>%
+  filter(!is.na(CH4_kg_year)) %>%
+  distinct(B.Code) %>%
+  nrow()
+
+n_CH4_codes
+
+n_CH4_codes_by_product <- GE_combined %>%
+  filter(!is.na(CH4_kg_year)) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "n_CH4_codes")
+
+n_CH4_codes_by_product
+
+relevant_BCodes <- GE_combined %>%
+  distinct(B.Code)
+
+# Step 2: Filter Animals.Diet.Comp for relevant B.Codes
+diet_data_filtered <- merged_metadata$Animals.Diet %>%
+  semi_join(relevant_BCodes, by = "B.Code")
+
+# Step 3: Count unique diets and ingredients
+total_diets <- diet_data_filtered %>%
+  filter(!is.na(A.Level.Name)) %>%
+  distinct(B.Code, A.Level.Name) %>%
+  nrow()
+
+total_ingredients <- diet_data_filtered %>%
+  filter(!is.na(D.Item)) %>%
+  distinct(B.Code, D.Item) %>%
+  nrow()
+
+# Step 4: Output
+cat("Total unique diets:", total_diets, "\n")
+cat("Total unique ingredients:", total_ingredients, "\n")
+```
+
+
+## add practice to ge combined to know if ingrediens were addded or substituted
+
+
+
+```{r}
+# Step 1: Aggregate practice type per diet
+practice_summary <- practice %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    practice_type = first(na.omit(practice_type)),  # summarize per diet
+    changed_types = paste(unique(D.Type), collapse = "; "),
+    .groups = "drop"
+  )
+
+# Step 2: Merge into GE_combined
+GE_combined <- GE_combined %>%
+  left_join(practice_summary, by = c("B.Code", "D.Item" = "A.Level.Name"))
+
+```
 
 
 ## 17) Link emissions to productivity data 
@@ -3309,106 +3520,6 @@ ggplot(emissions_by_species, aes(x = P.Product, y = CH4_kg_year, fill = P.Produc
 ```
 
 
-```{r}
-
-ingredients_cleaned <- ingredients %>%
-  mutate(
-    D.Amount = ifelse(D.Unit.Amount == "g", D.Amount / 1000, D.Amount),
-    D.Unit.Amount = ifelse(D.Unit.Amount == "g", "kg", D.Unit.Amount)
-  )
-
-# Step 3: Keep only diets where all units are now consistent (all in kg)
-diet_valid_units <- ingredients_cleaned %>%
-  group_by(B.Code, A.Level.Name) %>%
-  filter(n_distinct(D.Unit.Amount, na.rm = TRUE) == 1) %>%
-  ungroup()
-
-
-forage_types    <- c("Forage Trees", "Herbaceous Fodders", "Agroforestry Fodders")
-forage_keywords <- c("hay", "straw", "stover","silage","grass")
-
-
-forage_summary <- ingredients %>% 
-  
-  # 1. Harmonise units and flag forage ------------------------------
-  mutate(
-    D.Amount_kg = if_else(D.Unit.Amount == "g", D.Amount / 1000, D.Amount),
-    
-    is_forage   =  D.Type %in% forage_types  |                        # exact match in D.Type
-                   str_detect(str_to_lower(D.Item),
-                              str_c(forage_keywords, collapse = "|")) # keyword in D.Item
-  ) %>% 
-  
-  # 2. Keep diets that use one single mass‑unit ----------------------
-  group_by(B.Code, A.Level.Name) %>% 
-  filter(n_distinct(D.Unit.Amount, na.rm = TRUE) == 1) %>% 
-  
-  # 3. Compute forage proportion ------------------------------------
-  summarise(
-    forage_prop   = sum(D.Amount_kg[is_forage]) / sum(D.Amount_kg),
-    n_ingredients = n(),
-    .groups       = "drop"
-  )
-
-
-# 4. Attach CH₄ data and keep diets that appear ≥ 2 times ----------
-forage_ch4 <- forage_summary %>% 
-  inner_join(
-    GE_combined %>% select(B.Code, D.Item, CH4_kg_year),
-    by = c("B.Code", "A.Level.Name" = "D.Item")
-  ) %>% 
-  left_join(
-    merged_metadata$Prod.Out %>% select(B.Code, P.Product),   #  ⇦ add this line
-    by = "B.Code"
-  ) %>% 
-  group_by(B.Code) %>% 
-  filter(n() >= 2) %>% 
-  ungroup()
-
-
-# 5A. *Relative* change in CH₄ within each diet --------------------
-relative_change <- forage_ch4 %>% 
-  group_by(B.Code) %>% 
-  summarise(
-    rel_decrease_ch4 = 100 * diff(range(CH4_kg_year)) / max(CH4_kg_year),
-    min_forage       = min(forage_prop),
-    max_forage       = max(forage_prop),
-    P.Product        = first(P.Product),
-    .groups          = "drop"
-  )
-
-# 5B. *Slope* (ΔCH₄ / Δforage) within each diet -------------------
-#   – sometimes more interpretable than % change
-slopes <- forage_ch4 %>% 
-  group_by(B.Code) %>% 
-  summarise(
-    slope_ch4 = {
-      ok <- complete.cases(forage_prop, CH4_kg_year)
-      if (sum(ok) >= 2) coef(lm(CH4_kg_year[ok] ~ forage_prop[ok]))[2] else NA_real_
-    },
-    r2 = {
-      ok <- complete.cases(forage_prop, CH4_kg_year)
-      if (sum(ok) >= 2) summary(lm(CH4_kg_year[ok] ~ forage_prop[ok]))$r.squared else NA_real_
-    },
-    P.Product = first(P.Product),
-    .groups   = "drop"
-  )
-
-ggplot(slopes,
-       aes(P.Product, slope_ch4, fill = P.Product)) +
-  geom_hline(yintercept = 0, linetype = 2) +
-  geom_boxplot(alpha = 0.4, outlier.shape = NA) +
-  geom_jitter(width = 0.15, alpha = 0.7, size = 2) +
-  labs(
-    title = "Within‑diet slope of CH₄ vs. forage proportion",
-    y = "Slope (kg CH₄ per unit forage proportion)"
-  ) +
-  theme_minimal(base_size = 13) +
-  theme(legend.position = "none")
-
-```
-
-
 
 ```{r}
 ## 1) Live‑weight table --------------------------------------------------------
@@ -3449,88 +3560,285 @@ ggplot(ch4_vs_bw,
 
 ```
 ```{r}
-########################################################
-## % concentrate (strict rule) vs. CH₄ g kg⁻¹ DMI     ##
-########################################################
-
-## 1)  Tag forage and concentrate ------------------------------------------------
-forage_types    <- c("Forage Trees", "Herbaceous Fodders",
-                     "Agroforestry Fodders", "Pasture", "Crop Byproduct")
-forage_keywords <- c("hay", "straw", "stover", "silage", "grass")
-
-ingredients_fc <- ingredients %>%
+wg<-merged_metadata$Data.Out%>%filter(Out.Subind=="Weight Gain")
+###############################################################################
+##  STANDARDISE WEIGHT-GAIN TO kg animal⁻¹ day⁻¹  (no totals, no wk/mo)      ##
+###############################################################################
+wg_clean <- wg %>%
+  ## 1. normalise text ---------------------------------------------------------
   mutate(
-    name_lc        = str_to_lower(D.Item),
-    
-    is_forage      = D.Type %in% forage_types |
-                     str_detect(name_lc, str_c(forage_keywords, collapse = "|")),
-    
-    is_concentrate = str_detect(name_lc, "concentrate") |
-                     D.Type == "Concentrate",
-    
-    category       = case_when(
-                       is_forage      ~ "Forage",
-                       is_concentrate ~ "Concentrate",
-                       TRUE           ~ "Other"
-                     )
-  )
-
-## 2)  Compute % concentrate per diet ------------------------------------------
-fc_ratio <- ingredients_fc %>%
-  mutate(D.Amount_kg = if_else(D.Unit.Amount == "g", D.Amount / 1000, D.Amount)) %>%
-  group_by(B.Code, A.Level.Name) %>%
-  summarise(
-    kg_conc   = sum(D.Amount_kg[category == "Concentrate"], na.rm = TRUE),
-    kg_total  = sum(D.Amount_kg,                         na.rm = TRUE),
-    pct_conc  = if_else(kg_total > 0, kg_conc / kg_total * 100, NA_real_),
-    .groups   = "drop"
-  )
-
-## 3)  Bring in intake (kg DMI d‑¹) and CH₄ (kg y‑¹) ---------------------------
-intake_tbl <- feed_intake_diet %>%
-  select(B.Code, A.Level.Name, DMI_kg_d = ED.Mean.T)
-
-ch4_tbl <- GE_combined %>%
-  rename(A.Level.Name = D.Item) %>%
-  select(B.Code, A.Level.Name, CH4_kg_year)
-
-fc_full <- fc_ratio %>%
-  left_join(intake_tbl, by = c("B.Code", "A.Level.Name")) %>%
-  left_join(ch4_tbl,   by = c("B.Code", "A.Level.Name")) %>%
+    unit_raw = tolower(trimws(Out.Unit)),
+    value    = as.numeric(ED.Mean.T)                 # be sure it's numeric
+  ) %>%
+  
+  ## 2. discard relative indices (% IBW, % SGR) -------------------------------
+  filter(
+    !str_detect(unit_raw, "% ibw") &
+    !str_detect(unit_raw, "% sgr")
+  ) %>%
+  
+  ## 3. keep only entries that already contain “/d” or “/day” ------------------
+  filter(str_detect(unit_raw, "/d") | str_detect(unit_raw, "/day") |
+         str_detect(unit_raw, "g/kg metabolic weight")) %>%
+  
+  ## 4. parse amount unit ------------------------------------------------------
+  mutate(
+    amount_unit = case_when(
+      str_starts(unit_raw, "mg") ~ "mg",
+      str_starts(unit_raw, "g")  ~ "g",
+      str_starts(unit_raw, "kg") ~ "kg",
+      TRUE                       ~ NA_character_
+    ),
+    gain_kg = case_when(
+      amount_unit == "mg" ~ value / 1e6,
+      amount_unit == "g"  ~ value / 1e3,
+      amount_unit == "kg" ~ value,
+      TRUE                ~ NA_real_
+    )
+  ) %>%
+  
+  ## 5. handle “g/kg metabolic weight” -----------------------------------------
   left_join(
-    merged_metadata$Prod.Out %>% select(B.Code, P.Product),
-    by = "B.Code"
+    weights_unique %>% 
+      select(B.Code, A.Level.Name, BW_start_kg = Out.WG.Start),
+    by = c("B.Code", "A.Level.Name")
   ) %>%
   mutate(
-    CH4_g_kgDMI = CH4_kg_year * 1000 / (DMI_kg_d * 365)
+    ADG_kg = case_when(
+      str_detect(unit_raw, "g/kg metabolic weight") &
+        !is.na(value) & !is.na(BW_start_kg)
+          ~ (value / 1000) * (BW_start_kg ^ 0.75),   # g → kg × BW^0.75
+      TRUE ~ gain_kg                                # already kg/d
+    )
   ) %>%
-  filter(!is.na(pct_conc), !is.na(CH4_g_kgDMI), !is.na(P.Product))
+  
+  ## 6. final screen -----------------------------------------------------------
+  filter(!is.na(ADG_kg) & ADG_kg > 0) %>%
+  select(B.Code, A.Level.Name, ADG_kg)
 
-## 4)  Plot % concentrate vs CH₄ intensity -------------------------------------
-ggplot(fc_full,
-       aes(x = pct_conc, y = CH4_g_kgDMI, colour = P.Product)) +
+```
+
+```{r}
+############################################################
+##  EMISSION INTENSITY  (kg CH₄  kg-¹ live-weight gain)   ##
+############################################################
+
+
+## 1. merge CH₄ and ADG ------------------------------------
+ei_df <- GE_combined %>%                    # CH₄ table
+  select(B.Code, A.Level.Name = D.Item,
+         CH4_kg_year, P.Product) %>%
+  inner_join(
+    wg_clean,                               # weight-gain table
+    by = c("B.Code", "A.Level.Name")
+  ) %>%
+
+  ## 2. compute emission intensity -------------------------
+  mutate(
+    gain_kg_year = ADG_kg * 365,                           # kg yr-¹
+    EI_CH4_kg = CH4_kg_year / gain_kg_year
+  ) %>%
+
+  ## 3. basic QC  ------------------------------------------
+  filter(
+    !is.na(EI_CH4_kg) & EI_CH4_kg > 0,          # remove missing / negative
+    EI_CH4_kg < 1                               # drop extreme outliers (>1 kg CH₄ kg-¹ LW-gain)
+  )
+
+length(unique(ei_df$B.Code))
+
+# A) box-and-jitter by species -----------------------------------------------
+ggplot(ei_df, aes(x = P.Product, y = EI_CH4_kg, fill = P.Product)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.35) +
+  geom_jitter(width = 0.15, alpha = 0.65, size = 2) +
+  scale_y_continuous("Emission intensity (kg CH₄ kg⁻¹ LW-gain)",
+                     labels = scales::comma_format()) +
+  labs(title = "Enteric-methane intensity of growth",
+       x = NULL) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none")
+
+# B) relationship between growth rate and EI ---------------------------------
+ggplot(ei_df, aes(x = ADG_kg, y = EI_CH4_kg, colour = P.Product)) +
   geom_point(alpha = 0.7, size = 2.3) +
   geom_smooth(method = "lm", se = TRUE, linetype = "dashed") +
-  labs(
-    title  = "Concentrate proportion vs. CH₄ intensity",
-    x      = "% concentrate in diet (DM basis)",
-    y      = "CH₄ (g kg⁻¹ DMI)",
-    colour = "Species"
-  ) +
+  scale_x_log10("Average daily gain (kg animal⁻¹ day⁻¹)",
+                breaks = scales::log_breaks(),
+                labels = scales::comma_format()) +
+  scale_y_continuous("Emission intensity (kg CH₄ kg⁻¹ LW-gain)",
+                     labels = scales::comma_format()) +
+  labs(title = "Faster-growing animals generally emit less CH₄ per kg gain",
+       colour = "Species") +
   theme_minimal(base_size = 13) +
   theme(legend.position = "bottom")
 
-## 5)  Species‑level slopes -----------------------------------------------------
-fc_slopes <- fc_full %>%
-  group_by(P.Product) %>%
-  summarise(
-    slope_gCH4_per_pctC = coef(lm(CH4_g_kgDMI ~ pct_conc))[2],
-    r2                  = summary(lm(CH4_g_kgDMI ~ pct_conc))$r.squared,
-    n_diets             = n(),
-    .groups = "drop"
+```
+```{r,warning=FALSE}
+library(dplyr); library(ggplot2); library(scales)
+# 0.  Make sure your weight-gain table is available
+#     (this is the object you built in the earlier step)
+adg_clean <- wg_clean %>%                 # <- rename for clarity
+  select(B.Code, A.Level.Name, ADG_kg)    # keep only the essentials
+# 1.  Bring EI together with the absolute-CH₄ table you already built
+ei_tbl <- adg_clean %>%                           # has A.Level.Name
+  inner_join(
+    GE_combined, 
+    by = c("B.Code"       = "B.Code",             # same name
+           "A.Level.Name" = "D.Item")             # different names
+  ) %>% 
+  mutate(
+    EI = CH4_kg_year / (ADG_kg * 365)             # kg CH₄ kg⁻¹ LW-gain
   )
 
-print(fc_slopes)
+
+# 2.  Median split lines (or choose any threshold you like)
+vline <- median(ei_tbl$CH4_kg_year,   na.rm = TRUE)
+hline <- median(ei_tbl$EI,            na.rm = TRUE)
+
+x_lim <- range(ei_tbl$ADG_kg,  na.rm = TRUE)   # e.g. 0.002 – 0.8
+y_lim <- range(ei_tbl$EI,      na.rm = TRUE)   # e.g. 0.005 – 1.2
+ch4_lim <- range(ei_tbl$CH4_kg_year, na.rm = TRUE)
+
+
+# 3.  Plot ----------------------------------------------------------------
+ggplot(ei_tbl,
+       aes(x = ADG_kg,
+           y = EI,
+           colour = CH4_kg_year,
+           size   = CH4_kg_year)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, colour = "black") +
+  scale_x_log10(limits = x_lim,
+                breaks  = log_breaks(),
+                labels  = comma_format()) +
+  scale_y_log10(limits = y_lim,
+                breaks  = c(.005, .01, .03, .1, .3, 1),
+                labels  = comma_format()) +
+  scale_colour_viridis_c(option = "plasma",
+                         trans   = "log10",
+                         limits  = ch4_lim,
+                         name    = "Annual CH₄ (kg)") +
+  scale_size(range = c(2, 6),
+             trans  = "log10",
+             limits = ch4_lim,
+             guide  = "none") +
+  facet_wrap(~ P.Product) +                # same axes in every facet
+  labs(title   = "Faster-growing animals emit less CH4 per kg gain",
+       subtitle = "Axes are identical across cattle, goat and sheep panels",
+       x = "Average daily gain (kg animal⁻¹ day⁻¹, log scale)",
+       y = "Emission intensity (kg CH4 kg⁻¹ live-weight gain)",
+       caption = "Point colour & size scale with absolute annual CH4 per animal") +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "right")
 
 ```
+
+```{r}
+##############################################
+##  1.  PREPARE DAILY YIELD (kg animal-1 d-1)
+##############################################
+
+## density of milk for L → kg conversion
+MILK_DENSITY <- 1.03   # kg L-1
+
+yield_d_clean <- yield_data %>%                      # ← your harmonised table
+  filter(Out.Subind %in% c("Milk Yield", "Meat Yield")) %>%
+  mutate(
+    Yield_kg_day = case_when(
+      # ───────────── Milk ─────────────────────────────────────────────
+      Out.Subind == "Milk Yield" & Out.Unit == "l/individual/day"  ~ ED.Mean.T * MILK_DENSITY,
+      Out.Subind == "Milk Yield" & Out.Unit == "kg/individual/day" ~ ED.Mean.T,
+      
+      # ───────────── Meat (already kg day-1) ─────────────────────────
+      Out.Subind == "Meat Yield" & Out.Unit == "kg/individual/day" ~ ED.Mean.T,
+      
+      # ───────────── Everything else (drop) ─────────────────────────
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  filter(!is.na(Yield_kg_day) & Yield_kg_day > 0) %>%   # keep usable rows only
+  select(B.Code, A.Level.Name, Out.Subind, Yield_kg_day)
+
+
+###########################################################################
+##  2.  COMPUTE EMISSION-INTENSITY  (kg CH4 per kg *product*) #############
+###########################################################################
+
+ei_prod <- GE_combined %>%                              # absolute CH4 table
+  select(B.Code, A.Level.Name = D.Item,
+         CH4_kg_year, P.Product,T.Control,practice_type,changed_types) %>%
+  inner_join(yield_d_clean, by = c("B.Code","A.Level.Name")) %>%
+  mutate(
+    Yield_kg_year = Yield_kg_day * 365,
+    EI_CH4_prod   = CH4_kg_year / Yield_kg_year,
+    Product       = if_else(Out.Subind == "Milk Yield", "Milk", "Meat")
+  ) %>%
+  filter(EI_CH4_prod > 0, EI_CH4_prod < 10)             # drop negatives / crazy outliers
+
+#########################################
+##  3.  QUICK DIAGNOSTIC PLOTS ##########
+#########################################
+
+# ── A) Box-and-jitter by species & product ───────────────────────────────
+ggplot(ei_prod, aes(x = P.Product, y = EI_CH4_prod,
+                    fill = P.Product)) +
+  geom_boxplot(outlier.shape = NA, alpha = .35) +
+  geom_jitter(width = .15, alpha = .65, size = 2) +
+  scale_y_log10("Emission-intensity (kg CH₄ kg⁻¹ product)",
+                breaks = scales::log_breaks(),
+                labels = scales::comma_format()) +
+  facet_wrap(~ Product, nrow = 1) +
+  labs(title = "Enteric-methane intensity of milk and meat production",
+       x = NULL) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none")
+
+# ── B) Relationship between yield and EI ────────────────────────────────
+ggplot(ei_prod,
+       aes(x = Yield_kg_day,
+           y = EI_CH4_prod,
+           colour = P.Product)) +
+  geom_point(alpha = .7, size = 2.3) +
+  geom_smooth(method = "lm", se = TRUE, linetype = "dashed") +
+  scale_x_log10("Yield (kg animal⁻¹ day⁻¹, log scale)",
+                breaks = scales::log_breaks(),
+                labels = scales::comma_format()) +
+  scale_y_log10("Emission-intensity (kg CH₄ kg⁻¹ product)",
+                breaks = scales::log_breaks(),
+                labels = scales::comma_format()) +
+  facet_wrap(~ Product, nrow = 1) +
+  labs(title  = "Higher-yielding animals emit less CH₄ per kg of product",
+       colour = "Species") +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "bottom")
+
+length(unique(ei_prod$B.Code))
+
+```
+
+## Analysis based on practices 
+
+```{r}
+ei_prod_filtered <- ei_prod %>%
+  filter(T.Control != "Yes") %>%   # Exclude control diets
+  mutate(
+    top_type = str_split(changed_types, ";\\s*") %>% map_chr(1)
+  )
+
+ggplot(ei_prod_filtered, aes(x = top_type, y = EI_CH4_prod, fill = practice_type)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.4) +
+  geom_jitter(width = 0.2, alpha = 0.5, size = 2, color = "black") +
+  facet_wrap(~ Product, scales = "fixed") +
+  scale_y_log10("Emission Intensity (kg CH₄ / kg product)",
+                breaks = scales::log_breaks(),
+                labels = scales::comma_format()) +
+  labs(title = "Emission Intensity by Practice and Ingredient Type",
+       x = "Ingredient Type") +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "bottom")
+
+
+
+```
+
 
