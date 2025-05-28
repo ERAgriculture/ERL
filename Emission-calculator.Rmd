@@ -42,6 +42,7 @@ library(arrow)
 library(ggplot2)
 library(data.table)
 library(purrr)
+library(janitor)
 
 # Set up connection to S3 bucket
 s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
@@ -61,6 +62,7 @@ if(!file.exists(save_path)){
 
 # Load the data
 livestock_metadata <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path))
+
 
 
 ```
@@ -86,6 +88,7 @@ if(!file.exists(save_path)){
 # Load the data
 camel <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path))
 
+
 ```
 
 
@@ -99,115 +102,100 @@ missing_unit_feed_intake<- camel$Data.Out %>%
 
 
 ```{r,message=FALSE,warning=FALSE}
-#merge camel and livestock 
+
+##### 0. column templates ------------------------------------------------------
+diet_cols   <- c("B.Code","A.Level.Name","D.Item","D.Type","D.Amount",
+                 "D.Unit.Amount","D.Unit.Time","D.Unit.Animals",
+                 "DC.Is.Dry","D.Ad.lib")
+mt_cols     <- c("B.Code","A.Level.Name","T.Animals","T.Name","T.Control")
+comp_cols   <- c("B.Code","D.Item","is_entire_diet",
+                 "DC.Variable","DC.Value","DC.Unit")
+digest_cols <- c("B.Code","D.Item","is_entire_diet",
+                 "DD.Variable","DD.Value","DD.Unit")
+data_cols   <- c("B.Code","A.Level.Name","Out.Code.Joined",
+                 "ED.Intake.Item","ED.Intake.Item.Raw",
+                 "ED.Mean.T","ED.Error","Out.Subind","Out.Unit",
+                 "Out.WG.Start","Out.WG.Unit","is_entire_diet","T.Animals")
+prod_cols   <- c("B.Code","P.Product")
+
+##### 1. livestock tables (unchanged) ----------------------------------------
+diet_livestock   <- livestock_metadata$Animals.Diet        [ , ..diet_cols ][, Source:="livestock"]
+mt_livestock     <- livestock_metadata$MT.Out              [ , ..mt_cols   ][, Source:="livestock"]
+comp_livestock   <- livestock_metadata$Animals.Diet.Comp   [ , ..comp_cols ][, Source:="livestock"]
+digest_livestock <- livestock_metadata$Animals.Diet.Digest [ , ..digest_cols][, Source:="livestock"]
+data_livestock   <- livestock_metadata$Data.Out            [ , ..data_cols ][, Source:="livestock"]
+prod_livestock   <- livestock_metadata$Prod.Out            [ , ..prod_cols ][, Source:="livestock"]
+
+##### 2. camel – build one key that links everything --------------------------
+## 2·1  T-level information from MT.Out  (diet names + control flag)
+diet_key <- camel$MT.Out[ , .(B.Code, T.Name, A.Level.Name, T.Control,Herd.Level.Name,Herd.Sublevel.Name)]
+
+## 2·2  Animal numbers & start-weights from Herd.Out
+herd_info <- camel$Herd.Out[ ,
+   .(B.Code,
+    Herd.Level.Name,
+    Herd.Sublevel.Name,
+    Herd.Sex,
+    Herd.Stage,
+     T.Animals    = Herd.N,
+     Out.WG.Start = Herd.Start.Weight,
+     Out.WG.Unit  = Herd.Start.Weight.Unit)
+]
+
+##### 3. camel tables ----------------------------------------------------------
+## 3·1  Animals.Diet
+diet_camel <- camel$Animal.Diet[ , ..diet_cols ][ , Source:="camel"]
+
+## 3·2  MT.Out  (add T.Animals via herd_info)
+mt_camel <- merge(diet_key,
+                  herd_info,
+                  by = c("B.Code","Herd.Level.Name","Herd.Sublevel.Name"),
+                  all.x = TRUE)[, Source := "camel"]
+        # ..mt_cols  **includes T.Animals**
 
 
-# Define column lists (as character vectors)
-diet_cols <- c("B.Code", "A.Level.Name", "D.Item", "D.Type", "D.Amount",
-               "D.Unit.Amount", "D.Unit.Time", "D.Unit.Animals", "DC.Is.Dry", 
-               "D.Ad.lib", "D.Is.Group")
+## 3·3  Comp / Digest
+comp_camel <- camel$Animal.Diet.Comp[ ,
+       .(B.Code, D.Item, is_entire_diet,
+         DC.Variable = DN.Variable,
+         DC.Value    = DN.Value,
+         DC.Unit     = DN.Unit)][, Source:="camel"]
 
-mt_cols <- c("B.Code", "A.Level.Name", "T.Animals","T.Name","T.Control")
+digest_camel <- camel$Animal.Diet.Digest[ ,
+       .(B.Code, D.Item, is_entire_diet,
+         DD.Variable, DD.Value, DD.Unit)][, Source:="camel"]
 
-comp_cols <- c("B.Code", "D.Item", "is_entire_diet", "DC.Variable", 
-               "DC.Value", "DC.Unit")
+## 3·4  Data.Out   (join diet_key → A.Level.Name, then herd_info)
+data_camel <- merge(camel$Data.Out,                # brings in T.Name*
+                    diet_key,                      # adds A.Level.Name & control
+                    by = c("B.Code","T.Name"),
+                    all.x = TRUE, sort = FALSE)
 
-digest_cols <- c("B.Code", "D.Item", "is_entire_diet", "DD.Variable", 
-                 "DD.Value", "DD.Unit")
+data_camel <- merge(data_camel, herd_info, by = c("B.Code","Herd.Level.Name","Herd.Sublevel.Name"),
+                    all.x = TRUE, sort = FALSE)
 
-data_cols <- c("B.Code", "A.Level.Name","Out.Code.Joined", "ED.Intake.Item", "ED.Intake.Item.Raw", 
-               "ED.Mean.T", "ED.Error","Out.Subind", "Out.Unit", "Out.WG.Start", "Out.WG.Unit","is_entire_diet","T.Animals")
+data_camel <- data_camel[ ,
+   .(B.Code, A.Level.Name,
+     ED.Intake.Item,
+     ED.Intake.Item.Raw = ED.Intake.Item,
+     ED.Mean.T, ED.Error, Out.Unit, Out.Subind,
+     Out.WG.Start, Out.WG.Unit,
+     T.Animals)][, Source:="camel"]
 
-prod_cols <- c("B.Code", "P.Product")
+## 3·5  product table
+prod_camel <- camel$Herd.Out[ ,
+   .(B.Code,
+     P.Product = V.Product,
+     Herd.Stage)][, Source:="camel"]
 
-# Extract livestock tables and add Source column
-diet_livestock   <- livestock_metadata$Animals.Diet[, ..diet_cols][, Source := "livestock"]
-mt_livestock     <- livestock_metadata$MT.Out[, ..mt_cols][, Source := "livestock"]
-comp_livestock   <- livestock_metadata$Animals.Diet.Comp[, ..comp_cols][, Source := "livestock"]
-digest_livestock <- livestock_metadata$Animals.Diet.Digest[, ..digest_cols][, Source := "livestock"]
-data_livestock   <- livestock_metadata$Data.Out[, ..data_cols][, Source := "livestock"]
-prod_livestock   <- livestock_metadata$Prod.Out[, ..prod_cols][, Source := "livestock"]
-
-# Extract camel tables and rename columns to match livestock structure
-diet_camel <- camel$Animal.Diet[, ..diet_cols][, Source := "camel"]
-
-#merge Mt and Data to have A.Level.Name in data 
-
-camel$Data.Out<-merge(x=camel$Data.Out,
-y= camel$MT.Out[,.(B.Code,T.Name,A.Level.Name)],by=c("B.Code","T.Name"),all.x=T,sort=F)
-
-
-# Construct MT.Out for camel: get A.Level.Name and T.Animals from Herd
-mt_camel <- camel$Herd.Out[, .(
-  B.Code, T.Animals = Herd.N
-)][, Source := "camel"]
-
-# Rename DN.* to DC.* in camel Diet.Comp
-comp_camel <- camel$Animal.Diet.Comp[, .(
-  B.Code, D.Item, is_entire_diet, 
-  DC.Variable = DN.Variable,
-  DC.Value = DN.Value,
-  DC.Unit = DN.Unit
-)][, Source := "camel"]
-
-# Rename DD.* and add digestibility source
-digest_camel <- camel$Animal.Diet.Digest[, .(
-  B.Code, D.Item, is_entire_diet, 
-  DD.Variable = DD.Variable,
-  DD.Value = DD.Value,
-  DD.Unit = DD.Unit
-)][, Source := "camel"]
-
-# Join Data.Out from camel with Herd to get weight info
-# Create herd_info with renamed T.Animals
-herd_info <- camel$Herd.Out[, .(
-  B.Code,
-  A.Level.Name = Herd.Level.Name,
-  Out.WG.Start = Herd.Start.Weight,
-  Out.WG.Unit = Herd.Start.Weight.Unit,
-  T.Animals = Herd.N  # Rename here
-)]
-
-# Merge into Data.Out
-data_camel <- camel$Data.Out[
-  , .(B.Code, ED.Intake.Item, 
-      ED.Intake.Item.Raw = ED.Intake.Item, 
-      A.Level.Name,
-      ED.Mean.T, ED.Error, Out.Unit, Out.Subind)
-][
-  herd_info,
-  on = .(B.Code),
-  `:=`(
-    P.Product = i.A.Level.Name,
-    Out.WG.Start = i.Out.WG.Start,
-    Out.WG.Unit = i.Out.WG.Unit,
-    T.Animals = i.T.Animals
-  )
-][
-  , .(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, 
-      ED.Mean.T, ED.Error, Out.Unit, Out.Subind, Out.WG.Start, Out.WG.Unit, T.Animals)
-][, Source := "camel"]
-
-
-
-# Extract product info from Herd table in camel
-prod_camel <- camel$Herd.Out[, .(
-  B.Code, 
-  P.Product = V.Product, 
-  Herd.Stage = Herd.Stage  # New column
-)][, Source := "camel"]
-
-# Step 2: Bind with livestock production data (which may not have Herd.Stage)
-
-# Merge camel and livestock datasets
-diet_all   <- rbindlist(list(diet_livestock, diet_camel), fill = TRUE)
-mt_all     <- rbindlist(list(mt_livestock, mt_camel), fill = TRUE)
-comp_all   <- rbindlist(list(comp_livestock, comp_camel), fill = TRUE)
+##### 4. bind camel + livestock ----------------------------------------------
+diet_all   <- rbindlist(list(diet_livestock,   diet_camel  ), fill = TRUE)
+mt_all     <- rbindlist(list(mt_livestock,     mt_camel    ), fill = TRUE)
+comp_all   <- rbindlist(list(comp_livestock,   comp_camel  ), fill = TRUE)
 digest_all <- rbindlist(list(digest_livestock, digest_camel), fill = TRUE)
-data_all   <- rbindlist(list(data_livestock, data_camel), fill = TRUE)
-prod_all   <- rbindlist(list(prod_livestock, prod_camel), fill = TRUE)
+data_all   <- rbindlist(list(data_livestock,   data_camel  ), fill = TRUE)
+prod_all   <- rbindlist(list(prod_livestock,   prod_camel  ), fill = TRUE)
 
-# Final merged metadata list
 merged_metadata <- list(
   Animals.Diet        = diet_all,
   MT.Out              = mt_all,
@@ -218,7 +206,6 @@ merged_metadata <- list(
 )
 
 
-
 ```
 
 ```{r,message=FALSE,warning=FALSE}
@@ -226,13 +213,65 @@ merged_metadata <- list(
 rm(
   diet_cols, mt_cols, comp_cols, digest_cols, data_cols, prod_cols,
   diet_livestock, mt_livestock, comp_livestock, digest_livestock, data_livestock, prod_livestock,
-  diet_camel, mt_camel, comp_camel, digest_camel, data_camel, prod_camel, herd_weight,comp_all,data_all,diet_all,digest_all,mt_all,prod_all,livestock_metadata,camel)
+  diet_camel, mt_camel, comp_camel, digest_camel, data_camel, prod_camel, herd_weight,comp_all,data_all,diet_all,digest_all,mt_all,prod_all,livestock_metadata,camel,herd_info,diet_key)
 
 # (Optional) Run gc() to free memory
 gc()
 ```
+## 1.1 Correct T.Control
 
-## 1.1) Correct A.Level.Name
+When t control is yes for one of the diets then automatically enter No for the other diets of the same paper. Also for missing t control if the name of the diet contains control or Con or Zero then automatically deduce this is a control diet and others are treatment diets. 
+
+```{r}
+
+MT <- copy(merged_metadata$MT.Out)
+
+
+MT[, T.Control := tolower(trimws(as.character(T.Control))) ]
+
+
+MT[
+  ## diet name suggests a control …
+  grepl("\\bzero\\b|\\bcon\\b|control", A.Level.Name, ignore.case = TRUE) &
+
+  ## … but flag is still empty / ambiguous
+  (is.na(T.Control) | T.Control %in% c("0", "false","na")),
+
+  T.Control := "yes"
+]
+
+
+
+MT[, T.Control := {
+  has_ctrl <- any(T.Control == "yes", na.rm = TRUE)          # does study have a control?
+  
+  if (has_ctrl) {
+    # 4·a  normalise obvious “no” variants
+    flag <- fifelse(
+      T.Control %in% c("false", "0", "n", "no"), "no", T.Control
+    )
+    # 4·b  ensure exactly one category: yes / no
+    fifelse(flag == "yes", "yes", "no")
+    
+  } else {
+    # keep whatever was there (even "0", "false", NA, …)
+    T.Control
+  }
+}, by = B.Code]
+
+
+MT[, T.Control := fifelse(
+  (is.na(T.Control) | T.Control %in% c("", "na")) & any(T.Control == "yes", na.rm = TRUE),
+  "no",
+  T.Control
+), by = B.Code]
+
+
+merged_metadata$MT.Out <- MT
+
+```
+
+## 1.2) Correct A.Level.Name
 Some feed intake entries are not matched to any ingredient data due to discrepancies in A.Level.Name between the feed intake and ingredient datasets for the same study codes. In this section, we build a table to flag studies where diet names do not align, helping to identify cases that may require manual review or correction.
 
 
@@ -300,7 +339,7 @@ merged_stats <- list(
 ```
 
 
-## 1.2) Correct ingredient units 
+## 1.3) Correct ingredient units 
 
 Some ingredients appear multiple times with amounts reported in different units. In this section, we prioritize entries that are already in preferred units to minimize the need for conversions.
 
@@ -349,7 +388,7 @@ merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
 ```
 
 
-Summary of the data 
+## 1.4) Summary of the data 
 ```{r,message=FALSE,warning=FALSE}
 
 # Define species of interest
@@ -430,8 +469,7 @@ ingredients <- merged_metadata$Animals.Diet %>%
     D.Unit.Time,
     D.Unit.Animals,
     DC.Is.Dry,
-    D.Ad.lib,
-    D.Is.Group
+    D.Ad.lib
   ) %>%
   mutate(D.Amount = as.numeric(D.Amount))
 
@@ -516,6 +554,7 @@ reps <- merged_metadata$MT.Out %>%
   mutate(T.Animals = as.numeric(T.Animals)) %>%
   distinct(B.Code, A.Level.Name, .keep_all = TRUE)
 
+
 ingredients <- ingredients %>%
   left_join(reps %>% dplyr::select(B.Code, A.Level.Name, T.Animals), by=c("B.Code","A.Level.Name")) %>%
   mutate(
@@ -537,8 +576,6 @@ rm(harmonize_units)
 ### 2.1) Suspicious dry amounts
 
 This step identifies ingredients where DC.Is.Dry is marked as NA or unspecified. We cross-check these with moisture values from the composition table to infer whether the ingredient is likely dry or wet. We also flag inconsistencies between the ingredient name (e.g., containing "dried") and the recorded dry status.
-
-
 
 ```{r}
 # --- 1. Classify ingredients from Moisture or DM values ---
@@ -625,8 +662,6 @@ dry_prediction_final <- bind_rows(
     mutate(DC.Is.Dry = "Yes", Prediction_Source = "Extra_rule")
 ) %>%
   distinct(B.Code, D.Item, .keep_all = TRUE)
-
-
 
 
 # --- 4. Apply predictions to ingredients table (update only predicted dry) ---
@@ -755,9 +790,6 @@ For ingredients reported in relative units such as %, % Diet, or g/kg, we can es
 
 
 ```{r}
-#some papers also have ni units for feed intake 
-#data and chekc in excel if unit is missing 
-
 missing_unit_feed_intake<- merged_metadata$Data.Out %>%
   select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw,
          ED.Mean.T, ED.Error, Out.Unit, Out.Subind,is_entire_diet,Source,Out.Code.Joined) %>%
@@ -975,8 +1007,6 @@ feed_intake <- feed_intake %>%
 ```
 
 
-
-
 #### 2.4.3) Use of feed intake for ingredient amounts
 
 If feed intake data is there for the entire diet and that the ingredients in ingredients dataset are in % or % of diet or g/kg we can convert 
@@ -1010,205 +1040,21 @@ ingredients <- ingredients %>%
 
 
 ```
+## 3) Subset data
 
+## 3.1) Take out basal diets 
 
-
-
-
-## 3) Integrate basal diets 
-
-Basal diets serve as the control and foundation for all treatments in livestock experiments. They are present in both the control diet and in every treatment diet that includes additional ingredients. This section integrates basal diet ingredients into the treatment diets while preserving the original basal formulation, and it flags any ingredient that originates from the basal diet.Basal diets (base diets) are merged into treatment diets to ensure consistency across feeding trials, allowing for a more accurate estimate of total diet composition.
+We excluded the basal diets because, in most of the livestock trials in our database, the basal ration is offered ad libitum and therefore lacks two pieces of information that are essential for a fair, productivity-based comparison: (i) actual feed-intake measurements and (ii) corresponding enteric-methane estimates. Without intake data we cannot convert emissions—or, in many cases, even estimate them—on a per-kilogram-of-product basis, and retaining these records would artificially inflate the number of “treatments” while contributing no usable information to the efficiency analyses. By focusing on the control diet (with measured intake) and the formulated treatment diets, we keep a coherent set of observations in which every data point can be expressed as both absolute emissions and emission intensity, allowing robust, like-for-like comparisons across studies.
 
 ```{r,message=FALSE,warning=FALSE}
-# # Identify basal diets
-# basal_diets <- ingredients %>%
-#   filter(tolower(str_trim(A.Level.Name)) == "base") %>%
-#   mutate(from_basal = TRUE)
-# 
-# 
-# # Identify non-basal diets
-# non_basal_diets <- ingredients %>%
-#   filter(tolower(str_trim(A.Level.Name)) != "base") %>%
-#   mutate(from_basal = FALSE)
-# 
-# # Duplicate basal diets for each non-basal diet within the same B.Code
-# basal_expanded <- non_basal_diets %>%
-#   dplyr::select(B.Code, A.Level.Name) %>%
-#   distinct() %>%
-#   inner_join(basal_diets, by="B.Code") %>%
-#   mutate(
-#     A.Level.Name = A.Level.Name.x, # carry over the non-basal A.Level.Name
-#     from_basal   = TRUE
-#   ) %>%
-#   dplyr::select(-A.Level.Name.x, -A.Level.Name.y)
-# 
-# # Combine everything into one integrated dataset
-# ingredients <- bind_rows(
-#   non_basal_diets,   # original non-basal
-#   basal_expanded,    # basal items added to each non-basal diet
-#   basal_diets        # keep the purely basal diet for control
-# )
-# 
-# rm(basal_expanded,basal_diets,non_basal_diets)
 
-```
-
-Similarly to the previous step, we can estimate the amounts of ingredients originating from basal diets using the total feed intake—provided the units are reported in % or g/kg.
-```{r}
-# Step 5: Estimate ingredient absolute amounts for diets with "Entire Diet" intake
-ingredients <- ingredients %>%
-  # Join only feed intake values where ED.Intake.Item is "Entire Diet"
-  left_join(
-    feed_intake %>%
-      filter(ED.Intake.Item == "Entire Diet") %>%
-      select(B.Code, A.Level.Name, Intake_kg_day = ED.Mean.T),
-    by = c("B.Code", "A.Level.Name")
-  ) %>%
-  mutate(
-    # Estimate absolute amount (in grams)
-    D.Amount = case_when(
-      D.Unit.Amount == "%" & !is.na(Intake_kg_day) ~ (D.Amount / 100) * Intake_kg_day * 1000,
-      D.Unit.Amount == "% Diet" & !is.na(Intake_kg_day) ~ (D.Amount / 100) * Intake_kg_day * 1000,
-      D.Unit.Amount == "g/kg" & !is.na(Intake_kg_day) ~ D.Amount * Intake_kg_day,
-      TRUE ~ D.Amount
-    ),
-    
-    # Update unit only if we did a conversion
-    D.Unit.Amount = case_when(
-      D.Unit.Amount %in% c("%", "% Diet", "g/kg") & !is.na(Intake_kg_day) ~ "g",
-      TRUE ~ D.Unit.Amount
-    )
-  ) %>%
-  select(-Intake_kg_day)
+ingredients<-ingredients%>%
+  filter(A.Level.Name!="Base")
 
 ```
 
 
-
-add if treatments are control or not 
-
-```{r}
-
-
-# 1 ── Build a one-row-per-diet key from MT.Out ---------------------------
-ctrl_key <- merged_metadata$MT.Out %>% 
-  select(B.Code, A.Level.Name, T.Control) %>%      # keep only what we need
-  distinct()                                       # drop any accidental duplicates
-# If some diets still appear more than once (rare) choose one value:
-#   distinct() above is usually enough; otherwise replace it with:
-#   group_by(B.Code, A.Level.Name) %>% summarise(T.Control = first(T.Control), .groups = "drop")
-
-# 2 ── Add T.Control to the ingredients table ----------------------------
-ingredients <- ingredients %>% 
-  left_join(ctrl_key, by = c("B.Code", "A.Level.Name"))
-```
-
-## 4) Replace feed intake data where available
-
-We prioritize feed intake data over the amounts reported in the methods section, as feed intake is the key variable needed for emission calculations. When feed intake data is unavailable, we fall back on the harmonized ingredient amounts extracted earlier.
-
-### 4.1) Feed intake data at the diet level 
-
-```{r,message=FALSE,warning=FALSE}
-# Step 5: Remove feed intake entries that are actually full-diet labels
-feed_intake_ingredients <- feed_intake %>%
-  filter(ED.Intake.Item != A.Level.Name | ED.Intake.Item != "Entire Diet")%>%
-  filter(!is.na(ED.Mean.T))
-
-
-
-# Step 6: Merge with ingredients and override with ED.Mean.T when available
-# FIXED VERSION
-# Merge with ingredients and override with ED.Mean.T when available
-ingredients <- ingredients %>%
-  left_join(
-    feed_intake_ingredients %>%
-      select(B.Code, A.Level.Name, ED.Intake.Item, ED.Mean.T, Out.Unit.Amount, Out.Unit.Animals, Out.Unit.Time),
-    by = c("B.Code", "A.Level.Name", "D.Item" = "ED.Intake.Item")
-  ) %>%
-  mutate(
-    from_feed_intake = !is.na(ED.Mean.T),
-    D.Amount = if_else(from_feed_intake, ED.Mean.T, D.Amount),
-    D.Unit.Amount = if_else(from_feed_intake & !is.na(Out.Unit.Amount), Out.Unit.Amount, D.Unit.Amount),
-    D.Unit.Animals = if_else(from_feed_intake & !is.na(Out.Unit.Animals), Out.Unit.Animals, D.Unit.Animals),
-    D.Unit.Time = if_else(from_feed_intake & !is.na(Out.Unit.Time), Out.Unit.Time, D.Unit.Time)
-  ) %>%
-  select(-ED.Mean.T, -Out.Unit.Amount, -Out.Unit.Animals, -Out.Unit.Time) %>%
-  distinct()
-
-
-
-
-
-# Step 8: Final conversion of unit to grams (g)
-ingredients <- ingredients %>%
-  mutate(
-    D.Amount = case_when(
-      D.Unit.Amount == "kg" ~ D.Amount * 1000,
-      TRUE ~ D.Amount
-    ),
-    D.Unit.Amount = case_when(
-      D.Unit.Amount == "kg" ~ "g",
-      TRUE ~ D.Unit.Amount
-    )
-  )
-
-
-```
-
-
-### 4.2) Feed intake at the diet level  
-
-
-TO do : See BO1070 we ewant the full diet to be included form feed intake which is not the case now see feed intake data the goal would be to add rows in ingredient to add info at the entire diet level have a close look to make it the smae format as entire diets alreayd in ingredients 
-
-```{r}
-# Step: Extract feed intake entries that refer to the entire diet
-feed_intake_diet <- feed_intake %>%
-  filter(ED.Intake.Item == A.Level.Name | ED.Intake.Item == "Entire Diet")
-
-# Step: Merge and overwrite ingredients using diet-level feed intake
-ingredients <- ingredients %>%
-  left_join(
-    feed_intake_diet %>%
-      select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, ED.Mean.T, Out.Unit.Amount, Out.Unit.Animals, Out.Unit.Time),
-    by = c("B.Code", "A.Level.Name", "D.Type" = "ED.Intake.Item.Raw")
-  ) %>%
-  mutate(
-    from_feed_intake2 = !is.na(ED.Mean.T),
-    D.Amount = if_else(from_feed_intake2, ED.Mean.T, D.Amount),
-    D.Unit.Amount = if_else(from_feed_intake2 & !is.na(Out.Unit.Amount), Out.Unit.Amount, D.Unit.Amount),
-    D.Unit.Animals = if_else(from_feed_intake2 & !is.na(Out.Unit.Animals), Out.Unit.Animals, D.Unit.Animals),
-    D.Unit.Time = if_else(from_feed_intake2 & !is.na(Out.Unit.Time), Out.Unit.Time, D.Unit.Time)
-  ) %>%
-  select(-ED.Mean.T, -Out.Unit.Amount, -Out.Unit.Animals, -Out.Unit.Time,-ED.Intake.Item) %>%
-  distinct()
-
-
-
-
-# Step 8: Final conversion of unit to grams (g)
-ingredients <- ingredients %>%
-  mutate(
-    D.Amount = case_when(
-      D.Unit.Amount == "kg" ~ D.Amount * 1000,
-      TRUE ~ D.Amount
-    ),
-    D.Unit.Amount = case_when(
-      D.Unit.Amount == "kg" ~ "g",
-      TRUE ~ D.Unit.Amount
-    )
-  )
-
-
-```
-
-
-
-
-grazing 
-
-try to take out the diet for which grazing is involved d type = grazing and see the loss of papers 
+## 3.1 Take out grazing experiments 
 
 ```{r}
 
@@ -1258,6 +1104,100 @@ papers_after <- ingredients %>%
   count(P.Product, name = "papers_after")
 ```
 
+## 4) Replace feed intake data where available
+
+We prioritize feed intake data over the amounts reported in the methods section, as feed intake is the key variable needed for emission calculations. When feed intake data is unavailable, we fall back on the harmonized ingredient amounts extracted earlier.
+
+### 4.1) Feed intake data at the diet level 
+
+```{r,message=FALSE,warning=FALSE}
+# Step 5: Remove feed intake entries that are actually full-diet labels
+feed_intake_ingredients <- feed_intake %>%
+  filter(str_trim(ED.Intake.Item) != str_trim(A.Level.Name) & 
+         str_trim(ED.Intake.Item) != "Entire Diet") %>%
+  filter(!is.na(ED.Mean.T))
+
+
+# Step 6: Merge with ingredients and override with ED.Mean.T when available
+# FIXED VERSION
+# Merge with ingredients and override with ED.Mean.T when available
+ingredients <- ingredients %>%
+  left_join(
+    feed_intake_ingredients %>%
+      select(B.Code, A.Level.Name, ED.Intake.Item, ED.Mean.T, Out.Unit.Amount, Out.Unit.Animals, Out.Unit.Time),
+    by = c("B.Code", "A.Level.Name", "D.Item" = "ED.Intake.Item")
+  ) %>%
+  mutate(
+    from_feed_intake = !is.na(ED.Mean.T),
+    D.Amount = if_else(from_feed_intake, ED.Mean.T, D.Amount),
+    D.Unit.Amount = if_else(from_feed_intake & !is.na(Out.Unit.Amount), Out.Unit.Amount, D.Unit.Amount),
+    D.Unit.Animals = if_else(from_feed_intake & !is.na(Out.Unit.Animals), Out.Unit.Animals, D.Unit.Animals),
+    D.Unit.Time = if_else(from_feed_intake & !is.na(Out.Unit.Time), Out.Unit.Time, D.Unit.Time)
+  ) %>%
+  select(-ED.Mean.T, -Out.Unit.Amount, -Out.Unit.Animals, -Out.Unit.Time) %>%
+  distinct()
+
+
+# Step 8: Final conversion of unit to grams (g)
+ingredients <- ingredients %>%
+  mutate(
+    D.Amount = case_when(
+      D.Unit.Amount == "kg" ~ D.Amount * 1000,
+      TRUE ~ D.Amount
+    ),
+    D.Unit.Amount = case_when(
+      D.Unit.Amount == "kg" ~ "g",
+      TRUE ~ D.Unit.Amount
+    )
+  )
+
+
+```
+
+
+### 4.2) Feed intake at the diet level  
+
+TO do : See BO1070 we want the full diet to be included from feed intake which is not the case now see feed intake data the goal would be to add rows in ingredient to add info at the entire diet level have a close look to make it the same format as entire diets already in ingredients 
+
+```{r}
+# Step: Extract feed intake entries that refer to the entire diet
+feed_intake_diet <- feed_intake %>%
+  filter(ED.Intake.Item == A.Level.Name | ED.Intake.Item == "Entire Diet")
+
+# Step: Merge and overwrite ingredients using diet-level feed intake
+ingredients <- ingredients %>%
+  left_join(
+    feed_intake_diet %>%
+      select(B.Code, A.Level.Name, ED.Intake.Item, ED.Intake.Item.Raw, ED.Mean.T, Out.Unit.Amount, Out.Unit.Animals, Out.Unit.Time),
+    by = c("B.Code", "A.Level.Name", "D.Type" = "ED.Intake.Item.Raw")
+  ) %>%
+  mutate(
+    from_feed_intake2 = !is.na(ED.Mean.T),
+    D.Amount = if_else(from_feed_intake2, ED.Mean.T, D.Amount),
+    D.Unit.Amount = if_else(from_feed_intake2 & !is.na(Out.Unit.Amount), Out.Unit.Amount, D.Unit.Amount),
+    D.Unit.Animals = if_else(from_feed_intake2 & !is.na(Out.Unit.Animals), Out.Unit.Animals, D.Unit.Animals),
+    D.Unit.Time = if_else(from_feed_intake2 & !is.na(Out.Unit.Time), Out.Unit.Time, D.Unit.Time)
+  ) %>%
+  select(-ED.Mean.T, -Out.Unit.Amount, -Out.Unit.Animals, -Out.Unit.Time,-ED.Intake.Item) %>%
+  distinct()
+
+
+# Step 8: Final conversion of unit to grams (g)
+ingredients <- ingredients %>%
+  mutate(
+    D.Amount = case_when(
+      D.Unit.Amount == "kg" ~ D.Amount * 1000,
+      TRUE ~ D.Amount
+    ),
+    D.Unit.Amount = case_when(
+      D.Unit.Amount == "kg" ~ "g",
+      TRUE ~ D.Unit.Amount
+    )
+  )
+
+
+```
+
 
 
 ## 5) Subset for Dry data 
@@ -1305,7 +1245,6 @@ papers_after <- ingredients %>%
   count(P.Product, name = "papers_after")
 
 ```
-
 
 ## 6) Complete the nutrition and digestibility papers
 
@@ -1434,7 +1373,7 @@ feedipedia <- read_parquet(temp_file)
 ## download AOM with the correspondance between feedipedia codes and diet items 
 
 # Define the raw URL for the Excel file
-url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(4).xlsx"
+url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(5).xlsx"
 
 # Download the file to a temporary location
 temp_file <- tempfile(fileext = ".xlsx")
@@ -1449,7 +1388,7 @@ mastersheet$Feedipedia <- as.numeric(sub(".*node/", "", mastersheet$Feedipedia))
 
 ```
 
-add nutrition and digestibility from feedipedia 
+## 7.1) add nutrition and digestibility from feedipedia 
 
 ```{r,message=FALSE,warning=FALSE}
 # --- A) Add Feedipedia node from mastersheet into Comp and Digest tables
@@ -1777,62 +1716,214 @@ bcode_table_df <- bind_rows(bcode_table)
 print(species_summary_df)
 head(bcode_table_df)
 ```
-## Tagg practices 
+
+## Link data to ILRI database
+
+```{r}
+## Link data to ILRI database
+
+# Define the raw URL for the Excel file
+url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(5).xlsx"
+
+# Download the file to a temporary location
+temp_file <- tempfile(fileext = ".xlsx")
+download.file(url, destfile = temp_file, mode = "wb")
+
+# ---- Load ILRI nutrition data ----
+ILRI <- read_excel(temp_file, sheet = "ssa_feedsdb", col_types = "text") %>%
+  janitor::clean_names()
+names(ILRI) <- gsub("\\.\\.\\.[0-9]+", "", names(ILRI))
+
+# Reshape ILRI data and standardize units
+ilri_long <- ILRI %>%
+  select(ilri_feedcode = ilri_feedcode_6, cp, om, ndf, adf, adl, dm, me, n_el) %>%
+  pivot_longer(
+    cols = -ilri_feedcode,
+    names_to = "DC.Variable",
+    values_to = "ILRI_Value"
+  ) %>%
+  mutate(
+    DC.Variable = toupper(DC.Variable),
+    ILRI_Value = case_when(
+      DC.Variable %in% c("ME", "NEL", "NEM", "NEG") ~ as.numeric(ILRI_Value),
+      TRUE ~ as.numeric(ILRI_Value) * 10  # convert % DM to g/kg DM
+    ),
+    ILRI_Unit = case_when(
+      DC.Variable %in% c("ME", "NEL", "NEM", "NEG") ~ "MJ/kg DM",
+      TRUE ~ "g/kg DM"
+    )
+  )
+
+# ---- Load and clean AOM mapping sheet ----
+aom_map <- read_excel(temp_file, sheet = "AOM", col_types = "text") %>%
+  janitor::clean_names() %>%
+  filter(l5 == "Feed Ingredient") %>%
+  select(edge_value, ilri_code) %>%
+  mutate(ilri_code = as.character(ilri_code))
+
+# ---- Merge ILRI feed codes into diet composition ----
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  left_join(aom_map, by = c("D.Item" = "edge_value"))
+
+```
+
+join nutritional values
+```{r}
+
+# ---- Join nutritional values from ILRI ----
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  left_join(ilri_long, by = c("ilri_code" = "ilri_feedcode", "DC.Variable"))
+
+
+```
+fill missing values from ILRI database
+
+```{r}
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  mutate(
+    DC.Value = if_else(is.na(DC.Value) & !is.na(ILRI_Value), ILRI_Value, DC.Value),
+    DC.Unit = if_else(is.na(DC.Unit) & !is.na(ILRI_Value), ILRI_Unit, DC.Unit),
+    nutrition_source = if_else(is.na(nutrition_source) & !is.na(ILRI_Value), "ilri", nutrition_source)
+  ) %>%
+  select(-ILRI_Value, -ILRI_Unit)
+
+```
+
+
+
+## 9) Tagg diet practices 
+
+## 9.1) Tagg ingredient with control or trt 
+
+```{r}
+##— build the control key from your merged MT.Out
+ctrl_key <- merged_metadata$MT.Out[, .(
+  B.Code,
+  A.Level.Name,
+  T.Name,
+  T.Control
+)]
+
+##— example join back onto your ingredient table
+# (assuming your ingredients DT has B.Code + A.Level.Name)
+ingredients <- merge(
+  x = ingredients, 
+  y = ctrl_key, 
+  by = c("B.Code","A.Level.Name"), 
+  all.x = TRUE, 
+  sort = FALSE
+)
+
+```
+
 In this section we are going to compare control treatments and treatment and define whether ingredients were substituted or added and what type of ingredient was changed. 
 
 ```{r}
 
-classify_diet_changes_detailed <- function(df) {
-  df %>%
+classify_practice_changes <- function(ing_tbl) {
+  ing_tbl <- ing_tbl %>%
+    mutate(T.Control = tolower(trimws(T.Control)))
+  
+  ing_tbl %>%
     group_by(B.Code) %>%
     group_split() %>%
-    purrr::map_dfr(~{
-      trial <- .x
-      ctrl_tbl <- trial %>% filter(T.Control == "Yes")
-      ctrl_items <- unique(ctrl_tbl$D.Item)
-
-      trt_diets <- trial %>%
-        filter(T.Control == "No") %>%
-        group_by(A.Level.Name) %>%
-        summarise(items = list(unique(D.Item)), .groups = "drop")
-
-      if (length(ctrl_items) == 0 || nrow(trt_diets) == 0) return(NULL)
-
-      trt_diets %>%
-        rowwise() %>%
-        mutate(
-          added   = list(setdiff(items, ctrl_items)),
-          removed = list(setdiff(ctrl_items, items)),
-          practice_type = case_when(
-            length(added) == length(removed) & length(added) > 0 ~ "substitution",
-            length(added) > 0                                     ~ "addition",
-            TRUE                                                  ~ NA_character_
+    map_dfr(function(study) {
+      # control items
+      ctrl_items <- study %>% 
+        filter(T.Control == "yes") %>% 
+        pull(D.Item) %>% unique()
+      if (length(ctrl_items)==0) return(NULL)
+      
+      # all non-control diet names
+      trt_diets <- study %>% 
+        filter(T.Control != "yes") %>% 
+        pull(A.Level.Name) %>% unique() %>% sort()
+      
+      # helper to build one comparison block
+      cmp_block <- function(base_items, comp_items, base_name, comp_name, cmp_flag) {
+        added   <- setdiff(comp_items, base_items)
+        removed <- setdiff(base_items, comp_items)
+        practice_type <- case_when(
+          length(added)>0 & length(removed)>0 ~ "substitution",
+          length(added)>0                   ~ "addition",
+          TRUE                              ~ NA_character_
+        )
+        # build two tibbles (added, removed), then stack
+        bind_rows(
+          tibble(
+            A.Level.Name  = comp_name,
+            compare_to    = cmp_flag,
+            other_diet    = ifelse(cmp_flag=="other_trt", base_name, NA_character_),
+            change_type   = "added",
+            practice_type = practice_type,
+            D.Item        = added
+          ),
+          tibble(
+            A.Level.Name  = comp_name,
+            compare_to    = cmp_flag,
+            other_diet    = ifelse(cmp_flag=="other_trt", base_name, NA_character_),
+            change_type   = "removed",
+            practice_type = practice_type,
+            D.Item        = removed
           )
-        ) %>%
-        ungroup() %>%
-        mutate(B.Code = unique(trial$B.Code)) %>%
-        pivot_longer(cols = c(added, removed),
-                     names_to = "change_type",
-                     values_to = "D.Item") %>%
-        unnest(D.Item) %>%
-        left_join(
-          df %>% select(B.Code, A.Level.Name, D.Item, D.Type) %>% distinct(),
-          by = c("B.Code", "A.Level.Name", "D.Item")
-        ) %>%
-        select(B.Code, A.Level.Name, D.Item, D.Type, change_type, practice_type)
-    })
+        ) %>% filter(!is.na(D.Item))
+      }
+      
+      # 1) each treatment vs control
+      vs_ctrl <- map_dfr(
+        trt_diets,
+        ~{
+          comp_items <- study %>% filter(A.Level.Name==.x) %>% pull(D.Item) %>% unique()
+          cmp_block(ctrl_items, comp_items,
+                    base_name = "control", comp_name = .x,
+                    cmp_flag  = "control")
+        }
+      )
+      
+      # 2) pairwise treatment vs treatment
+      vs_trt <- if (length(trt_diets)>=2) {
+        combn(trt_diets, 2, simplify=FALSE) %>%
+          map_dfr(function(pair) {
+            d1 <- pair[1]; d2 <- pair[2]
+            items1 <- study %>% filter(A.Level.Name==d1)%>%pull(D.Item)%>%unique()
+            items2 <- study %>% filter(A.Level.Name==d2)%>%pull(D.Item)%>%unique()
+            bind_rows(
+              cmp_block(items2, items1, base_name=d2, comp_name=d1, cmp_flag="other_trt"),
+              cmp_block(items1, items2, base_name=d1, comp_name=d2, cmp_flag="other_trt")
+            )
+          })
+      } else {
+        tibble(
+          A.Level.Name=character(),
+          compare_to=character(),
+          other_diet=character(),
+          change_type=character(),
+          practice_type=character(),
+          D.Item=character()
+        )
+      }
+      
+      # combine, attach feed‐type, and finalize
+      # combine, attach feed‐type, and finalize
+bind_rows(vs_ctrl, vs_trt) %>%
+  mutate(B.Code = unique(study$B.Code)) %>%  # <-- add B.Code BEFORE the join
+  left_join(
+  ing_tbl %>% select(B.Code, D.Item, D.Type) %>% distinct(),
+  by = c("B.Code", "D.Item")
+) %>%
+  select(B.Code, A.Level.Name, compare_to, other_diet,
+         change_type, practice_type, D.Item, D.Type)
+})
 }
 
-
-
-# ── example call ─────────────────────────────────────────
-practice <- classify_diet_changes_detailed(ingredients)
+# ---- example usage ----
+practice_changes <- classify_practice_changes(ingredients)
 
 
 ```
 
 
-## 9) Relative % of each ingredient in the diet
+## 10) Relative % of each ingredient in the diet
 
 This table presents the relative percentage of each ingredient within a diet. To ensure accurate proportion calculations, we first filtered the dataset to include only diets with consistent units. Diets with incompatible or non-harmonizable units were excluded, as their proportions could not be reliably determined.
 
@@ -1985,9 +2076,9 @@ if we have total amounts and feed intake for ingredient we might be abe to deduc
 
 
 
-## 10) Emission calculations 
+## 11) Emission calculations 
 
-### 10.1 Estimation of Enteric Methane Emissions Using IPCC Tier 2
+### 11.1 Estimation of Enteric Methane Emissions Using IPCC Tier 2
 
 Enteric methane (CH₄) emissions were estimated using the **IPCC Tier 2** methodology, which incorporates animal-specific data such as **gross energy intake (GE)** and **methane conversion factors (Ym)**. This approach improves accuracy over Tier 1 by reflecting diet composition, feed intake, and species-specific differences.
 
@@ -2020,7 +2111,7 @@ Where:
 
 Then, daily intake was computed using the same formula above.
 
-### 10.3. Methane Emissions Calculation (Tier 2)
+### 11.3. Methane Emissions Calculation (Tier 2)
 
 Annual methane emissions were calculated using the IPCC Tier 2 equation:
 
@@ -2039,7 +2130,7 @@ Where:
 - 55.65 = energy content of methane (MJ/kg CH₄)
 
 
-### 10.4 Data Requirements and Supporting Tables
+### 11.4 Data Requirements and Supporting Tables
 
 **1. Table of Diet Composition Proportions**
 
@@ -2149,9 +2240,9 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 ```
 
 
-## 11) Gross energy data 
+## 12) Gross energy data 
 
-## 11.1) Gross energy harmonization
+## 12.1) Gross energy harmonization
 
 ```{r}
 # 1. Total papers per species
@@ -2283,7 +2374,7 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 ```
 
 
-## 11.2 Gross energy data check 
+## 12.2 Gross energy data check 
 
 ```{r}
 
@@ -2296,7 +2387,7 @@ Gross_energy_check <- Gross_energy %>%
 
 
 
-## 12) Estimate gross energy for ingredients from proximate nutritional composition
+## 13) Estimate gross energy for ingredients from proximate nutritional composition
 
 To estimate Gross Energy (GE) when direct measurements are not available, we use a predictive equation based on proximate nutritional components: **crude protein (CP)**, **ether extract (EE)**, and **ash**. This method provides an accurate approximation of the energy content of feed ingredients based on their macronutrient composition.
 
@@ -2401,7 +2492,7 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 ```
 
 
-## 13) Infer gross energy from data 
+## 14) Infer gross energy from data 
 As we did in 9) we are inferring again GE data after estimation by proximal nutritional composition. 
 
 ```{r}
@@ -2457,7 +2548,7 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 ```
 
 
-## 14) Estimate Digestible energy from proximate nutritional composition
+## 15) Estimate Digestible energy from proximate nutritional composition
 
 ```{r}
 # --- STEP 4: Prepare predictors for Weiss DE equation ---
@@ -2538,7 +2629,7 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 
 We dont get more papers seems logical because probably the same ingredient as the equation  for GE. 
 
-## 15) Convert digestible energy into gross energy 
+## 16) Convert digestible energy into gross energy 
 Converts digestible energy (DE) to gross energy (GE) using a default digestibility factor (54%) when DE is reported but GE is not.
 
 ```{r,message=FALSE,warning=FALSE}
@@ -2671,7 +2762,7 @@ knitr::kable(bcode_list_both, caption = "B.Codes with BOTH GE (DC.Value) and Fee
 
 
 
-## 16) Calculation of CH4 emissions
+## 17) Calculation of CH4 emissions
 
 To estimate enteric methane emissions, a methane conversion factor (Ym) is applied to the gross energy (GE) intake of livestock. Ym represents the proportion of the animal’s gross energy intake that is converted to methane and varies based on the species, productivity level, and diet composition. The IPCC (2019) provides updated Ym values based on feed digestibility and forage content. Below is the logic applied:
 
@@ -2694,7 +2785,7 @@ kable(
 ```
 
 
-### 16.1) Ym estimations 
+### 17.1) Ym estimations 
 
 ```{r}
 # Step 1: Identify purpose of each B.Code from the production output table
@@ -2823,7 +2914,7 @@ forage_proportions <- diet_valid_units %>%
 ```
 
 
-### 16.2) Reconstruct Gross Energy at the diet level from ingredient data 
+### 17.2) Reconstruct Gross Energy at the diet level from ingredient data 
 Reconstructs the gross energy of the entire diet from the weighted average of GE values of individual ingredients, when diet-level GE is not reported.
 
 
@@ -2933,7 +3024,7 @@ GE_diet_reconstructed <- GE_from_ingredients %>%
 ```
 
 
-### 16.3) Gross energy at the entire diet level 
+### 17.3) Gross energy at the entire diet level 
 ```{r,message=FALSE,warning=FALSE}
 
 Gross_energy_entire <- Gross_energy %>%
@@ -2987,7 +3078,7 @@ Gross_energy_entire <- Gross_energy %>%
 
 ```
 
-### 16.4) Merge GE data with feed intake 
+### 17.4) Merge GE data with feed intake 
 
 ```{r,message=FALSE,warning=FALSE}
   # Make sure 'purpose_by_code' is unique per B.Code
@@ -3156,7 +3247,7 @@ Ym = case_when(
 
 
 
-### 16.5) Final calculation
+### 17.5) Final calculation
 
 ```{r,message=FALSE,warning=FALSE}
 #combine
@@ -3287,14 +3378,12 @@ cat("Total unique ingredients:", total_ingredients, "\n")
 
 ```
 
-
-
 total number of codes that have ge and have both treatment and control 
 
 ```{r}
 # Identify B.Codes that contain both control and treatment diets
 b_codes_with_both_ctrl_and_trt <- GE_combined %>%
-  filter(T.Control %in% c("Yes", "No")) %>%   # Only if T.Control is properly labeled
+  filter(T.Control %in% c("yes", "no")) %>%   # Only if T.Control is properly labeled
   group_by(B.Code) %>%
   summarise(n_control_status = n_distinct(T.Control), .groups = "drop") %>%
   filter(n_control_status > 1)   # Keep only those with both Yes and No
@@ -3305,7 +3394,13 @@ cat("Number of B.Codes with both control and treatment diets:", n_both_ctrl_and_
 
 ```
 
+papers that have no tagg for t control 
 
+```{r}
+check_control<-ingredients%>%
+  filter(is.na(T.Control))%>%
+  select(B.Code,A.Level.Name,D.Item,T.Control)
+```
 
 filter ge combined with only papers with both control and treatments 
 
@@ -3364,33 +3459,12 @@ cat("Total unique ingredients:", total_ingredients, "\n")
 ```
 
 
-## add practice to ge combined to know if ingrediens were addded or substituted
-
-
-
-```{r}
-# Step 1: Aggregate practice type per diet
-practice_summary <- practice %>%
-  group_by(B.Code, A.Level.Name) %>%
-  summarise(
-    practice_type = first(na.omit(practice_type)),  # summarize per diet
-    changed_types = paste(unique(D.Type), collapse = "; "),
-    .groups = "drop"
-  )
-
-# Step 2: Merge into GE_combined
-GE_combined <- GE_combined %>%
-  left_join(practice_summary, by = c("B.Code", "D.Item" = "A.Level.Name"))
-
-```
-
-
-## 17) Link emissions to productivity data 
+## 18) Link emissions to productivity data 
 
 here we will have the same issue as with feed intake data since the Alevel in the data tab dont always latch the ones in the diet tab 
 
 
-### 17.1) Merge yield and emission data 
+### 18.1) Merge yield and emission data 
 
 ```{r}
 
@@ -3409,7 +3483,7 @@ yield_with_emissions <- yield_data %>%
 
 ```
 
-### 17.2) Plot the data
+### 18.2) Plot the data
 ```{r}
 
 # Filter meat yield data and drop missing values
@@ -3673,6 +3747,7 @@ ggplot(ei_df, aes(x = ADG_kg, y = EI_CH4_kg, colour = P.Product)) +
   theme(legend.position = "bottom")
 
 ```
+
 ```{r,warning=FALSE}
 library(dplyr); library(ggplot2); library(scales)
 # 0.  Make sure your weight-gain table is available
@@ -3766,7 +3841,7 @@ yield_d_clean <- yield_data %>%                      # ← your harmonised table
 
 ei_prod <- GE_combined %>%                              # absolute CH4 table
   select(B.Code, A.Level.Name = D.Item,
-         CH4_kg_year, P.Product,T.Control,practice_type,changed_types) %>%
+         CH4_kg_year, P.Product,T.Control) %>%
   inner_join(yield_d_clean, by = c("B.Code","A.Level.Name")) %>%
   mutate(
     Yield_kg_year = Yield_kg_day * 365,
@@ -3819,25 +3894,63 @@ length(unique(ei_prod$B.Code))
 ## Analysis based on practices 
 
 ```{r}
-ei_prod_filtered <- ei_prod %>%
-  filter(T.Control != "Yes") %>%   # Exclude control diets
+# ── 1) get the detailed “added‐ingredient” changes per diet ────────────────
+practice_changes <- classify_practice_changes(ingredients)
+# returns cols: B.Code, A.Level.Name, added, D.Type, compare_to, other_diet
+practice_changes_classified <- practice_changes %>%
   mutate(
-    top_type = str_split(changed_types, ";\\s*") %>% map_chr(1)
+    D.Type.Class = case_when(
+      str_detect(D.Type, regex("concentrate", ignore_case = TRUE)) ~ "Concentrate",
+      str_detect(D.Type, regex("supplement", ignore_case = TRUE)) ~ "Supplement",
+      TRUE ~ D.Type
+    )
   )
 
-ggplot(ei_prod_filtered, aes(x = top_type, y = EI_CH4_prod, fill = practice_type)) +
+# Step 2: Create practice_summary using the cleaned D.Type.Class
+practice_summary <- practice_changes_classified %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    practice_type = first(na.omit(practice_type)),
+    primary_added = first(D.Item),
+    added_types   = paste(unique(D.Type.Class), collapse = "; "),
+    .groups = "drop"
+  )
+
+```
+
+
+```{r}
+
+# Option A: if GE_combined still has diet in D.Item
+GE_with_practice <- GE_combined %>%
+  rename(A.Level.Name = D.Item) %>%
+  left_join(practice_summary, by = c("B.Code", "A.Level.Name"))
+
+ei_plot_df_expanded <- GE_with_practice %>%
+  left_join(
+    ei_prod %>% select(B.Code, A.Level.Name, EI_CH4_prod, Product),
+    by = c("B.Code", "A.Level.Name")
+  ) %>%
+  filter(T.Control %in% c("no", "false", "0", FALSE)) %>%
+  filter(!is.na(EI_CH4_prod)) %>%
+  filter(!is.na(practice_type)) %>%
+  separate_rows(added_types, sep = ";\\s*") # Splits on "; " and expands rows
+
+# Now plot
+ggplot(ei_plot_df_expanded, aes(x = added_types, y = EI_CH4_prod, fill= practice_type)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.4) +
-  geom_jitter(width = 0.2, alpha = 0.5, size = 2, color = "black") +
+  geom_jitter(width = 0.2, size = 2, color = "black", alpha = 0.6) +
   facet_wrap(~ Product, scales = "fixed") +
-  scale_y_log10("Emission Intensity (kg CH₄ / kg product)",
-                breaks = scales::log_breaks(),
-                labels = scales::comma_format()) +
-  labs(title = "Emission Intensity by Practice and Ingredient Type",
-       x = "Ingredient Type") +
+  scale_y_log10("Emission intensity (kg CH₄ / kg product)",
+                breaks = log_breaks(), labels = comma_format()) +
+  labs(
+    title = "CH₄ Emission Intensity by Ingredient Category",
+    x     = "Ingredient type",
+    fill  = "Practice"
+  ) +
   theme_minimal(base_size = 13) +
-  theme(legend.position = "bottom")
-
-
+  theme(legend.position = "bottom",
+        axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
