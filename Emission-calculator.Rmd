@@ -43,7 +43,7 @@ library(ggplot2)
 library(data.table)
 library(purrr)
 library(janitor)
-
+library(ggalt)
 # Set up connection to S3 bucket
 s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
 era_s3 <- "s3://digital-atlas/era"
@@ -387,8 +387,85 @@ merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
 
 ```
 
+## 1.5) Correct D.Type TO BE MODIFIED WHEN PETE UPDATES
 
-## 1.4) Summary of the data 
+Some ingredients have more than one type, for those we merge the ingredients with the masterhseet to get the correct D.Type 
+```{r}
+# library(dplyr)
+# library(readxl)
+# 
+# # ── 1) Canonical lookup from AOM ──────────────────────────────────────────
+# aom_url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(5).xlsx"
+# tmp_xls <- tempfile(fileext = ".xlsx")
+# download.file(aom_url, tmp_xls, mode = "wb")
+# 
+# lookup <- read_excel(tmp_xls, sheet = "AOM") %>% 
+#   filter(L5 == "Feed Ingredient") %>% 
+#   transmute(
+#     D.Item     = trimws(Edge_Value),
+#     Canon_Type = trimws(L7)
+#   ) %>% 
+#   filter(!is.na(D.Item), !is.na(Canon_Type)) %>% 
+#   distinct()
+# 
+# # ── 2) Ingredients that carry >1 distinct D.Type ──────────────────────────
+# Animals.Diet <- merged_metadata$Animals.Diet   # shorthand
+# 
+# multi_type_items <- Animals.Diet %>% 
+#   group_by(D.Item) %>% 
+#   summarise(n_types = n_distinct(D.Type[!is.na(D.Type)]), .groups = "drop") %>% 
+#   filter(n_types > 1) %>% 
+#   pull(D.Item)                               # *vector* of ambiguous names
+# 
+# # ── 3) Overwrite only those ambiguous rows when canonical exists ───────────
+# Animals.Diet <- Animals.Diet %>% 
+#   left_join(lookup, by = "D.Item") %>% 
+#   mutate(
+#     D.Type = case_when(
+#       D.Item %in% multi_type_items & !is.na(Canon_Type) ~ Canon_Type,
+#       TRUE                                              ~ D.Type
+#     )
+#   ) %>% 
+#   select(-Canon_Type)
+# 
+# merged_metadata$Animals.Diet <- Animals.Diet   # write back
+# 
+# # ── 4) Quick sanity check ──────────────────────────────────────────────────
+# fixed_n <- Animals.Diet %>% 
+#   filter(D.Item %in% multi_type_items) %>% 
+#   distinct(D.Item, D.Type) %>% 
+#   add_count(D.Item, name = "n") %>% 
+#   filter(n == 1) %>% 
+#   summarise(n_fixed = n_distinct(D.Item)) %>% 
+#   pull(n_fixed)
+# 
+# still_bad_n <- Animals.Diet %>% 
+#   filter(D.Item %in% multi_type_items) %>% 
+#   distinct(D.Item, D.Type) %>% 
+#   add_count(D.Item, name = "n") %>% 
+#   filter(n > 1) %>% 
+#   summarise(n_bad = n_distinct(D.Item)) %>% 
+#   pull(n_bad)
+# 
+# cat("✔  Ingredients corrected :", fixed_n,  "\n",
+#     "✖  Still ambiguous       :", still_bad_n, "\n")
+
+```
+
+also when same species so same in mastersheet they should have the same caterogy
+
+
+those need to be categforized because there is nothing for d item 
+
+```{r}
+to_be_categorized<-merged_metadata$Animals.Diet%>%
+  filter(is.na(D.Item))%>%
+  filter(D.Type!="Entire Diet")
+
+```
+
+
+## 1.6) Summary of the data 
 ```{r,message=FALSE,warning=FALSE}
 
 # Define species of interest
@@ -1840,34 +1917,46 @@ classify_practice_changes <- function(ing_tbl) {
         pull(A.Level.Name) %>% unique() %>% sort()
       
       # helper to build one comparison block
-      cmp_block <- function(base_items, comp_items, base_name, comp_name, cmp_flag) {
-        added   <- setdiff(comp_items, base_items)
-        removed <- setdiff(base_items, comp_items)
-        practice_type <- case_when(
-          length(added)>0 & length(removed)>0 ~ "substitution",
-          length(added)>0                   ~ "addition",
-          TRUE                              ~ NA_character_
-        )
-        # build two tibbles (added, removed), then stack
-        bind_rows(
-          tibble(
-            A.Level.Name  = comp_name,
-            compare_to    = cmp_flag,
-            other_diet    = ifelse(cmp_flag=="other_trt", base_name, NA_character_),
-            change_type   = "added",
-            practice_type = practice_type,
-            D.Item        = added
-          ),
-          tibble(
-            A.Level.Name  = comp_name,
-            compare_to    = cmp_flag,
-            other_diet    = ifelse(cmp_flag=="other_trt", base_name, NA_character_),
-            change_type   = "removed",
-            practice_type = practice_type,
-            D.Item        = removed
-          )
-        ) %>% filter(!is.na(D.Item))
-      }
+      cmp_block <- function(base_items, comp_items,
+                      base_name, comp_name, cmp_flag) {
+
+  added   <- setdiff(comp_items, base_items)
+  removed <- setdiff(base_items, comp_items)
+
+  practice_type <- case_when(
+    length(added)   > 0 & length(removed) > 0 ~ "substitution",
+    length(added)   > 0                       ~ "addition",
+    TRUE                                       ~ NA_character_
+  )
+
+  ## ---------- NEW: label “other_trt:<name>” instead of plain “other_trt” ----
+  cmp_label <- ifelse(
+    cmp_flag == "other_trt",
+    paste0("other_trt:", base_name),      # e.g.  other_trt:Diet_A
+    "control"
+  )
+
+  bind_rows(
+    tibble(
+      A.Level.Name  = comp_name,
+      compare_to    = cmp_label,          # <-- changed
+      other_diet    = ifelse(cmp_flag=="other_trt", base_name, NA_character_),
+      change_type   = "added",
+      practice_type = practice_type,
+      D.Item        = added
+    ),
+    tibble(
+      A.Level.Name  = comp_name,
+      compare_to    = cmp_label,          # <-- changed
+      other_diet    = ifelse(cmp_flag=="other_trt", base_name, NA_character_),
+      change_type   = "removed",
+      practice_type = practice_type,
+      D.Item        = removed
+    )
+  ) %>% 
+    filter(!is.na(D.Item))
+}
+
       
       # 1) each treatment vs control
       vs_ctrl <- map_dfr(
@@ -1915,9 +2004,6 @@ bind_rows(vs_ctrl, vs_trt) %>%
          change_type, practice_type, D.Item, D.Type)
 })
 }
-
-# ---- example usage ----
-practice_changes <- classify_practice_changes(ingredients)
 
 
 ```
@@ -3903,18 +3989,34 @@ practice_changes_classified <- practice_changes %>%
       str_detect(D.Type, regex("concentrate", ignore_case = TRUE)) ~ "Concentrate",
       str_detect(D.Type, regex("supplement", ignore_case = TRUE)) ~ "Supplement",
       TRUE ~ D.Type
+    ))%>%
+       mutate(
+    D.Item = case_when(
+      str_detect(D.Item, regex("Salt", ignore_case = TRUE)) ~ "Salt",
+      TRUE ~ D.Item
     )
   )
 
 # Step 2: Create practice_summary using the cleaned D.Type.Class
-practice_summary <- practice_changes_classified %>%
-  group_by(B.Code, A.Level.Name) %>%
+practice_summary <- practice_changes_classified %>% 
+  group_by(B.Code, A.Level.Name, compare_to) %>%     # ← add compare_to here
   summarise(
     practice_type = first(na.omit(practice_type)),
-    primary_added = first(D.Item),
-    added_types   = paste(unique(D.Type.Class), collapse = "; "),
+
+    added_items   = paste(unique(D.Item[change_type == "added"   ]), 
+                          collapse = "; "),
+    removed_items = paste(unique(D.Item[change_type == "removed" ]), 
+                          collapse = "; "),
+
+    added_types   = paste(unique(D.Type.Class[change_type == "added"   ]), 
+                          collapse = "; "),
+    removed_types = paste(unique(D.Type.Class[change_type == "removed" ]), 
+                          collapse = "; "),
     .groups = "drop"
   )
+
+
+
 
 ```
 
@@ -3953,5 +4055,118 @@ ggplot(ei_plot_df_expanded, aes(x = added_types, y = EI_CH4_prod, fill= practice
         axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
+salt to eb salt 
 
+
+look non era feed and other ingredients those could maybe classified other ways 
+
+```{r}
+non_era_ing <- ingredients %>%                 # ⬅️ all “Non-ERA Feed”
+  filter(D.Type == "Non-ERA Feed") %>% 
+  pull(D.Item) %>% 
+  unique()                                      # character vector
+
+other_ing   <- ingredients %>%                 # ⬅️ all “Other ingredients”
+  filter(D.Type == "Other Feed" |              #  ← or whatever your label is
+         D.Type == "Other Ingredient") %>%     #  ← add more ORs if needed
+  pull(D.Item) %>% 
+  unique()
+```
+
+
+
+```{r}
+ctrl_tbl <- ei_prod %>% 
+  filter(T.Control %in% c("yes", TRUE)) %>%   # keep ONLY control diets
+  distinct(B.Code, .keep_all = TRUE) %>%      # make sure one control per study
+  select(B.Code, ctrl_EI = EI_CH4_prod)       # keep just the two columns
+
+
+## ── Build ONE tidy table of category–substitutions ──────────────────────────
+subs_df <- GE_with_practice %>%                       # practice info
+  left_join(ei_prod  %>% select(B.Code, A.Level.Name,
+                                EI_CH4_prod, Product, T.Control),
+            by = c("B.Code","A.Level.Name")) %>% 
+  distinct(B.Code, A.Level.Name, .keep_all = TRUE) %>%       # de-dup
+  filter(compare_to == "control",        # only trt vs. *its* control
+         !is.na(practice_type)) %>% 
+  left_join(ctrl_tbl, by = "B.Code") %>%                     # add ctrl EI
+  mutate(delta_EI = EI_CH4_prod - ctrl_EI) %>%               # + = ↑ EI
+  ## explode to one row per *category pair* -------------------------------
+  separate_rows(added_types,   sep = ";\\s*") %>% 
+  separate_rows(removed_types, sep = ";\\s*") %>% 
+  transmute(B.Code, Product,
+            removed = trimws(removed_types),
+            added   = trimws(added_types),
+            delta_EI)%>%
+  filter(!is.na(delta_EI))
+
+
+```
+```{r}
+
+heat_bubble <- subs_df %>% 
+  group_by(removed, added) %>% 
+  summarise(n      = n(),
+            mean_d = mean(delta_EI, na.rm = TRUE),
+            .groups = "drop") %>% 
+  filter(!is.na(removed) & !is.na(added))
+
+ggplot(heat_bubble, aes(removed, added)) +
+  geom_point(aes(size = n, fill = mean_d),
+             shape = 21, colour = "grey30") +
+  scale_size(range = c(2, 14), breaks = c(1, 3, 5, 10)) +
+  scale_fill_gradient2(low = "#2b83ba", high = "#d7191c",
+                       mid = "white", midpoint = 0,
+                       name = "ΔEI") +
+  labs(title = "How category substitutions shift EI",
+       x = "Category removed", y = "Category added") +
+  theme_minimal(base_size = 12) +
+  theme(axis.text.x  = element_text(angle = 45, hjust = 1),
+        panel.grid   = element_blank())
+
+```
+
+```{r}
+library(ggpubr)   # gives geom_errorbarh if you prefer base ggplot
+
+forest_df <- subs_df %>% 
+  group_by(removed, added) %>% 
+  summarise(n   = n(),
+            d   = mean(delta_EI, na.rm = TRUE),
+            se  = sd(delta_EI)/sqrt(n),
+            lo  = d - 1.96*se,
+            hi  = d + 1.96*se,
+            .groups = "drop") %>% 
+  filter(n >= 3)   # keep only pairs with ≥3 trials
+
+ggplot(forest_df,
+       aes(y = reorder(paste(removed, "→", added), d),
+           x = d)) +
+  geom_point() +
+  geom_errorbarh(aes(xmin = lo, xmax = hi), height = 0) +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+  scale_x_continuous("Mean ΔEI  (kg CH₄ / kg product)") +
+  labs(y = NULL, title = "Average effect of common substitutions") +
+  theme_minimal(base_size = 11)
+
+
+```
+```{r}
+add_effect <- subs_df %>%
+  filter(removed == "" | is.na(removed)) %>%     # pure additions
+  group_by(added) %>%
+  summarise(n = n(),
+            mean_d = mean(delta_EI),
+            .groups = "drop")
+
+ggplot(add_effect, aes(x = reorder(added, mean_d), y = mean_d,
+                       fill = mean_d > 0)) +
+  geom_col() + coord_flip() +
+  scale_fill_manual(values = c("#2b83ba", "#d7191c"),
+                    guide = "none") +
+  labs(x = NULL, y = "ΔEI", title = "Effect of adding a single category") +
+  theme_minimal()
+
+```
 
