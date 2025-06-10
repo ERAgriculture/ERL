@@ -387,68 +387,87 @@ merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
 
 ```
 
-## 1.5) Correct D.Type TO BE MODIFIED WHEN PETE UPDATES
+## 1.5) Correct D.Type
 
 Some ingredients have more than one type, for those we merge the ingredients with the masterhseet to get the correct D.Type 
 ```{r}
-# library(dplyr)
-# library(readxl)
+# Step 1: Load master sheet
+url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(7).xlsx"
+temp_file <- tempfile(fileext = ".xlsx")
+download.file(url, destfile = temp_file, mode = "wb")
+
+# Step 2: Read Ani diet and AOM sheets
+ani_diet <- read_excel(temp_file, sheet = "ani_diet")
+aom <- read_excel(temp_file, sheet = "AOM") %>% filter(L5 == "Feed Ingredient")
+
+# Step 3: Clean Ani diet — rename columns and trim whitespace
+ani_diet_clean <- ani_diet %>%
+  rename_with(~ str_replace_all(., "\\s+", "_")) %>%
+  mutate(across(everything(), ~ str_trim(as.character(.))))
+
+# Step 4: Create long-format lookup for D.Item corrections
+ditem_lookup <- ani_diet_clean %>% 
+  select(D.Item.Root.Comp.Proc_Major, D.Item, D.Item.Root.Other.Comp.Proc_All) %>% 
+  pivot_longer(cols = c(D.Item, D.Item.Root.Other.Comp.Proc_All),
+               names_to = "Source_Field", values_to = "Name") %>% 
+  filter(!is.na(Name), !is.na(D.Item.Root.Comp.Proc_Major)) %>% 
+  separate_rows(Name, sep = "[,;]\\s*") %>%   # ← changed line
+  mutate(Name = str_to_lower(str_trim(Name)),
+         D.Item.Root.Comp.Proc_Major = str_trim(D.Item.Root.Comp.Proc_Major)) %>% 
+  group_by(Name) %>% 
+  slice(1) %>% 
+  ungroup()
+
+
+# Step 5: Apply correction to Animals.Diet using the lookup
+animals_diet_updated <- merged_metadata$Animals.Diet %>%
+  mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
+  left_join(ditem_lookup, by = c("D.Item" = "Name")) %>%
+  mutate(D.Item = coalesce(D.Item.Root.Comp.Proc_Major, D.Item)) %>%
+  select(-D.Item.Root.Comp.Proc_Major)
+
+# Step 6: Clean and prepare AOM mapping
+aom_clean <- aom %>%
+  rename_with(~ str_replace_all(., "\\s+", "_")) %>%
+  mutate(
+    Corrected_Type = ifelse(
+      str_to_lower(L6) %in% c("other ingredients", "forage plants") & !is.na(L7),
+      L7,                       # use L7 when rule matches
+      L6                        # otherwise keep L6
+    ),
+    Edge_Value = str_trim(Edge_Value),
+    Synonym    = str_trim(Synonym)
+  )
+
+# Step 7: Build mapping table from Edge_Value + Synonym
+direct_match <- aom_clean %>%
+  select(D.Item = Edge_Value, Corrected_Type) %>%
+  filter(!is.na(D.Item))
+
+synonym_match <- aom_clean %>%
+  filter(!is.na(Synonym)) %>%
+  separate_rows(Synonym, sep = ";\\s*") %>%
+  mutate(Synonym = str_trim(Synonym)) %>%
+  select(D.Item = Synonym, Corrected_Type)
+
+aom_mapping <- bind_rows(direct_match, synonym_match) %>%
+  mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
+  distinct(D.Item, Corrected_Type)
+
+# Step 8: Join to assign Corrected_Type → D.Type
+animals_diet_updated <- animals_diet_updated %>%
+  mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
+  left_join(aom_mapping, by = "D.Item") %>%
+  mutate(D.Type = ifelse(!is.na(Corrected_Type), Corrected_Type, D.Type)) %>%
+  select(-Corrected_Type)
+
+# # Step 9: Save back to merged metadata
+merged_metadata$Animals.Diet <- animals_diet_updated
 # 
-# # ── 1) Canonical lookup from AOM ──────────────────────────────────────────
-# aom_url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(5).xlsx"
-# tmp_xls <- tempfile(fileext = ".xlsx")
-# download.file(aom_url, tmp_xls, mode = "wb")
+# # Step 10: Optional check — items with no match
+# check <- animals_diet_updated %>%
+#   filter(is.na(Corrected_Type) & D.Type != "entire diet")
 # 
-# lookup <- read_excel(tmp_xls, sheet = "AOM") %>% 
-#   filter(L5 == "Feed Ingredient") %>% 
-#   transmute(
-#     D.Item     = trimws(Edge_Value),
-#     Canon_Type = trimws(L7)
-#   ) %>% 
-#   filter(!is.na(D.Item), !is.na(Canon_Type)) %>% 
-#   distinct()
-# 
-# # ── 2) Ingredients that carry >1 distinct D.Type ──────────────────────────
-# Animals.Diet <- merged_metadata$Animals.Diet   # shorthand
-# 
-# multi_type_items <- Animals.Diet %>% 
-#   group_by(D.Item) %>% 
-#   summarise(n_types = n_distinct(D.Type[!is.na(D.Type)]), .groups = "drop") %>% 
-#   filter(n_types > 1) %>% 
-#   pull(D.Item)                               # *vector* of ambiguous names
-# 
-# # ── 3) Overwrite only those ambiguous rows when canonical exists ───────────
-# Animals.Diet <- Animals.Diet %>% 
-#   left_join(lookup, by = "D.Item") %>% 
-#   mutate(
-#     D.Type = case_when(
-#       D.Item %in% multi_type_items & !is.na(Canon_Type) ~ Canon_Type,
-#       TRUE                                              ~ D.Type
-#     )
-#   ) %>% 
-#   select(-Canon_Type)
-# 
-# merged_metadata$Animals.Diet <- Animals.Diet   # write back
-# 
-# # ── 4) Quick sanity check ──────────────────────────────────────────────────
-# fixed_n <- Animals.Diet %>% 
-#   filter(D.Item %in% multi_type_items) %>% 
-#   distinct(D.Item, D.Type) %>% 
-#   add_count(D.Item, name = "n") %>% 
-#   filter(n == 1) %>% 
-#   summarise(n_fixed = n_distinct(D.Item)) %>% 
-#   pull(n_fixed)
-# 
-# still_bad_n <- Animals.Diet %>% 
-#   filter(D.Item %in% multi_type_items) %>% 
-#   distinct(D.Item, D.Type) %>% 
-#   add_count(D.Item, name = "n") %>% 
-#   filter(n > 1) %>% 
-#   summarise(n_bad = n_distinct(D.Item)) %>% 
-#   pull(n_bad)
-# 
-# cat("✔  Ingredients corrected :", fixed_n,  "\n",
-#     "✖  Still ambiguous       :", still_bad_n, "\n")
 
 ```
 
@@ -2134,6 +2153,7 @@ rm(inconsistent_diets,consistent_diets,diet_completeness)
 
 ```
 
+
 ```{r,message=FALSE,warning=FALSE}
 # Check if each diet sums close to 100%
 validation <- diet_percentages %>%
@@ -2158,8 +2178,264 @@ validation <- diet_percentages %>%
 
 The lines that have 0 as validation are the ones that were feeding ad libitum for which we do not have a precise amount so it's impossible to calculate the relative proportion of the ingredients.
 
-if we have total amounts and feed intake for ingredient we might be abe to deduce ad libitum feed intake data 
 
+```{r}
+# ──────────────────────────────────────────────────────────────────────────────
+# 0 · Pre-processing helpers ----------------------------------------------------
+# Convert D.Amount to numeric and drop strict duplicates that would otherwise
+# blow up the joins further down the pipeline.
+# ──────────────────────────────────────────────────────────────────────────────
+
+ingredients <- ingredients %>%
+  mutate(D.Amount = as.numeric(D.Amount)) %>%
+  distinct(
+    B.Code, A.Level.Name, D.Item, D.Amount,
+    D.Unit.Amount, D.Unit.Time, D.Unit.Animals,
+    .keep_all = TRUE
+  )
+
+# Optional sanity check ---------------------------------------------------------
+
+dup_left <- ingredients %>%
+  count(B.Code, A.Level.Name, D.Item, D.Amount,
+        D.Unit.Amount, D.Unit.Time, D.Unit.Animals) %>%
+  filter(n > 1)
+
+if (nrow(dup_left) == 0) {
+  message("✅ all identical-amount duplicates removed.")
+} else {
+  message("⚠️ still some duplicates—investigate dup_left.")
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# quantify_practice_changes() ---------------------------------------------------
+#   Computes how one diet changes relative to another within each study.
+#   * Works diet-by-diet, study-by-study (keyed by B.Code)
+#   * Collapses duplicate ingredient rows *within* each diet before joining
+#   * Avoids Cartesian explosions without requiring allow.cartesian = TRUE
+# ──────────────────────────────────────────────────────────────────────────────
+
+quantify_practice_changes <- function(ingredients, min_pct = 0.5) {
+  ing <- as.data.table(copy(ingredients))  # never modify caller’s object
+
+  #── 0 · basic housekeeping ---------------------------------------------------
+  ing[, D.Amount := as.numeric(D.Amount)]
+  ing[, T.Control := tolower(trimws(T.Control))]
+
+  # kg → g so we have only one mass basis to compare
+  ing[D.Unit.Amount == "kg", `:=`(D.Amount = D.Amount * 1000,
+                                    D.Unit.Amount = "g")]
+
+  # % of diet DM per ingredient (computed diet-by-diet)
+  ing[, total_g := sum(D.Amount, na.rm = TRUE), by = .(B.Code, A.Level.Name)]
+  ing[, pct_diet := (D.Amount / total_g) * 100]
+
+  #── 1 · work study-by-study --------------------------------------------------
+  result <- ing[, {
+    dt <- .SD                         # only rows for this B.Code (paper)
+
+    # Identify control diets BEFORE collapsing, because we need T.Control ----
+    ctrl  <- unique(dt[T.Control == "yes", A.Level.Name])
+    diets <- unique(dt$A.Level.Name)
+
+    # Collapse duplicate ingredient rows *within* each diet -------------------
+    dt <- dt[, .(
+      D.Type          = first(D.Type),          # keep the category
+      pct_diet        = sum(pct_diet),
+      D.Unit.Amount   = first(D.Unit.Amount),
+      D.Unit.Time     = first(D.Unit.Time),
+      D.Unit.Animals  = first(D.Unit.Animals)
+    ), by = .(A.Level.Name, D.Item)]
+
+    # Build comparison pairs --------------------------------------------------
+    pairs <- list()
+    if (length(ctrl)) {
+      trt <- setdiff(diets, ctrl)
+      if (length(trt)) {
+        for (c_diet in ctrl) {
+          for (t_diet in trt) {
+            pairs[[length(pairs) + 1]] <- c(c_diet, t_diet)
+          }
+        }
+      }
+    }
+    if (length(diets) > 1) {
+      pairs <- c(pairs, combn(diets, 2, simplify = FALSE))
+    }
+
+    # If no pairs, emit empty DT ---------------------------------------------
+    if (length(pairs) == 0) {
+      NULL
+    } else {
+      rbindlist(lapply(pairs, function(p) {
+        diet_A <- p[1]; diet_B <- p[2]
+        dA <- dt[A.Level.Name == diet_A]
+        dB <- dt[A.Level.Name == diet_B]
+
+        grid <- merge(
+          dA[, .(D.Item, D.Type, pct_A = pct_diet,
+                   unit_A = paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals))],
+          dB[, .(D.Item, D.Type, pct_B = pct_diet,
+                   unit_B = paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals))],
+          by = c("D.Item", "D.Type"), all = TRUE, allow.cartesian = FALSE
+        )
+
+        # Unit compatibility check -------------------------------------------
+        grid[, unit_ok := (is.na(unit_A) | is.na(unit_B) | unit_A == unit_B)]
+        unit_mismatch <- grid[unit_ok == FALSE, D.Item]
+        grid <- grid[unit_ok == TRUE]
+
+        # Fill NAs, compute deltas, apply threshold ---------------------------
+        grid[is.na(pct_A), pct_A := 0]
+        grid[is.na(pct_B), pct_B := 0]
+        grid[, delta := pct_B - pct_A]
+        grid <- grid[abs(delta) >= min_pct]
+
+        if (nrow(grid) == 0) return(NULL)
+
+        # Aggregate change metrics (overall) ----------------------------------
+        total_added    <- grid[pct_A == 0 & delta  > 0,  sum(delta)]
+        total_removed  <- grid[pct_B == 0 & delta  < 0, -sum(delta)]
+        total_increase <- grid[pct_A > 0 & pct_B > 0 & delta > 0,  sum(delta)]
+        total_decrease <- grid[pct_A > 0 & pct_B > 0 & delta < 0, -sum(delta)]
+        n_changed      <- nrow(grid)
+
+        # Aggregate *by D.Type* ----------------------------------------------
+        fmt <- function(dt) {
+          if (nrow(dt) == 0) return(NA_character_)
+          paste(paste0(dt$D.Type, ":", round(dt$V1,2)), collapse = "; ")
+        }
+
+        add_by_type  <- fmt(grid[pct_A == 0 & delta  > 0,  .(V1 = sum(delta)), by = D.Type])
+        rem_by_type  <- fmt(grid[pct_B == 0 & delta  < 0,  .(V1 = -sum(delta)), by = D.Type])
+        inc_by_type  <- fmt(grid[pct_A > 0 & pct_B > 0 & delta > 0,  .(V1 = sum(delta)), by = D.Type])
+        dec_by_type  <- fmt(grid[pct_A > 0 & pct_B > 0 & delta < 0,  .(V1 = -sum(delta)), by = D.Type])
+
+        # Practice label ------------------------------------------------------
+        practice_type <- fifelse(total_added   > 0 & total_removed > 0, "substitution",
+                          fifelse(total_added   > 0 & total_removed == 0, "addition",
+                          fifelse(total_added   == 0 & total_removed > 0, "removal",
+                                 "dosage_change")))
+
+        compare_to <- if (diet_A %in% ctrl) "control" else paste0("other_trt:", diet_A)
+
+        data.table(
+          diet_A               = diet_A,
+          diet_B               = diet_B,
+          compare_to           = compare_to,
+          practice_type        = practice_type,
+          total_pct_added      = round(total_added,   2),
+          total_pct_removed    = round(total_removed, 2),
+          total_pct_increase   = round(total_increase,2),
+          total_pct_decrease   = round(total_decrease,2),
+          added_by_type        = add_by_type,
+          removed_by_type      = rem_by_type,
+          increase_by_type     = inc_by_type,
+          decrease_by_type     = dec_by_type,
+          n_ingredients_changed= n_changed,
+          unit_mismatch        = paste(unit_mismatch, collapse = "; ")
+        )
+      }), fill = TRUE)
+    }
+  }, by = .(B.Code)]
+
+  # final column order ---------------------------------------------------------
+  setcolorder(result,
+              c("B.Code","diet_A","diet_B","compare_to","practice_type",
+                "total_pct_added","total_pct_removed",
+                "total_pct_increase","total_pct_decrease",
+                "added_by_type","removed_by_type",
+                "increase_by_type","decrease_by_type",
+                "n_ingredients_changed","unit_mismatch"))
+
+  as.data.frame(result)
+}
+
+
+changes <- quantify_practice_changes(ingredients, min_pct = 1)  # 1 % threshold
+
+
+changes<- changes %>% 
+  mutate(pair_id = map2_chr(diet_A, diet_B, ~paste(sort(c(.x, .y)), collapse = "|"))) %>% 
+  distinct(B.Code, pair_id, .keep_all = TRUE) %>%        # keep the first orientation
+  select(-pair_id)
+
+
+```
+
+
+```{r}
+
+# ── 1 · Helper: explode one “…_by_type” column into tidy rows ─────────────
+explode <- function(.data, col, kind) {                         # { 1
+  .data %>% 
+    select(B.Code, diet_A, diet_B, all_of(col)) %>% 
+    mutate(pair_id = paste(diet_A, "→", diet_B)) %>%            # tag each comparison
+    mutate(across(all_of(col), ~ ifelse(is.na(.x) | .x == "", NA, .x))) %>% 
+    separate_rows(all_of(col), sep = ";\\s*") %>%               # "A:10; B:20" → rows
+    filter(!is.na(.data[[col]])) %>% 
+    separate(.data[[col]], into = c("D.Type", "pct"),           # "A:10" → A | 10
+             sep = ":", convert = TRUE, fill = "right") %>% 
+    mutate(
+      # ─ collapse categories ────────────────────────────────────────────
+      D.Type = case_when(
+        str_detect(D.Type, regex("supplement",  ignore_case = TRUE)) ~ "Supplement",
+        str_detect(D.Type, regex("concentrate", ignore_case = TRUE)) ~ "Concentrate",
+        TRUE                                                        ~ D.Type
+      ),
+      change_kind = kind
+    ) %>% 
+    filter(D.Type != "Entire Diet")                               # drop whole-diet rows
+}                                                                 # } 1
+
+# ── 2 · Build a long table of ingredient-type moves ────────────────────
+type_changes <- bind_rows(                                       # ( 2
+  explode(changes, "added_by_type",    "added"),
+  explode(changes, "removed_by_type",  "removed"),
+  explode(changes, "increase_by_type", "increase"),
+  explode(changes, "decrease_by_type", "decrease")
+)                                                                 # ) 2
+
+# ── 3 · Count how many comparisons show each Practice × Type combo ────
+summary <- type_changes %>% 
+  group_by(D.Type, change_kind) %>% 
+  summarise(n_comparisons = n_distinct(pair_id), .groups = "drop")
+
+# ── 4 · Plot: bar height = number of comparisons ───────────────────────
+ggplot(summary,
+       aes(D.Type, n_comparisons, fill = change_kind)) +
+  geom_col(position = "dodge") +
+  labs(title = "How often each practice affected each ingredient type",
+       x     = "Ingredient type",
+       y     = "# of diet-pair comparisons",
+       fill  = "Change kind") +
+  theme_bw() +
+  theme(axis.text.x  = element_text(angle = 45, hjust = 1),
+        legend.position = "top")
+
+
+```
+```{r}
+
+changes %>% 
+  mutate(abs_delta = case_when(
+            practice_type == "addition"      ~  total_pct_added,
+            practice_type == "removal"       ~  total_pct_removed,
+            practice_type == "substitution"  ~  pmax(total_pct_added,
+                                                    total_pct_removed),
+            practice_type == "dosage_change" ~  pmax(total_pct_increase,
+                                                    total_pct_decrease)
+          )) %>% 
+  ggplot(aes(practice_type, abs_delta, fill = practice_type)) +
+  geom_violin(trim = FALSE, alpha = .4, colour = NA) +
+  geom_boxplot(width = .15, outlier.shape = NA) +
+  stat_summary(fun = median, geom = "point", size = 2, colour = "black") +
+  labs(x = NULL, y = "Magnitude (%-points of diet DM)",
+       title = "Distribution of practice intensities") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+```
 
 
 ## 11) Emission calculations 
@@ -4057,6 +4333,19 @@ ggplot(ei_plot_df_expanded, aes(x = added_types, y = EI_CH4_prod, fill= practice
 ```
 salt to eb salt 
 
+```{r}
+# Total number of plotted points
+n_total <- nrow(ei_plot_df_expanded)
+
+# Count by comparison type
+comparison_counts <- ei_plot_df_expanded %>%
+  count(compare_to, practice_type)
+
+# View the results
+print(paste("Total points in plot:", n_total))
+print(comparison_counts)
+
+```
 
 look non era feed and other ingredients those could maybe classified other ways 
 
@@ -4170,3 +4459,255 @@ ggplot(add_effect, aes(x = reorder(added, mean_d), y = mean_d,
 
 ```
 
+
+```{r}
+
+################################################################################
+##  Join “changes” with emission-intensity of BOTH diets in every comparison ##
+###############################################################################
+
+## keep only the columns we need from ei_prod
+ei_core <- ei_prod %>% 
+  select(B.Code,
+         A.Level.Name,           # diet name
+         EI_CH4_prod,            # kg CH4 · kg-product⁻¹
+         CH4_kg_year,            # (optional, if you want absolute CH4 later)
+         Product, P.Product,     # meat / milk & species
+         T.Control,              # yes / no
+         Yield_kg_day, Yield_kg_year)   # keep yields if you like
+
+ei_pairs <- changes %>% 
+  ## ---- attach intensity for diet_A -----------------------------------------
+  left_join(ei_core,
+            by = c("B.Code", "diet_A" = "A.Level.Name"),
+            suffix = c("", "_A")) %>%          # tmp suffix to avoid clashes
+  rename(EI_A = EI_CH4_prod) %>%               # keep only the field we need
+  ## ---- attach intensity for diet_B -----------------------------------------
+  left_join(ei_core,
+            by = c("B.Code", "diet_B" = "A.Level.Name"),
+            suffix = c("_A", "_B")) %>%        # second join, new suffix
+  rename(EI_B = EI_CH4_prod) %>%               
+  ## ---- derive deltas & practice magnitude -----------------------------------
+  mutate(
+    delta_EI_prod = EI_B - EI_A,               # +  ⇒ diet_B is worse
+    abs_change    = coalesce(total_pct_added,    0) +
+                    coalesce(total_pct_removed,  0) +
+                    coalesce(total_pct_increase, 0) +
+                    coalesce(total_pct_decrease, 0),
+    pair_label    = paste(diet_A, "→", diet_B)
+  ) %>% 
+  ## keep only rows where we have both intensities
+  filter(!is.na(delta_EI_prod))
+            # keep only pairs with EI on both sides
+
+```
+```{r}
+###################################
+##  Practice-vs-EI plotting chunk
+###################################
+
+library(tidyverse)
+library(patchwork)               # install.packages("patchwork") once
+
+## ───────────────── 0 · Prep  ────────────────────────────────────────────────
+ei_pairs_plot <- ei_pairs %>% 
+  # 0·a  choose one species/product label
+  mutate(Product = coalesce(Product_B, Product_A,
+                            P.Product_B, P.Product_A)) %>% 
+  # 0·b  compute yield delta before selecting
+  mutate(delta_Yield = Yield_kg_day_B - Yield_kg_day_A) %>% 
+  select(abs_change,
+         delta_EI_prod,
+         delta_Yield,
+         practice_type,
+         Product) %>% 
+  filter(!is.na(Product),
+         !is.na(delta_EI_prod))
+
+## ───────────────── 1 · scatter, 2 · violin, 3 · trade-off ──────────────────
+p1 <- ggplot(ei_pairs_plot,
+             aes(abs_change, delta_EI_prod, colour = practice_type)) +
+  geom_hline(yintercept = 0, linetype = 2, colour = "grey50") +
+  geom_point(alpha = .7, size = 2) +
+  geom_smooth(method = "lm", se = TRUE, colour = "black",
+              formula = y ~ x) +
+  scale_x_continuous("% of diet DM changed") +
+  scale_y_continuous("Δ EI (kg CH₄ / kg product)") +
+  facet_wrap(~ Product) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+p2 <- ggplot(ei_pairs_plot,
+             aes(practice_type, delta_EI_prod, fill = practice_type)) +
+  geom_violin(trim = FALSE, alpha = .35, colour = NA) +
+  geom_boxplot(width = .18, outlier.shape = NA) +
+  stat_summary(fun = median, geom = "point",
+               size = 2, colour = "black") +
+  geom_hline(yintercept = 0, linetype = 2, colour = "grey40") +
+  scale_y_continuous("Δ EI (kg CH₄ / kg product)") +
+  facet_wrap(~ Product, nrow = 1) +
+  labs(x = NULL, title = "Emission-intensity shift by practice type") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+p3 <- ggplot(ei_pairs_plot,
+             aes(delta_Yield, delta_EI_prod,
+                 colour = practice_type,
+                 size   = abs_change)) +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey60") +
+  geom_hline(yintercept = 0, linetype = 2, colour = "grey60") +
+  geom_point(alpha = .7) +
+  scale_x_continuous("Δ Yield (kg animal⁻¹ d⁻¹)",
+                     labels = scales::comma) +
+  scale_y_continuous("Δ EI (kg CH₄ / kg product)",
+                     labels = scales::comma) +
+  scale_size(range = c(2,6), name = "% moved") +
+  facet_wrap(~ Product) +
+  labs(title = "Productivity vs. emission-intensity trade-offs") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+## ───────────────── 2 · show or combine ──────────────────────────────────────
+p1
+p2
+p3
+# (p1 | p2 | p3) + plot_layout(guides = "collect")   # uncomment for one panel
+
+
+```
+```{r}
+library(tidyverse)
+
+## ── 1 · tidy table -----------------------------------------------------------
+plot_df <- ei_pairs %>% 
+  filter(practice_type %in% c("addition", "substitution")) %>%     # only add / sub
+  mutate(abs_change = total_pct_added + total_pct_removed +
+                     total_pct_increase + total_pct_decrease) %>%  # magnitude
+  
+  separate_rows(added_by_type, sep = ";\\s*") %>%                  # explode list
+  
+  mutate(
+    Ingredient_Type = str_remove(added_by_type, ":.*$") %>% str_trim(),
+    Ingredient_Type = case_when(                                   # collapse names
+      str_detect(Ingredient_Type, regex("supplement",  TRUE)) ~ "Supplement",
+      str_detect(Ingredient_Type, regex("concentrate", TRUE)) ~ "Concentrate",
+      TRUE                                                   ~ Ingredient_Type
+    )
+  ) %>% 
+  filter(Ingredient_Type != "", Ingredient_Type != "Entire Diet") %>% 
+  
+  mutate(Product = coalesce(!!!syms(names(.)[str_detect(names(.), "Product")]))) %>% 
+  
+  select(Product, practice_type, Ingredient_Type,
+         abs_change, delta_EI_prod)
+
+## ── 2 · bubble panel ---------------------------------------------------------
+ggplot(plot_df,
+       aes(abs_change, delta_EI_prod,
+           colour = Ingredient_Type,
+           shape  = practice_type,
+           size   = abs_change)) +
+  geom_hline(yintercept = 0, linetype = 2, colour = "grey50") +
+  geom_point(alpha = .75) +
+  scale_size(range = c(3,10), guide = "none") +
+  scale_x_continuous("% of diet DM changed") +
+  scale_y_continuous("Δ EI (kg CH₄ / kg product)",
+                     labels = scales::comma) +
+  facet_wrap(~ Product) +
+  labs(title  = "Effect of adding / substituting single ingredient categories",
+       colour = "Ingredient category",
+       shape  = "Practice") +
+  theme_bw() +
+  theme(legend.position = "right")
+
+
+```
+```{r}
+library(tidyverse)
+library(ggalt)     # install.packages("ggalt")  for geom_dumbbell()
+
+
+## ── 1 · tidy substitutions table --------------------------------------------
+subs_db <- ei_pairs %>%
+  filter(practice_type == "substitution") %>% 
+  
+  # explode the semicolon lists
+  separate_rows(removed_by_type, added_by_type, sep = ";\\s*") %>% 
+  
+  # trim & strip trailing numbers, then normalise categories
+  mutate(
+    removed = removed_by_type %>% str_remove(":.*$") %>% str_trim() %>% str_to_lower(),
+    added   = added_by_type   %>% str_remove(":.*$") %>% str_trim() %>% str_to_lower(),
+    
+    removed = case_when(
+      str_detect(removed, "supplement")   ~ "Supplement",
+      str_detect(removed, "concentrate")  ~ "Concentrate",
+      TRUE                                ~ str_to_title(removed)
+    ),
+    added = case_when(
+      str_detect(added, "supplement")     ~ "Supplement",
+      str_detect(added, "concentrate")    ~ "Concentrate",
+      TRUE                                ~ str_to_title(added)
+    )
+  ) %>% 
+  
+  # drop blanks & “Entire Diet”
+  filter(removed != "", added != "",
+         removed != "Entire Diet", added != "Entire Diet") %>% 
+  
+  # pair label + product label
+  mutate(
+    pair_id = paste(removed, "→", added),
+    Product = coalesce(!!!syms(names(.)[str_detect(names(.), "Product")]))
+  )
+
+## ── 2 · dumb-bell plot -------------------------------------------------------
+subs_db <- subs_db %>%                         # reuse the table
+  mutate(effect = case_when(
+    delta_EI_prod <= -0.02 ~ "Lower EI",
+    delta_EI_prod >=  0.02 ~ "Higher EI",
+    TRUE                   ~ "Neutral"
+  ))
+
+library(tidyverse)
+
+## subs_db already built & classified with “effect” ----
+## left  dot  = original EI  (grey)
+## right dot  = new EI       (colour by effect)
+
+ggplot(subs_db,
+       aes(y = reorder(pair_id, delta_EI_prod))) +
+
+  ## segment
+  geom_segment(aes(x = 0, xend = delta_EI_prod),
+               colour = "grey70") +
+
+  ## left (before) dot
+  geom_point(aes(x = 0),
+             colour = "grey60",
+             size   = 2) +
+
+  ## right (after) dot – coloured by effect
+  geom_point(aes(x = delta_EI_prod,
+                 colour = effect),
+             size = 2) +
+
+  scale_colour_manual(values = c(
+    "Lower EI"  = "#2b83ba",   # blue  = improvement
+    "Neutral"   = "grey70",
+    "Higher EI" = "#d7191c"    # red   = worse
+  )) +
+
+  facet_wrap(~ Product, scales = "free_y") +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+  labs(x = "Δ EI (kg CH₄ / kg product)",
+       y = NULL,
+       colour = "Effect",
+       title = "Direction & magnitude of each substitution") +
+  theme_minimal()
+
+
+```
+
+add intensity of the substitution. how are subtitution done ? removed and added werid concentrate thing. 
+do it by species ? how many pooints ? 
