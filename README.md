@@ -13,7 +13,7 @@ Explore the rendered HTML files for detailed documentation:
 
 - [Diet items for emission calculator](https://eragriculture.github.io/ERL/Emission-calculator.html)
 
-- [Use of Ai for Extraction](https://eragriculture.github.io/ERL/Use_of_AI_for_extraction.html)
+- [Use of Ai for Extraction](https://eragriculture.github.io/ERL/Use_of_AI_for_Extraction.html)
 ---
 
 ## Key Features
