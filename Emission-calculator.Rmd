@@ -91,13 +91,30 @@ camel <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path)
 
 ```
 
-
+### to DO
 ```{r}
 missing_unit_feed_intake<- camel$Data.Out %>%
   select(B.Code, T.Name, ED.Intake.Item,
          ED.Mean.T, ED.Error, Out.Unit, Out.Subind,Out.Code.Joined) %>%
   filter(Out.Subind == "Feed Intake") %>%
   filter(is.na(Out.Unit))
+
+```
+
+fill in feed intakes 
+
+```{r}
+# #Add units where they are NA for Feed-Intake rows
+# camel$Data.Out[
+#   Out.Subind == "Feed Intake" & is.na(Out.Unit),                 # target rows
+#   Out.Unit := sub("^.*?\\.\\.(.*?)\\.\\..*$", "\\1", Out.Code.Joined)  # extract middle chunk
+# ]
+# 
+# feed_intake<-camel$Data.Out%>%
+#   filter(Out.Subind=="Feed Intake")
+# 
+# sort(unique(feed_intake$Out.Unit), na.last = TRUE)   # A-Z, NAs at the end
+
 ```
 
 
@@ -218,7 +235,7 @@ rm(
 # (Optional) Run gc() to free memory
 gc()
 ```
-## 1.1 Correct T.Control
+## 1.1 Correct T.Control INCLUDE IN ERA DEV 
 
 When t control is yes for one of the diets then automatically enter No for the other diets of the same paper. Also for missing t control if the name of the diet contains control or Con or Zero then automatically deduce this is a control diet and others are treatment diets. 
 
@@ -387,87 +404,137 @@ merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
 
 ```
 
-## 1.5) Correct D.Type
+
+## 1.4 Take out grazing experiments 
+
+```{r}
+
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+papers_before <- merged_metadata$Animals.Diet %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_before")
+
+# Step 1: Identify A.Level.Name (diet) that include Grazing
+grazing_diets <- merged_metadata$Animals.Diet %>%
+  filter(D.Type == "Grazing") %>%
+  distinct(B.Code, A.Level.Name)
+
+length(unique(grazing_diets$B.Code))
+
+# Step 2: Count how many non-grazing diets exist per B.Code
+nongrazing_counts <- merged_metadata$Animals.Diet %>%
+  filter(!(D.Type == "Grazing")) %>%
+  distinct(B.Code, A.Level.Name) %>%
+  group_by(B.Code) %>%
+  summarise(n_nongrazing = n(), .groups = "drop")
+
+length(unique(nongrazing_counts$B.Code))
+
+
+# Step 3: Keep only diets that are not marked as Grazing AND are in B.Codes with at least one non-grazing diet
+merged_metadata$Animals.Diet <- merged_metadata$Animals.Diet %>%
+  anti_join(grazing_diets, by = c("B.Code", "A.Level.Name")) %>%  # remove all diets that were grazing
+  semi_join(nongrazing_counts, by = "B.Code")  # keep only papers with at least one non-grazing diet
+
+
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+papers_after <- merged_metadata$Animals.Diet %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_after")
+```
+## 1.5) Correct D.Type PETE HAS TO CHANGE THIS ERA DEV 
 
 Some ingredients have more than one type, for those we merge the ingredients with the masterhseet to get the correct D.Type 
 ```{r}
-# Step 1: Load master sheet
-url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(7).xlsx"
-temp_file <- tempfile(fileext = ".xlsx")
-download.file(url, destfile = temp_file, mode = "wb")
-
-# Step 2: Read Ani diet and AOM sheets
-ani_diet <- read_excel(temp_file, sheet = "ani_diet")
-aom <- read_excel(temp_file, sheet = "AOM") %>% filter(L5 == "Feed Ingredient")
-
-# Step 3: Clean Ani diet — rename columns and trim whitespace
-ani_diet_clean <- ani_diet %>%
-  rename_with(~ str_replace_all(., "\\s+", "_")) %>%
-  mutate(across(everything(), ~ str_trim(as.character(.))))
-
-# Step 4: Create long-format lookup for D.Item corrections
-ditem_lookup <- ani_diet_clean %>% 
-  select(D.Item.Root.Comp.Proc_Major, D.Item, D.Item.Root.Other.Comp.Proc_All) %>% 
-  pivot_longer(cols = c(D.Item, D.Item.Root.Other.Comp.Proc_All),
-               names_to = "Source_Field", values_to = "Name") %>% 
-  filter(!is.na(Name), !is.na(D.Item.Root.Comp.Proc_Major)) %>% 
-  separate_rows(Name, sep = "[,;]\\s*") %>%   # ← changed line
-  mutate(Name = str_to_lower(str_trim(Name)),
-         D.Item.Root.Comp.Proc_Major = str_trim(D.Item.Root.Comp.Proc_Major)) %>% 
-  group_by(Name) %>% 
-  slice(1) %>% 
-  ungroup()
-
-
-# Step 5: Apply correction to Animals.Diet using the lookup
-animals_diet_updated <- merged_metadata$Animals.Diet %>%
-  mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
-  left_join(ditem_lookup, by = c("D.Item" = "Name")) %>%
-  mutate(D.Item = coalesce(D.Item.Root.Comp.Proc_Major, D.Item)) %>%
-  select(-D.Item.Root.Comp.Proc_Major)
-
-# Step 6: Clean and prepare AOM mapping
-aom_clean <- aom %>%
-  rename_with(~ str_replace_all(., "\\s+", "_")) %>%
-  mutate(
-    Corrected_Type = ifelse(
-      str_to_lower(L6) %in% c("other ingredients", "forage plants") & !is.na(L7),
-      L7,                       # use L7 when rule matches
-      L6                        # otherwise keep L6
-    ),
-    Edge_Value = str_trim(Edge_Value),
-    Synonym    = str_trim(Synonym)
-  )
-
-# Step 7: Build mapping table from Edge_Value + Synonym
-direct_match <- aom_clean %>%
-  select(D.Item = Edge_Value, Corrected_Type) %>%
-  filter(!is.na(D.Item))
-
-synonym_match <- aom_clean %>%
-  filter(!is.na(Synonym)) %>%
-  separate_rows(Synonym, sep = ";\\s*") %>%
-  mutate(Synonym = str_trim(Synonym)) %>%
-  select(D.Item = Synonym, Corrected_Type)
-
-aom_mapping <- bind_rows(direct_match, synonym_match) %>%
-  mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
-  distinct(D.Item, Corrected_Type)
-
-# Step 8: Join to assign Corrected_Type → D.Type
-animals_diet_updated <- animals_diet_updated %>%
-  mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
-  left_join(aom_mapping, by = "D.Item") %>%
-  mutate(D.Type = ifelse(!is.na(Corrected_Type), Corrected_Type, D.Type)) %>%
-  select(-Corrected_Type)
-
-# # Step 9: Save back to merged metadata
-merged_metadata$Animals.Diet <- animals_diet_updated
+# # Step 1: Load master sheet
+# url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(7).xlsx"
+# temp_file <- tempfile(fileext = ".xlsx")
+# download.file(url, destfile = temp_file, mode = "wb")
 # 
-# # Step 10: Optional check — items with no match
-# check <- animals_diet_updated %>%
-#   filter(is.na(Corrected_Type) & D.Type != "entire diet")
+# # Step 2: Read Ani diet and AOM sheets
+# ani_diet <- read_excel(temp_file, sheet = "ani_diet")
+# aom <- read_excel(temp_file, sheet = "AOM") %>% filter(L5 == "Feed Ingredient")
 # 
+# # Step 3: Clean Ani diet — rename columns and trim whitespace
+# ani_diet_clean <- ani_diet %>%
+#   rename_with(~ str_replace_all(., "\\s+", "_")) %>%
+#   mutate(across(everything(), ~ str_trim(as.character(.))))
+# 
+# # Step 4: Create long-format lookup for D.Item corrections
+# ditem_lookup <- ani_diet_clean %>% 
+#   select(D.Item.Root.Comp.Proc_Major, D.Item, D.Item.Root.Other.Comp.Proc_All) %>% 
+#   pivot_longer(cols = c(D.Item, D.Item.Root.Other.Comp.Proc_All),
+#                names_to = "Source_Field", values_to = "Name") %>% 
+#   filter(!is.na(Name), !is.na(D.Item.Root.Comp.Proc_Major)) %>% 
+#   separate_rows(Name, sep = "[,;]\\s*") %>%   # ← changed line
+#   mutate(Name = str_to_lower(str_trim(Name)),
+#          D.Item.Root.Comp.Proc_Major = str_trim(D.Item.Root.Comp.Proc_Major)) %>% 
+#   group_by(Name) %>% 
+#   slice(1) %>% 
+#   ungroup()
+# 
+# 
+# # Step 5: Apply correction to Animals.Diet using the lookup
+# animals_diet_updated <- merged_metadata$Animals.Diet %>%
+#   mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
+#   left_join(ditem_lookup, by = c("D.Item" = "Name")) %>%
+#   mutate(D.Item = coalesce(D.Item.Root.Comp.Proc_Major, D.Item)) %>%
+#   select(-D.Item.Root.Comp.Proc_Major)
+# 
+# # Step 6: Clean and prepare AOM mapping
+# aom_clean <- aom %>%
+#   rename_with(~ str_replace_all(., "\\s+", "_")) %>%
+#   mutate(
+#     Corrected_Type = ifelse(
+#       str_to_lower(L6) %in% c("other ingredients", "forage plants") & !is.na(L7),
+#       L7,                       # use L7 when rule matches
+#       L6                        # otherwise keep L6
+#     ),
+#     Edge_Value = str_trim(Edge_Value),
+#     Synonym    = str_trim(Synonym)
+#   )
+# 
+# # Step 7: Build mapping table from Edge_Value + Synonym
+# direct_match <- aom_clean %>%
+#   select(D.Item = Edge_Value, Corrected_Type) %>%
+#   filter(!is.na(D.Item))
+# 
+# synonym_match <- aom_clean %>%
+#   filter(!is.na(Synonym)) %>%
+#   separate_rows(Synonym, sep = ";\\s*") %>%
+#   mutate(Synonym = str_trim(Synonym)) %>%
+#   select(D.Item = Synonym, Corrected_Type)
+# 
+# aom_mapping <- bind_rows(direct_match, synonym_match) %>%
+#   mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
+#   distinct(D.Item, Corrected_Type)
+# 
+# # Step 8: Join to assign Corrected_Type → D.Type
+# animals_diet_updated <- animals_diet_updated %>%
+#   mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
+#   left_join(aom_mapping, by = "D.Item") %>%
+#   mutate(D.Type = ifelse(!is.na(Corrected_Type), Corrected_Type, D.Type)) %>%
+#   select(-Corrected_Type)
+# 
+# # # Step 9: Save back to merged metadata
+# merged_metadata$Animals.Diet <- animals_diet_updated
+# # 
+# # # Step 10: Optional check — items with no match
+# # check <- animals_diet_updated %>%
+# #   filter(is.na(Corrected_Type) & D.Type != "entire diet")
+# # 
 
 ```
 
@@ -484,7 +551,29 @@ to_be_categorized<-merged_metadata$Animals.Diet%>%
 ```
 
 
-## 1.6) Summary of the data 
+##1.8) Chnage corn to Maize
+
+```{r}
+# ── Change “Corn” → “Maize” (whole-word match, case-insensitive) ─────────────
+fix_corn <- function(df) {
+  df %>% 
+    mutate(
+      D.Item = ifelse(
+        str_detect(trimws(D.Item), regex("^corn$", ignore_case = TRUE)),
+        "Maize",
+        D.Item
+      )
+    )
+}
+
+merged_metadata$Animals.Diet        <- fix_corn(merged_metadata$Animals.Diet)
+merged_metadata$Animals.Diet.Comp   <- fix_corn(merged_metadata$Animals.Diet.Comp)
+merged_metadata$Animals.Diet.Digest <- fix_corn(merged_metadata$Animals.Diet.Digest)
+
+```
+
+
+## 1.7) Summary of the data 
 ```{r,message=FALSE,warning=FALSE}
 
 # Define species of interest
@@ -669,7 +758,7 @@ rm(harmonize_units)
 
 ```
 
-### 2.1) Suspicious dry amounts
+### 2.1) Suspicious dry amounts TO DO ADD IN ERA DEV 
 
 This step identifies ingredients where DC.Is.Dry is marked as NA or unspecified. We cross-check these with moisture values from the composition table to infer whether the ingredient is likely dry or wet. We also flag inconsistencies between the ingredient name (e.g., containing "dried") and the recorded dry status.
 
@@ -794,7 +883,51 @@ filter(D.Item != "Water" | is.na(D.Item))
 rm(dry_classified,dry_name_match,dry_prediction_final,extra_dry)
 
 ```
+Subset for Dry data 
 
+When feed intake data is missing and we rely on ingredient-level amounts, we need to ensure that the quantities used refer to the dry form of the ingredient. To do this, we subset the data to include only ingredients identified as dried—based on either the declared DC.Is.Dry value or our earlier flagging using ingredient names and moisture content predictions. This ensures consistency and accuracy in downstream calculations. 
+```{r,message=FALSE,warning=FALSE}
+#take out unspecified ingredients
+
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+papers_before <- ingredients %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_before")
+length(unique(ingredients$B.Code))
+
+
+# Step 1: Identify A.Level.Name groups with at least one ingredient NOT dry
+non_dry_diets <- ingredients %>%
+  filter(is.na(DC.Is.Dry) | str_to_lower(DC.Is.Dry) %in% c("no", "n", "unspecified")) %>%
+  distinct(B.Code, A.Level.Name)
+
+# Step 2: Filter out these diets entirely from ingredients
+ingredients <- ingredients %>%
+  anti_join(non_dry_diets, by = c("B.Code", "A.Level.Name"))
+
+length(unique(ingredients$A.Level.Name))
+
+rm(non_dry_diets)
+
+length(unique(ingredients$B.Code))
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+papers_after <- ingredients %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_after")
+
+```
 
 ### 2.2) Filter data with acceptable units
 
@@ -1150,55 +1283,7 @@ ingredients<-ingredients%>%
 ```
 
 
-## 3.1 Take out grazing experiments 
 
-```{r}
-
-species_by_bcode <- merged_metadata$Prod.Out %>%
-  select(B.Code, P.Product) %>%
-  distinct()
-
-# 2. Papers per species before filtering
-papers_before <- ingredients %>%
-  select(B.Code) %>%
-  distinct() %>%
-  left_join(species_by_bcode, by = "B.Code") %>%
-  count(P.Product, name = "papers_before")
-
-# Step 1: Identify A.Level.Name (diet) that include Grazing
-grazing_diets <- ingredients %>%
-  filter(D.Type == "Grazing") %>%
-  distinct(B.Code, A.Level.Name)
-
-length(unique(grazing_diets$B.Code))
-
-# Step 2: Count how many non-grazing diets exist per B.Code
-nongrazing_counts <- ingredients %>%
-  filter(!(D.Type == "Grazing")) %>%
-  distinct(B.Code, A.Level.Name) %>%
-  group_by(B.Code) %>%
-  summarise(n_nongrazing = n(), .groups = "drop")
-
-length(unique(nongrazing_counts$B.Code))
-
-
-# Step 3: Keep only diets that are not marked as Grazing AND are in B.Codes with at least one non-grazing diet
-ingredients <- ingredients %>%
-  anti_join(grazing_diets, by = c("B.Code", "A.Level.Name")) %>%  # remove all diets that were grazing
-  semi_join(nongrazing_counts, by = "B.Code")  # keep only papers with at least one non-grazing diet
-
-
-species_by_bcode <- merged_metadata$Prod.Out %>%
-  select(B.Code, P.Product) %>%
-  distinct()
-
-# 2. Papers per species before filtering
-papers_after <- ingredients %>%
-  select(B.Code) %>%
-  distinct() %>%
-  left_join(species_by_bcode, by = "B.Code") %>%
-  count(P.Product, name = "papers_after")
-```
 
 ## 4) Replace feed intake data where available
 
@@ -1296,51 +1381,7 @@ ingredients <- ingredients %>%
 
 
 
-## 5) Subset for Dry data 
 
-When feed intake data is missing and we rely on ingredient-level amounts, we need to ensure that the quantities used refer to the dry form of the ingredient. To do this, we subset the data to include only ingredients identified as dried—based on either the declared DC.Is.Dry value or our earlier flagging using ingredient names and moisture content predictions. This ensures consistency and accuracy in downstream calculations. 
-```{r,message=FALSE,warning=FALSE}
-#take out unspecified ingredients
-
-species_by_bcode <- merged_metadata$Prod.Out %>%
-  select(B.Code, P.Product) %>%
-  distinct()
-
-# 2. Papers per species before filtering
-papers_before <- ingredients %>%
-  select(B.Code) %>%
-  distinct() %>%
-  left_join(species_by_bcode, by = "B.Code") %>%
-  count(P.Product, name = "papers_before")
-length(unique(ingredients$B.Code))
-
-
-# Step 1: Identify A.Level.Name groups with at least one ingredient NOT dry
-non_dry_diets <- ingredients %>%
-  filter(is.na(DC.Is.Dry) | str_to_lower(DC.Is.Dry) %in% c("no", "n", "unspecified")) %>%
-  distinct(B.Code, A.Level.Name)
-
-# Step 2: Filter out these diets entirely from ingredients
-ingredients <- ingredients %>%
-  anti_join(non_dry_diets, by = c("B.Code", "A.Level.Name"))
-
-length(unique(ingredients$A.Level.Name))
-
-rm(non_dry_diets)
-
-length(unique(ingredients$B.Code))
-species_by_bcode <- merged_metadata$Prod.Out %>%
-  select(B.Code, P.Product) %>%
-  distinct()
-
-# 2. Papers per species before filtering
-papers_after <- ingredients %>%
-  select(B.Code) %>%
-  distinct() %>%
-  left_join(species_by_bcode, by = "B.Code") %>%
-  count(P.Product, name = "papers_after")
-
-```
 
 ## 6) Complete the nutrition and digestibility papers
 
@@ -1469,7 +1510,7 @@ feedipedia <- read_parquet(temp_file)
 ## download AOM with the correspondance between feedipedia codes and diet items 
 
 # Define the raw URL for the Excel file
-url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(5).xlsx"
+url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(7).xlsx"
 
 # Download the file to a temporary location
 temp_file <- tempfile(fileext = ".xlsx")
@@ -1819,7 +1860,7 @@ head(bcode_table_df)
 ## Link data to ILRI database
 
 # Define the raw URL for the Excel file
-url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(5).xlsx"
+url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(7).xlsx"
 
 # Download the file to a temporary location
 temp_file <- tempfile(fileext = ".xlsx")
@@ -2186,17 +2227,17 @@ The lines that have 0 as validation are the ones that were feeding ad libitum fo
 # blow up the joins further down the pipeline.
 # ──────────────────────────────────────────────────────────────────────────────
 
-ingredients <- ingredients %>%
-  mutate(D.Amount = as.numeric(D.Amount)) %>%
-  distinct(
-    B.Code, A.Level.Name, D.Item, D.Amount,
-    D.Unit.Amount, D.Unit.Time, D.Unit.Animals,
-    .keep_all = TRUE
-  )
+ingredients_clean <- ingredients %>% 
+  mutate(D.Amount = as.numeric(D.Amount)) %>% 
+  distinct(B.Code, A.Level.Name, D.Item, D.Amount,
+           D.Unit.Amount, D.Unit.Time, D.Unit.Animals,
+           T.Control,                             # <- keep it
+           .keep_all = TRUE)
+
 
 # Optional sanity check ---------------------------------------------------------
 
-dup_left <- ingredients %>%
+dup_left <- ingredients_clean %>%
   count(B.Code, A.Level.Name, D.Item, D.Amount,
         D.Unit.Amount, D.Unit.Time, D.Unit.Animals) %>%
   filter(n > 1)
@@ -2215,8 +2256,8 @@ if (nrow(dup_left) == 0) {
 #   * Avoids Cartesian explosions without requiring allow.cartesian = TRUE
 # ──────────────────────────────────────────────────────────────────────────────
 
-quantify_practice_changes <- function(ingredients, min_pct = 0.5) {
-  ing <- as.data.table(copy(ingredients))  # never modify caller’s object
+quantify_practice_changes <- function(ingredients_clean, min_pct = 0.5) {
+  ing <- as.data.table(copy(ingredients_clean))  # never modify caller’s object
 
   #── 0 · basic housekeeping ---------------------------------------------------
   ing[, D.Amount := as.numeric(D.Amount)]
@@ -2352,7 +2393,7 @@ quantify_practice_changes <- function(ingredients, min_pct = 0.5) {
 }
 
 
-changes <- quantify_practice_changes(ingredients, min_pct = 1)  # 1 % threshold
+changes <- quantify_practice_changes(ingredients_clean, min_pct = 1)  # 1 % threshold
 
 
 changes<- changes %>% 
@@ -2747,6 +2788,51 @@ Gross_energy_check <- Gross_energy %>%
 
 ```
 
+
+## 12.3) Gross energy for non nutritional items 
+
+```{r}
+
+# ── 1 · Identify the non-energy ingredients ───────────────────────────────────
+nonenergy_types <- c("Non-ERA Feed", "Supplement")   # ← NEW: add more if needed
+
+# ── 1 · Look-up table of those items ─────────────────────────────────────────
+nonenergy_lookup <- merged_metadata$Animals.Diet %>%   # or use `ingredients`
+  filter(D.Type %in% nonenergy_types) %>%              # ← NEW: %in% the vector
+  distinct(B.Code, D.Item)
+
+# ── 2 · Make sure every (paper × item) has a GE row ───────────────────────────
+missing_nonera_ge <- nonenergy_lookup %>% 
+  anti_join(                                               # keep only those
+    Gross_energy %>% filter(DC.Variable == "GE") %>%       # already in GE table
+      select(B.Code, D.Item),
+    by = c("B.Code", "D.Item")
+  ) %>% 
+  mutate(
+    DC.Variable = "GE",
+    DC.Value    = 0,
+    DC.Unit     = "MJ/kg",
+    GE_source   = "assumed_zero"
+  )
+
+# ── 3 · Bind and override (value, unit, source) for every Non-ERA row ─────────
+Gross_energy <- Gross_energy %>% 
+  # add the rows that were completely missing
+  bind_rows(missing_nonera_ge) %>% 
+  
+  # tag which rows are Non-ERA so we can overwrite them
+  left_join(nonenergy_lookup %>% mutate(flag_nonera = TRUE),
+            by = c("B.Code", "D.Item")) %>% 
+  
+  mutate(
+    DC.Value  = if_else(DC.Variable == "GE" & flag_nonera, 0, DC.Value),
+    DC.Unit   = if_else(DC.Variable == "GE" & flag_nonera, "MJ/kg", DC.Unit),
+    GE_source = if_else(DC.Variable == "GE" & flag_nonera, "assumed_zero", GE_source)
+  ) %>% 
+  select(-flag_nonera)                                       # tidy up
+
+
+```
 
 
 ## 13) Estimate gross energy for ingredients from proximate nutritional composition
@@ -3745,6 +3831,7 @@ total number of codes that have ge and have both treatment and control
 ```{r}
 # Identify B.Codes that contain both control and treatment diets
 b_codes_with_both_ctrl_and_trt <- GE_combined %>%
+  filter(!is.na(CH4_kg_year)) %>%
   filter(T.Control %in% c("yes", "no")) %>%   # Only if T.Control is properly labeled
   group_by(B.Code) %>%
   summarise(n_control_status = n_distinct(T.Control), .groups = "drop") %>%
@@ -3842,6 +3929,12 @@ yield_with_emissions <- yield_data %>%
     by = c("B.Code", "A.Level.Name")
   )
 
+# distinct B.Code per product
+bcode_per_product <- yield_with_emissions %>%          # or yield_data
+  distinct(P.Product, B.Code) %>%                      # keep one row per pair
+  count(P.Product, name = "n_BCodes")                  # tally them
+
+bcode_per_product
 
 ```
 
@@ -4711,3 +4804,137 @@ ggplot(subs_db,
 
 add intensity of the substitution. how are subtitution done ? removed and added werid concentrate thing. 
 do it by species ? how many pooints ? 
+
+
+```{r}
+library(tidyverse)
+library(scales)      # for pretty breaks if you want
+
+## ── 1 · tidy substitutions + magnitude --------------------------------------
+subs_db <- ei_pairs %>%
+  filter(practice_type == "substitution") %>% 
+
+  ## magnitude of this reformulation
+  mutate(pct_moved = 0.5 * (total_pct_added + total_pct_removed +   # counts each swap once
+                   total_pct_increase + total_pct_decrease)
+) %>% 
+  
+  separate_rows(removed_by_type, added_by_type, sep = ";\\s*") %>% 
+  mutate(
+    removed = removed_by_type %>% str_remove(":.*$") %>% str_trim() %>% str_to_lower(),
+    added   = added_by_type   %>% str_remove(":.*$") %>% str_trim() %>% str_to_lower(),
+    removed = case_when(
+      str_detect(removed, "supplement")   ~ "Supplement",
+      str_detect(removed, "concentrate")  ~ "Concentrate",
+      TRUE                                ~ str_to_title(removed)),
+    added   = case_when(
+      str_detect(added, "supplement")     ~ "Supplement",
+      str_detect(added, "concentrate")    ~ "Concentrate",
+      TRUE                                ~ str_to_title(added))
+  ) %>% 
+  filter(removed != "", added != "",
+         removed != "Entire Diet", added != "Entire Diet") %>% 
+  
+  mutate(pair_id = paste(removed, "→", added),
+         Product = coalesce(!!!syms(names(.)[str_detect(names(.), "Product")])),
+         effect  = case_when(
+                      delta_EI_prod <= -0.02 ~ "Lower EI",
+                      delta_EI_prod >=  0.02 ~ "Higher EI",
+                      TRUE                   ~ "Neutral"))
+
+## ── 2 · dumb-bell with magnitude encoded ------------------------------------
+ggplot(subs_db,
+       aes(y = reorder(pair_id, delta_EI_prod))) +
+
+  ## segment thickness = % DM moved
+  geom_segment(aes(x    = 0,
+                   xend = delta_EI_prod,
+                   size = pct_moved),        # <- line width
+               colour = "grey70",
+               lineend = "round") +
+
+  ## before-swap dot (always grey)
+  geom_point(aes(x = 0),
+             colour = "grey60",
+             size   = 2) +
+
+  ## after-swap dot: colour = direction, size = % moved
+  geom_point(aes(x     = delta_EI_prod,
+                 colour = effect,
+                 size   = pct_moved)) +
+
+  scale_colour_manual(values = c(
+    "Lower EI"  = "#2b83ba",
+    "Neutral"   = "grey70",
+    "Higher EI" = "#d7191c")) +
+
+  scale_size(range = c(0.5, 4),      # tweak min/max stroke & dot sizes
+             breaks = pretty_breaks(4),
+             name = "% diet DM\nmoved") +
+
+  facet_wrap(~ Product, scales = "free_y") +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+  labs(x = "Δ EI (kg CH₄ / kg product)",
+       y = NULL,
+       colour = "Effect",
+       title  = "Direction, magnitude and intensity of each substitution") +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+```
+```{r}
+ggplot(subs_db,
+       aes(x = delta_EI_prod,
+           y = pct_moved,
+           colour = effect,                 # blue / red / grey
+           size   = pct_moved)) +           # double-encode size
+  geom_vline(xintercept = 0, linetype = 2) +
+  geom_point(alpha = .75) +
+  scale_size(range = c(3,12), guide = "none") +
+  scale_y_continuous("% of diet DM substituted") +
+  scale_x_continuous("Δ EI (kg CH₄ / kg product)",
+                     breaks = scales::pretty_breaks()) +
+  facet_wrap(~ Product) +
+  theme_bw()
+
+```
+
+```{r}
+heat_tbl <- subs_db %>% 
+  group_by(removed, added, Product) %>% 
+  summarise( mean_EI   = mean(delta_EI_prod),
+             mean_pct  = mean(pct_moved),
+             n = n(), .groups = "drop") %>% 
+  filter(n >= 3)
+
+ggplot(heat_tbl,
+       aes(removed, added, fill = mean_EI)) +
+  geom_tile(colour = "white") +
+  geom_text(aes(label = round(mean_pct,0)), size = 3) +   # % printed on tile
+  scale_fill_gradient2(low = "#2b83ba", mid = "white",
+                       high = "#d7191c", midpoint = 0,
+                       name = "Δ EI") +
+  facet_wrap(~ Product) +
+  labs(x = "Category removed", y = "Category added",
+       title = "Average EI shift (colour) and % DM swapped (number)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+```{r}
+
+na_GE_counts <- Gross_energy %>% 
+  filter(DC.Variable == "GE") %>%                         # only GE rows
+  mutate(DC.Value = as.numeric(DC.Value)) %>%             # blanks → NA
+  group_by(D.Item) %>% 
+  summarise(
+    n_rows = n(),                     # total GE rows for this item
+    n_na   = sum(is.na(DC.Value)),    # how many of them are NA
+    all_GE_missing = n_na == n_rows,  # TRUE ⇢ every GE row is NA
+    .groups = "drop"
+  )
+
+
+```
+
+
