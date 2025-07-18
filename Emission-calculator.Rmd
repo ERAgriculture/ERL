@@ -218,6 +218,28 @@ prod_camel <- camel$Herd.Out[ ,
      P.Product = V.Product,
      Herd.Stage)][, Source:="camel"]
 
+##### 4·a. harmonise Pub.Out --------------------------------------------------
+# Get all columns from both pub tables
+pub_cols <- union(names(livestock_metadata$Pub.Out), names(camel$Pub.Out))
+
+# Add missing columns to each table
+for (col in setdiff(pub_cols, names(livestock_metadata$Pub.Out))) {
+  livestock_metadata$Pub.Out[, (col) := NA]
+}
+for (col in setdiff(pub_cols, names(camel$Pub.Out))) {
+  camel$Pub.Out[, (col) := NA]
+}
+
+# Reorder columns to match
+setcolorder(livestock_metadata$Pub.Out, pub_cols)
+setcolorder(camel$Pub.Out, pub_cols)
+
+# Add Source columns (optional, for tracking origin)
+livestock_metadata$Pub.Out[, Source := "livestock"]
+camel$Pub.Out[, Source := "camel"]
+
+
+
 ##### 4. bind camel + livestock ----------------------------------------------
 diet_all   <- rbindlist(list(diet_livestock,   diet_camel  ), fill = TRUE)
 mt_all     <- rbindlist(list(mt_livestock,     mt_camel    ), fill = TRUE)
@@ -225,8 +247,11 @@ comp_all   <- rbindlist(list(comp_livestock,   comp_camel  ), fill = TRUE)
 digest_all <- rbindlist(list(digest_livestock, digest_camel), fill = TRUE)
 data_all   <- rbindlist(list(data_livestock,   data_camel  ), fill = TRUE)
 prod_all   <- rbindlist(list(prod_livestock,   prod_camel  ), fill = TRUE)
+pub_all <- rbind(livestock_metadata$Pub.Out,camel$Pub.Out)
+pub_all <- rbindlist(list(livestock_metadata$Pub.Out, camel$Pub.Out), fill = TRUE)
 
 merged_metadata <- list(
+    Pub.Out= pub_all,
   Animals.Diet        = diet_all,
   MT.Out              = mt_all,
   Animals.Diet.Comp   = comp_all,
@@ -298,6 +323,16 @@ MT[, T.Control := fifelse(
 
 
 merged_metadata$MT.Out <- MT
+
+
+controls_multi <- MT[
+  T.Control == "yes", 
+  .SD[uniqueN(A.Level.Name) > 1], 
+  by = B.Code
+]
+
+controls_multi[, .(B.Code, A.Level.Name, T.Control)]
+
 
 ```
 
@@ -1625,6 +1660,30 @@ merged_metadata$Animals.Diet.Comp <- animals
 ```
 
 
+### 6.3) Coverage of nutritent 
+
+```{r}
+
+coverage_raw <- merged_metadata$Animals.Diet.Comp %>%
+  filter(!is.na(DC.Variable)) %>%
+  mutate(
+    # Clean and detect actual missing values
+    DC.Value_clean = str_trim(as.character(DC.Value)),
+    DC.Value_clean = na_if(DC.Value_clean, ""),
+    DC.Value_clean = na_if(DC.Value_clean, "NA"),
+    DC.Value_clean = na_if(DC.Value_clean, "na")
+  ) %>%
+  group_by(DC.Variable) %>%
+  summarise(
+    n_total = n(),
+    n_non_missing = sum(!is.na(DC.Value_clean)),
+    coverage_percent = round(100 * n_non_missing / n_total, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(coverage_percent))
+
+
+```
 
 
 
@@ -2107,6 +2166,31 @@ print(species_summary_df)
 head(bcode_table_df)
 ```
 
+###7.3 Coverage after Feedipedia 
+
+```{r}
+coverage_feedipedia <- merged_metadata$Animals.Diet.Comp %>%
+  filter(!is.na(DC.Variable)) %>%
+  mutate(
+    # Clean and detect actual missing values
+    DC.Value_clean = str_trim(as.character(DC.Value)),
+    DC.Value_clean = na_if(DC.Value_clean, ""),
+    DC.Value_clean = na_if(DC.Value_clean, "NA"),
+    DC.Value_clean = na_if(DC.Value_clean, "na")
+  ) %>%
+  group_by(DC.Variable) %>%
+  summarise(
+    n_total = n(),
+    n_non_missing = sum(!is.na(DC.Value_clean)),
+    coverage_percent = round(100 * n_non_missing / n_total, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(coverage_percent))
+
+
+```
+
+
 ## Link data to ILRI database
 
 ```{r}
@@ -2151,34 +2235,100 @@ aom_map <- read_excel(temp_file, sheet = "AOM", col_types = "text") %>%
   select(edge_value, ilri_code) %>%
   mutate(ilri_code = as.character(ilri_code))
 
+# Find feeds present in both ILRI and AOM based on ILRI code
+common_feeds <- inner_join(
+  ilri_long %>% distinct(ilri_feedcode),
+  aom_map %>% distinct(ilri_code),
+  by = c("ilri_feedcode" = "ilri_code")
+)
+
+
+
 # ---- Merge ILRI feed codes into diet composition ----
 merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
-  left_join(aom_map, by = c("D.Item" = "edge_value"))
+  left_join(aom_map, by = c("D.Item" = "edge_value"))%>%
+  distinct()
 
 ```
 
 join nutritional values
 ```{r}
 
-# # ---- Join nutritional values from ILRI ----
-# merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
-#   left_join(ilri_long, by = c("ilri_code" = "ilri_feedcode", "DC.Variable"))
-# 
+# ---- Join nutritional values from ILRI ----
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  left_join(ilri_long, by = c("ilri_code" = "ilri_feedcode", "DC.Variable"))%>%
+  distinct()
+
 
 ```
 fill missing values from ILRI database
 
 ```{r}
-# merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
-#   mutate(
-#     DC.Value = if_else(is.na(DC.Value) & !is.na(ILRI_Value), ILRI_Value, DC.Value),
-#     DC.Unit = if_else(is.na(DC.Unit) & !is.na(ILRI_Value), ILRI_Unit, DC.Unit),
-#     nutrition_source = if_else(is.na(nutrition_source) & !is.na(ILRI_Value), "ilri", nutrition_source)
-#   ) %>%
-#   select(-ILRI_Value, -ILRI_Unit)
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  mutate(
+    to_fill = is.na(DC.Value) & !is.na(ILRI_Value),
+    DC.Value = if_else(to_fill, ILRI_Value, DC.Value),
+    DC.Unit = if_else(to_fill, ILRI_Unit, DC.Unit),
+    nutrition_source = if_else(to_fill, "ilri", nutrition_source)
+  ) %>%
+  select(-ILRI_Value, -ILRI_Unit, -to_fill)
+
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  mutate(
+    DC.Unit = case_when(
+      DC.Unit == "g/kg DM" ~ "g/kg",
+      DC.Unit == "MJ/kg DM" ~ "MJ/kg",
+      TRUE ~ DC.Unit
+    )
+  )%>%
+  distinct()
 
 ```
 
+
+
+### Coverage after ILRI
+
+```{r}
+coverage_ILRI <- merged_metadata$Animals.Diet.Comp %>%
+  filter(!is.na(DC.Variable)) %>%
+  mutate(
+    # Clean and detect actual missing values
+    DC.Value_clean = str_trim(as.character(DC.Value)),
+    DC.Value_clean = na_if(DC.Value_clean, ""),
+    DC.Value_clean = na_if(DC.Value_clean, "NA"),
+    DC.Value_clean = na_if(DC.Value_clean, "na")
+  ) %>%
+  group_by(DC.Variable) %>%
+  summarise(
+    n_total = n(),
+    n_non_missing = sum(!is.na(DC.Value_clean)),
+    coverage_percent = round(100 * n_non_missing / n_total, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(coverage_percent))
+
+```
+
+
+### summary coverage 
+
+```{r}
+coverage_summary <- bind_rows(
+  coverage_raw   %>% mutate(Source = "raw"),
+  coverage_feedipedia %>% mutate(Source = "feedipedia"),
+  coverage_ILRI  %>% mutate(Source = "ILRI")
+)
+
+# Pivot to wide format: one row per variable, columns for each source
+coverage_summary_wide <- coverage_summary %>%
+  select(DC.Variable, Source, coverage_percent) %>%
+  pivot_wider(names_from = Source, values_from = coverage_percent)
+
+# Optional: sort by raw coverage
+coverage_summary_wide <- coverage_summary_wide %>%
+  arrange(desc(raw))
+```
 
 
 ## 9) Tagg diet practices 
@@ -3100,605 +3250,255 @@ knitr::kable(bcode_list_both, caption = "B.Codes with BOTH GE (DC.Value) and Fee
 | **V** | Poor-quality roughages & fibrous by-products | ~90–94 | ~6–10 | 3–8 | High (60–75) | High (40–50) | High (6–10) | Very low (<2) | Very low (<2) | ~15–17 | 5–8 | Low (<50 %) | Mature pasture, straw, bagasse, maize stover, rice hulls, peanut shells, cottonseed hulls |
 | **VI** | Mineral/vitamin supplements | ~50 (variable) | ~50–95 | Negligible | Negligible | Negligible | Negligible | Negligible | Negligible | Negligible | Negligible | Highly digestible (N/A) | Mineral premixes, vitamin premixes, salt licks, bone meal, mineralised animal by-products |
 
-
 ```{r}
 
-
-meta <- merged_metadata$Animals.Diet.Comp   # shorthand
-
-## 0 ── Make ID-type columns characters everywhere -----------------------------
-id_cols <- c("Feedipedia", "ilri_code", "Source", "nutrition_source")
-
-# metadata
-meta <- merged_metadata$Animals.Diet.Comp %>% 
-  mutate(across(any_of(id_cols), as.character))
-
-# GE table
-Gross_energy <- Gross_energy %>% 
-  mutate(across(any_of(id_cols), as.character))
-
-
-## 1 ── Collapse GE table to one row per key -----------------------------------
-#  • remove white-space around D.Item
-#  • take the *first* non-missing GE value if duplicates exist
 ###############################################################################
-# 1.  Collapse the separate GE table to a single clean row per key
+## Draw updated feed‑classification decision tree   (DiagrammeR)
 ###############################################################################
-ge_keyed <- Gross_energy %>% 
-  mutate(
-    ## -- housekeeping --------------------------------------------------------
-    D.Item            = str_trim(D.Item),
-    GE_value          = as.numeric(DC.Value),      # numeric
-    nutrition_source  = GE_source                  # <- create / copy here
-  ) %>% 
-  arrange(B.Code, D.Item, is_entire_diet, desc(!is.na(GE_value))) %>% 
-  group_by(B.Code, D.Item, is_entire_diet) %>% 
-  slice(1) %>%                                      # keep one representative
-  ungroup() %>% 
-  transmute(
-    B.Code, D.Item, is_entire_diet,
-    DC.Variable = "GE",
-    DC.Value    = GE_value,
-    DC.Unit     = "MJ/kg",
-    Source,
-    Feedipedia,
-    nutrition_source,                               # now guaranteed to exist
-    ilri_code
-  )
+# install.packages("DiagrammeR")  # run once if not installed
+library(DiagrammeR)
 
+grViz("
+digraph feed_tree {
+  graph [rankdir = TB, fontsize = 10, fontname = Helvetica]
+  node  [shape = rectangle, style = filled, fillcolor = GhostWhite,
+         fontname = Helvetica, fontsize = 9]
 
-## 2 ── Split metadata into GE rows and non-GE rows ----------------------------
-meta_ge   <- meta %>% filter(DC.Variable == "GE")
-meta_other<- meta %>% filter(DC.Variable != "GE")
+  start   [label = 'Start\\n(NDF, CP, Ash, EE, GE)']
+  VI_q    [label = 'Ash > 500 g/kg ?']
+  II_q    [label = 'EE ≥ 300 g/kg\\nAND GE > 25 MJ/kg ?']
+  III_q   [label = 'CP ≥ 300 g/kg ?']
+  V_q     [label = 'NDF ≥ 600 g/kg ?']
+  IV_q    [label = '400 ≤ NDF < 600 ?']
+  I_chk   [label = 'Low fibre (<400) &\\nCP<300 & EE<300 & Ash≤500 &\\nGE 15–25 (if known) ?',
+           fontsize = 8]
 
-## 3 ── (a) FILL missing GE value/unit in rows that already exist --------------
-meta_ge_filled <- meta_ge %>% 
-  full_join(
-    ge_keyed,
-    by = c("B.Code", "D.Item", "is_entire_diet", "DC.Variable"),
-    suffix = c("", "_new")
-  ) %>% 
-  mutate(
-    ## keep existing value unless it's missing …
-    DC.Value = coalesce(DC.Value, DC.Value_new),
+  VI  [label = 'VI  | Mineral / vitamin',      fillcolor = LemonChiffon]
+  II  [label = 'II  | Fat / oil energy',       fillcolor = LemonChiffon]
+  III [label = 'III | High‑protein',           fillcolor = LemonChiffon]
+  V   [label = 'V   | Poor roughage',          fillcolor = LemonChiffon]
+  IV  [label = 'IV  | Good forage /\\nmoderate by‑product', fillcolor = LemonChiffon]
+  I   [label = 'I   | Starch / sugar energy',  fillcolor = LemonChiffon]
+  NAx [label = 'NA  | Unclassified',           fillcolor = Tomato, fontcolor = white]
 
-    ## … but always adopt the unit from the GE table
-    DC.Unit  = coalesce(DC.Unit_new, DC.Unit),   # <-- flip order here!
+  start -> VI_q
+  VI_q  -> VI [label = 'Yes']
+  VI_q  -> II_q [label = 'No']
 
-    ## keep existing provenance unless it was missing
-    Source           = coalesce(Source,            Source_new),
-    Feedipedia       = coalesce(Feedipedia,        Feedipedia_new),
-    nutrition_source = coalesce(nutrition_source,  nutrition_source_new),
-    ilri_code        = coalesce(ilri_code,         ilri_code_new)
-  ) %>% 
-  select(names(meta))    # keep original column order
-                # back to original column set/order
+  II_q  -> II [label = 'Yes']
+  II_q  -> III_q [label = 'No']
 
-## 3 ── (b) ADD GE rows that were totally absent -------------------------------
-ge_rows_absent <- ge_keyed %>% 
-  anti_join(meta_ge, by = c("B.Code", "D.Item", "is_entire_diet", "DC.Variable")) %>% 
-  mutate(
-    Source           = coalesce(Source, "filled_from_GE_table"),
-    nutrition_source = coalesce(nutrition_source, "filled_from_GE_table")
-  ) %>% 
-  select(names(meta))
+  III_q -> III [label = 'Yes']
+  III_q -> V_q  [label = 'No']
 
-## 4 ── Combine everything ------------------------------------------------------
-merged_metadata$Animals.Diet.Comp <- bind_rows(meta_other, meta_ge_filled, ge_rows_absent)
+  V_q   -> V  [label = 'Yes']
+  V_q   -> IV_q [label = 'No']
 
-## 5 ── Sanity check ------------------------------------------------------------
-merged_metadata$Animals.Diet.Comp %>% 
-  filter(DC.Variable == "GE") %>% 
-  summarise(n_rows      = n(),
-            still_NA    = sum(is.na(DC.Value)),
-            .groups = "drop")
+  IV_q  -> IV [label = 'Yes']
+  IV_q  -> I_chk [label = 'No']
+
+  I_chk -> I   [label = 'Yes']
+  I_chk -> NAx [label = 'No']
+}
+")
+###############################################################################
+
 
 ```
 
-coverage
 
 ```{r}
-# ============================================================================
-#  Ingredient categorisation pipeline with multi‑pass rules & summaries
-#  (Ideas 1‒3 integrated)
-# ---------------------------------------------------------------------------
-#  Requirements: tidyverse 1.3.2 or later
-# ============================================================================
+################################################################################
+## 17‑new)  Ingredient‑level feed‑class assignment
+##          • averages all rows of an ingredient first
+##          • NDF / CP / Ash / EE in g kg‑¹ DM ; GE in MJ kg‑¹ DM
+################################################################################
+library(dplyr)
+library(tidyr)
 
-margin <- 0.05                       # ±5 % tolerance on numeric thresholds
-fmin   <- function(x) x * (1 - margin)
-fmax   <- function(x) x * (1 + margin)
+vars_needed <- c("NDF", "CP", "Ash", "EE", "GE")
 
-# ---- 1.  One‑row‑per‑ingredient averages -----------------------------------
-ingredient_avg <- merged_metadata$Animals.Diet.Comp %>%
-  filter(is_entire_diet == "FALSE",                       # only single ingredients
-         DC.Variable %in% c("NDF", "EE", "GE", "CP")) %>%
-  mutate(DC.Value = as.numeric(DC.Value)) %>%
-  group_by(D.Item, DC.Variable) %>%
-  summarise(value = mean(DC.Value, na.rm = TRUE), .groups = "drop") %>%
-  pivot_wider(names_from = DC.Variable, values_from = value)
+# ── 1 · Build one mean row per ingredient ────────────────────────────────────
+nutr_wide <- merged_metadata$Animals.Diet.Comp %>% 
+  filter(DC.Variable %in% vars_needed, !is_entire_diet) %>% 
+  mutate(DC.Value = as.numeric(DC.Value)) %>% 
+  group_by(D.Item, DC.Variable) %>%                 # ← only D.Item, no B.Code
+  summarise(val = mean(DC.Value, na.rm = TRUE), .groups = "drop") %>% 
+  pivot_wider(names_from = DC.Variable, values_from = val)
 
-# ---- 2.  PASS 1 – strict rules (hard priority) -----------------------------
-ingredient_pass1 <- ingredient_avg %>%
-  mutate(
-    Category_code = case_when(
-      EE >= 800                                                       ~ "II",  # absolute priority: oils
-      NDF <  fmax(50)   & EE >= fmin(800) & CP <  fmax(50)            ~ "II", # fats/oils rule (in case EE < 800)
-      between(NDF, fmin(100), fmax(200)) &                            # I – starchy energy feeds
-        between(EE,  fmin(20),  fmax(40))  &
-        between(CP,  fmin(80),  fmax(120)) &
-        between(GE,  fmin(17),  fmax(19))                             ~ "I",
-      between(CP,  fmin(350), fmax(500)) &                            # III – protein feeds
-        between(NDF, fmin(100), fmax(300))                            ~ "III",
-      between(NDF, fmin(400), fmax(500)) &                            # IV – good forages
-        between(CP,  fmin(120), fmax(200)) &
-        between(EE,  fmin(10),  fmax(30))  &
-        between(GE,  fmin(16),  fmax(18))                             ~ "IV",
-      between(NDF, fmin(600), fmax(750)) &                            # V – poor roughages
-        EE < fmax(20) &
-        between(CP,  fmin(30),  fmax(80))  &
-        between(GE,  fmin(15),  fmax(17))                             ~ "V",
-      TRUE                                                           ~ NA_character_
-    )
-  )
-
-# ---- 3.  PASS 2 – rescue heuristics (wider net) ----------------------------
-ingredient_pass2 <- ingredient_pass1 %>%
-  mutate(
-    Category_code = coalesce(
-      Category_code,
-      case_when(
-        EE  >= 600                          ~ "II",   # fairly oily
-        CP  >= 300 & NDF <= 400             ~ "III",  # clearly protein
-        NDF >= 550 & CP <= 100              ~ "V",    # very fibrous
-        NDF >= 350 & CP >= 100 & CP <= 250  ~ "IV",   # middling fibre & protein
-        TRUE                                ~ NA_character_
-      )
-    )
-  )
-
-
-
-ingredient_final <- ingredient_pass2 
+# ── 2 · Explicit six‑class decision rules ------------------------------------
+classify_feed_gkg <- function(NDF, CP, Ash, EE, GE){
+  ok  <- function(x) !is.na(x)
+  nOK <- sum(ok(NDF), ok(CP), ok(Ash), ok(EE), ok(GE))
   
-
-# ---- 5.  Attach descriptive names -----------------------------------------
-ingredient_final <- ingredient_final %>%
-  mutate(
-    Category_name = recode(
-      Category_code,
-      "I"   = "High-digestible energy feeds (starch & sugars)",
-      "II"  = "High-digestible energy feeds (fats/oils)",
-      "III" = "High-protein feeds",
-      "IV"  = "Good-quality forages & moderate-digestible by-products",
-      "V"   = "Poor-quality roughages & fibrous by-products",
-      "VI"  = "Mineral/vitamin supplements",
-      .default = "Unclassified"
-    )
-  )
-
-# ---- 6.  Category counts at each stage ------------------------------------
-count_cats <- function(df, stage) {
-  df %>%
-    count(Category_code, name = "n") %>%
-    mutate(Stage = stage)
+  if(ok(Ash) && Ash > 500)                                       return("VI")   # mineral
+  if(ok(EE)  && EE  >= 300 && ok(GE) && GE > 25)                 return("II")  # fat/oil
+  if(ok(CP)  && CP  >= 300)                                      return("III") # protein
+  if(ok(NDF) && NDF >= 600)                                      return("V")   # poor roughage
+  if(ok(NDF) && NDF >= 400 && NDF < 600)                         return("IV")  # good forage
+  if(nOK > 0 &&
+     (!ok(NDF) || NDF < 400) &&
+     (!ok(CP)  || CP  < 300) &&
+     (!ok(EE)  || EE  < 300) &&
+     (!ok(Ash) || Ash <= 500) &&
+     (!ok(GE)  || (GE >= 15 & GE <= 25)))                        return("I")   # starch/sugar
+  
+  NA_character_                                                                # unclassified
 }
 
-summary_counts_long <- bind_rows(
-  count_cats(ingredient_pass1, "Pass 1 (strict)"),
-  count_cats(ingredient_pass2, "Pass 2 (rescue)")
-) %>%
-  arrange(Stage, desc(n))
+# ── 3 · Apply the classifier --------------------------------------------------
+nutr_wide <- nutr_wide %>% 
+  rowwise() %>% 
+  mutate(Category = classify_feed_gkg(NDF, CP, Ash, EE, GE)) %>% 
+  ungroup()
 
-summary_counts_wide <- summary_counts_long %>%
-  pivot_wider(names_from = Category_code, values_from = n, values_fill = 0)
+# ── 4 · Carry the ingredient‑level Category back into your data --------------
+#    (join only on D.Item because the class is the same for every paper)
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>% 
+  left_join(nutr_wide %>% select(D.Item, Category), by = "D.Item")
 
-# ---- 7.  Output preview ----------------------------------------------------
-print(summary_counts_long)
-# View(summary_counts_long)  # uncomment inside RStudio
-# View(summary_counts_wide)
+if (exists("ingredients")) {
+  ingredients <- ingredients %>% 
+    left_join(nutr_wide %>% select(D.Item, Category), by = "D.Item")
+}
 
+# ── 5 · Quick audit ----------------------------------------------------------
+table(nutr_wide$Category, useNA = "ifany")
+################################################################################
 
 
 ```
 
 
-
-```{r}
-
-# ────────────────────────────────────────────────────────────────────────────
-#  PASS 3 – similarity scoring with coverage‑adjusted confidence
-# ────────────────────────────────────────────────────────────────────────────
-vars <- c("NDF", "EE", "CP", "GE")           # four nutrients we compare
-
-# 1. Split data --------------------------------------------------------------
-classified   <- ingredient_final %>% filter(!is.na(Category_code))
-unclassified <- ingredient_final %>% 
-  filter(is.na(Category_code)) %>% 
-  mutate(row_id = row_number())              # keep row order for later joins
-
-# 2. Z‑score scaling ---------------------------------------------------------
-means <- summarise(classified, across(all_of(vars), ~ mean(.x, na.rm = TRUE)))
-sds   <- summarise(classified, across(all_of(vars), ~  sd(.x, na.rm = TRUE)))
-
-scale_z <- function(df) {
-  mutate(df,
-         across(all_of(vars),
-                ~ (.x - means[[cur_column()]]) / sds[[cur_column()]]))
-}
-
-cls_z <- scale_z(classified)
-unk_z <- scale_z(unclassified)
-
-# 3. Class centroids ---------------------------------------------------------
-centroids <- cls_z %>%
-  group_by(Category_code) %>%
-  summarise(across(all_of(vars), mean, na.rm = TRUE), .groups = "drop")
-
-cent_mat <- as.matrix(centroids[vars])
-rownames(cent_mat) <- centroids$Category_code
-
-# 4. Euclidean distances (NA‑safe) ------------------------------------------
-dist_pair <- function(u, v) {
-  ok <- is.finite(u) & is.finite(v)
-  if (!any(ok)) return(Inf)
-  sqrt(sum((u[ok] - v[ok])^2) / length(ok))
-}
-
-dist_mat <- matrix(NA_real_, nrow = nrow(unk_z), ncol = nrow(cent_mat))
-for (j in seq_len(nrow(cent_mat))) {
-  dist_mat[, j] <- apply(unk_z[vars], 1, dist_pair, v = cent_mat[j, ])
-}
-colnames(dist_mat) <- rownames(cent_mat)
-
-# 5. Nearest and second‑nearest centroids ------------------------------------
-row_has_data <- apply(is.finite(dist_mat), 1, any)
-best_idx     <- rep(NA_integer_, nrow(dist_mat))
-second_idx   <- rep(NA_integer_, nrow(dist_mat))
-
-for (i in which(row_has_data)) {
-  ord <- order(dist_mat[i, ], na.last = NA)
-  best_idx[i]   <- ord[1]
-  if (length(ord) >= 2) second_idx[i] <- ord[2]
-}
-
-min_dists <- dist_mat[cbind(seq_along(best_idx), best_idx)]
-sec_dists <- dist_mat[cbind(seq_along(second_idx), second_idx)]
-
-# 6. Coverage‑adjusted confidence -------------------------------------------
-k_available <- rowSums(is.finite(as.matrix(unk_z[vars])))   # 1–4 nutrients
-K <- length(vars)
-
-raw_conf <- 1 - min_dists / (min_dists + sec_dists)         # 0–1
-adj_conf <- raw_conf * (k_available / K)                    # penalise sparse rows
-safety   <- round(100 * adj_conf, 1)                        # % scale
-
-# 7. Assemble Pass 3 results -----------------------------------------------
-cat_name <- function(code) recode(
-  code,
-  "I"   = "High‑digestible energy feeds (starch & sugars)",
-  "II"  = "High‑digestible energy feeds (fats/oils)",
-  "III" = "High‑protein feeds",
-  "IV"  = "Good‑quality forages & moderate‑digestible by‑products",
-  "V"   = "Poor‑quality roughages & fibrous by‑products",
-  "VI"  = "Mineral/vitamin supplements",
-  .default = NA_character_)
-
-unk_scored <- unclassified %>% 
-  mutate(
-    Closest_category_code = ifelse(is.na(best_idx[row_id]),
-                                   NA_character_,
-                                   colnames(dist_mat)[best_idx[row_id]]),
-    Closest_category_name = cat_name(Closest_category_code),
-    Safety_pct            = safety[row_id],
-    Stage_assigned        = "Pass 3 (similarity)"
-  ) %>% 
-  select(-row_id)
-
-# 8. Bring back Pass 1/2 rows and combine ------------------------------------
-classified_labeled <- classified %>% 
-  mutate(
-    Closest_category_code = Category_code,
-    Closest_category_name = cat_name(Category_code),
-    Safety_pct            = 100,
-    Stage_assigned        = "Pass 1/2"
-  )
-
-ingredient_final <- bind_rows(classified_labeled, unk_scored)
-
-
-```
-
-
-```{r}
-library(stringr)
-
-ingredient_final <- ingredient_final %>% 
-  ## 0 ── normalise Stage_assigned  ------------------------------------------
-  mutate(Stage_assigned = str_replace_all(Stage_assigned, "\u00A0", " ")) %>% 
-  ## 1 ── make the decision ---------------------------------------------------
-  mutate(
-    Safety_pct  = as.numeric(Safety_pct),
-    Decision = case_when(
-      Stage_assigned == "Pass 1/2"                              ~ "Accepted (rule)",
-      Stage_assigned == "Pass 3 (similarity)" & Safety_pct >= 80~ "Accepted (similarity)",
-      Stage_assigned == "Pass 3 (similarity)" & Safety_pct >= 60~ "Needs review",
-      TRUE                                                      ~ "Unclassified"
-    )
-  ) %>% 
-  ## 2 ── overwrite category only for accepted rows --------------------------
-  mutate(
-    Category_code = if_else(str_starts(Decision, "Accepted"),
-                            Closest_category_code, Category_code),
-    Category_name = if_else(str_starts(Decision, "Accepted"),
-                            Closest_category_name, Category_name)
-  )
-
-
-```
-
+supplements 
 
 ```{r}
 
 
-## helper: flatten → count ---------------------------------------------------
-count_cats <- function(df, stage) {
-  df %>%
-    # 1. flatten any list-column safely
+## A · one authoritative lookup ------------------------------------------------
+type_lookup <- merged_metadata$Animals.Diet %>% 
+  distinct(B.Code, D.Item, D.Type)
+
+vi_types <- c("Non-ERA Feed", "Supplement")
+vi_regex <- regex("supplement", ignore_case = TRUE)
+
+set_vi <- function(df){
+  df2 <- df
+  
+  # add D.Type if it isn't there yet
+  if(!"D.Type" %in% names(df2)){
+    df2 <- df2 %>% left_join(type_lookup, by = c("B.Code", "D.Item"))
+  }
+  
+  # if D.Type still missing, just leave Category as-is
+  if(!"D.Type" %in% names(df2)){
+    warning("D.Type still absent after join – Category unchanged for this table")
+    return(df2)
+  }
+  
+  df2 %>% 
     mutate(
-      Category_code = map_chr(
-        Category_code,
-        ~ dplyr::coalesce(as.character(.x)[1], NA_character_)
-      )
-    ) %>%
-    # 2. keep only rows that really got a code
-    filter(!is.na(Category_code)) %>%
-    # 3. count and tag stage
-    count(Category_code, name = "n") %>%
-    mutate(Stage = stage)
-}
-
-## per-stage tallies ---------------------------------------------------------
-summary_counts_long <- bind_rows(
-  count_cats(ingredient_pass1, "Pass 1 (strict)"),
-  count_cats(ingredient_pass2, "Pass 2 (rescue)"),
-  count_cats(
-    ingredient_final %>%
-      filter(Stage_assigned == "Pass 3 (similarity)",
-             Decision       == "Accepted (similarity)"),
-    "Pass 3 (similarity)")
-) %>%
-  arrange(Stage, desc(n))
-
-summary_counts_wide <- summary_counts_long %>%
-  pivot_wider(names_from  = Category_code,
-              values_from = n,
-              values_fill = 0)
-
-## extra: decision dashboard -------------------------------------------------
-decision_summary <- ingredient_final %>%
-  count(Decision, name = "n") %>%
-  arrange(desc(n))
-
-# ---- 6.  Output preview ---------------------------------------------------
-print(summary_counts_long)
-print(decision_summary)
-# View(summary_counts_long)   # uncomment in RStudio
-# View(summary_counts_wide)
-
-
-```
-
-manually checcking 
-
-```{r}
-
-# ── 1. List rows that still need attention ──────────────────────────────────
-review_candidates <- function(df,
-                              columns = c("D.Item",
-                                          "Decision",
-                                          "Closest_category_name",
-                                          "Safety_pct",
-                                          "Closest_category_code")) {
-  df %>%
-    filter(Decision %in% c("Needs review", "Unclassified")) %>%
-    select(all_of(columns))
-}
-
-# ── 2. Promote selected items to "Accepted (manual)" ────────────────────────
-#    accepted_vec = character vector of D.Item values you’ve approved
-accept_reviewed <- function(df, accepted_vec) {
-  df %>%
-    mutate(
-      Decision = case_when(
-        D.Item %in% accepted_vec &
-          Decision %in% c("Needs review", "Unclassified")  ~ "Accepted (manual)",
-        TRUE                                               ~ Decision
-      ),
-      Category_code = if_else(D.Item %in% accepted_vec &
-                                Decision == "Accepted (manual)",
-                              Closest_category_code, Category_code),
-      Category_name = if_else(D.Item %in% accepted_vec &
-                                Decision == "Accepted (manual)",
-                              Closest_category_name, Category_name)
-    )
-}
-
-
-```
-
-```{r}
-## 1. Pull the list that still needs a decision
-to_check <- review_candidates(ingredient_final)
-
-## 2. Suppose you manually approve three items
-approved_items <- c("Fish Meal",
-                    "Clupeid Fish Meal",
-                    "Fish Meal Pelleted",
-                    "Fish Meal Roasted",
-                    "Maize Offal",
-                    "Molasses",
-                    "Maize Meal",
-                    "Soybean")   # ← your choices
-
-## 3. Flip their status to Accepted (manual)
-ingredient_final <- accept_reviewed(ingredient_final, approved_items)
-
-## 4. Re-run any summary/count blocks if you want updated tallies
-
-```
-
-```{r}
-# --------------------------------------------------------------------------
-# 9.  OVERWRITE D.Type WITH NUTRITIONAL CATEGORY (if accepted)
-# --------------------------------------------------------------------------
-# assume:
-#   ingredient_final  – result of Pass 4 (has Category_name, Decision, D.Item)
-#   ingredients       – your original table (columns shown in the paste)
-
-
-
-
-
-
-```
-
-reviewed but changed category 
-
-```{r}
-# ────────────────────────────────────────────────────────────────────────────
-#  MANUAL OVERRIDES for specific products
-# ────────────────────────────────────────────────────────────────────────────
-ingredient_final <- ingredient_final %>%
-  mutate(
-    # ----------------------------------------------------------------------
-    # 1. Force a Category_code when the product name matches
-    # ----------------------------------------------------------------------
-    Category_code = case_when(
-      # High-protein feeds (III)
-      D.Item %in% c(
-        "Noug Cake", "Cotton Seed Cake", "Cotton Seed Meal",
-        "Sunflower Seed Meal", "Sunflower Seed Cake", "Soybean Cake",
-        "Canola Meal", "Fish", "Fish Meal", "Fish Meal Pelleted",
-        "Fish Meal Roasted"
-      )                                                                  ~ "III",
-      
-      # Good-quality forages & by-products (IV)
-      D.Item %in% c(
-        "Brewers Grain Dried", "Brewers Grain", "Wheat Offal",
-        "Rice Offal", "Leucaena leucocephala Leaves Dried",
-        "Moringa oleifera Leaves Dried Ground"
-      )                                                                  ~ "IV",
-      
-      # Poor-quality roughages (V)
-      D.Item %in% c("Eragrostis curvula Hay", "Cellulose")               ~ "V",
-      
-      # Energy feeds – fats/oils (II)
-      D.Item %in% c("Soybean Oil", "Sunflower Oil")                      ~ "II",
-      
-      # Energy feeds – starch/sugars (I)
-      D.Item %in% c("Cassava Peel", "Sorghum Seed","Unspecified Molasses")                      ~ "I",
-      
-      # Mineral/vitamin supplements (VI)
-      D.Item %in% c("Bone", "Bone Meal")                                 ~ "VI",
-      
-      TRUE                                                               ~ Category_code
-    ),
-    
-    # ----------------------------------------------------------------------
-    # 2. Mark these rows as simply "Accepted"
-    # ----------------------------------------------------------------------
-    Decision = if_else(
-      D.Item %in% c(
-        "Noug Cake", "Cotton Seed Cake", "Cotton Seed Meal",
-        "Sunflower Seed Meal", "Sunflower Seed Cake", "Soybean Cake",
-        "Canola Meal", "Fish", "Fish Meal", "Fish Meal Pelleted",
-        "Fish Meal Roasted", "Brewers Grain Dried", "Brewers Grain",
-        "Wheat Offal", "Rice Offal", "Leucaena leucocephala Leaves Dried",
-        "Moringa oleifera Leaves Dried Ground", "Eragrostis curvula Hay",
-        "Cellulose", "Soybean Oil", "Sunflower Oil", "Cassava Peel",
-        "Sorghum Seed", "Bone", "Bone Meal"
-      ),
-      "Accepted(Manual)",                           # ← new value
-      Decision
-    ),
-    
-    # ----------------------------------------------------------------------
-    # 3. Refresh the readable label to match the code
-    # ----------------------------------------------------------------------
-    Category_name = recode(
-      Category_code,
-      "I"   = "High-digestible energy feeds (starch & sugars)",
-      "II"  = "High-digestible energy feeds (fats/oils)",
-      "III" = "High-protein feeds",
-      "IV"  = "Good-quality forages & moderate-digestible by-products",
-      "V"   = "Poor-quality roughages & fibrous by-products",
-      "VI"  = "Mineral/vitamin supplements",
-      .default = Category_name
-    )
-  )
-
-
-# 1. Pull the accepted category label for each D.Item -----------------------
-accepted_labels <- ingredient_final %>%
-  filter(startsWith(Decision, "Accepted")) %>%   # rule or similarity
-  select(D.Item, New_D.Type = Category_name) %>%
-  distinct()
-
-# 2. Merge & overwrite D.Type where a new label exists ----------------------
-ingredients <- ingredients %>%
-  left_join(accepted_labels, by = "D.Item") %>%         # adds New_D.Type
-  rename(D.Type_Nutri = New_D.Type)                     # keep both columns
-        # replace only when we have one
-                          # drop helper column
-
-```
-
-```{r}
-# ---------------------------------------------------------------------------
-#  AFTER you have ingredients with `D.Type_Nutri`  (may still contain NA)
-# ---------------------------------------------------------------------------
-nonenergy_types <- c("Non-ERA Feed", "Supplement")   # add more if needed
-
-ingredients <- ingredients %>%
-  mutate(
-    D.Type_Nutri = coalesce(
-      D.Type_Nutri,                                                # keep any prior assignment
-      case_when(
-        D.Type %in% nonenergy_types                                ~ "Mineral/vitamin supplements",  # VI
-        str_detect(D.Item, regex("^salt$", ignore_case = TRUE))    ~ "Mineral/vitamin supplements",  # VI
-        TRUE                                                       ~ NA_character_
+      Category = if_else(
+        !is.na(D.Type) &
+        (D.Type %in% vi_types | str_detect(D.Type, vi_regex)),
+        "VI",
+        Category
       )
     )
-  )
+}
+
+## B · run it on both tables ---------------------------------------------------
+merged_metadata$Animals.Diet.Comp <- set_vi(merged_metadata$Animals.Diet.Comp)
+
+if (exists("ingredients")) {
+  ingredients <- set_vi(ingredients)
+}
+
+## optional sanity check
+table(merged_metadata$Animals.Diet.Comp$Category, useNA = "ifany")
+###############################################################################
 
 
 ```
 
-
-
-
 ```{r}
 
 
-unclassified_products <- ingredients %>%          # table that has D.Type_Nutri
-  filter(is.na(D.Type_Nutri)) %>%                 # still no nutritional class
-  group_by(D.Item) %>%                            # one block per product
+
+## A · rebuild / refresh Category column in nutr_wide --------------------------
+nutr_wide <- nutr_wide %>% 
+  select(-Category) %>%                                  # drop any old class
+  left_join(
+    merged_metadata$Animals.Diet.Comp %>% 
+      distinct(D.Item, Category),                        # <- no B.Code here
+    by = "D.Item"
+  )
+
+
+## B · 1) overall share of rows that now have a class --------------------------
+overall <- nutr_wide %>% 
   summarise(
-    rows          = n(),                          # how many rows total
-    unique_codes  = n_distinct(B.Code)            # how many different B.Code
-  ) %>%
-  mutate(
-    perc = round(100 * rows / sum(rows), 2)       # share of *all* unclassified
-  ) %>%
-  arrange(desc(rows))                             # most frequent first
+    Total_rows    = n(),
+    Assigned_rows = sum(!is.na(Category)),
+    `% assigned`  = round(100 * Assigned_rows / Total_rows, 1)
+  )
 
-print(unclassified_products, n = 20)   # show top 20; tweak n as needed
+kable(overall, caption = "Overall coverage of the Category field")
 
+## C · 2) number of **unique** ingredients per category ------------------------
+uniq_per_cat <- nutr_wide %>% 
+  filter(!is.na(Category)) %>% 
+  group_by(Category) %>% 
+  summarise(
+    Unique_ingredients = n_distinct(D.Item),
+    Rows               = n(),                 # row count if you still want it
+    .groups = "drop"
+  ) %>% 
+  arrange(Category)
+
+kable(uniq_per_cat, caption = "Unique ingredients by category")
+
+## D · 3) ten *random* ingredients in each category ---------------------------
+## D · 3) ten *random* ingredients in each category ---------------------------
+set.seed(222)   # remove or change for a different random draw
+
+rand10 <- nutr_wide %>% 
+  filter(!is.na(Category)) %>% 
+  group_by(Category) %>% 
+  slice_sample(prop = 1) %>%         # randomise the whole group
+  slice_head(n = 10) %>%             # keep up to 10 rows
+  mutate(rank = row_number()) %>% 
+  ungroup()
+
+rand10_wide <- rand10 %>% 
+  select(Category, rank, D.Item) %>% 
+  tidyr::pivot_wider(names_from = rank, values_from = D.Item)
+
+kable(rand10_wide,
+      caption = "Ten random ingredients in every category")
 
 ```
 
 
+```{r}
+###############################################################################
+## E · Ingredients that remain unclassified (Category == NA)
+###############################################################################
+###############################################################################
+## E · Ingredients still unclassified, counted by unique study
+##     (“one vote per B.Code”)
+###############################################################################
+unclass_freq <- merged_metadata$Animals.Diet.Comp %>% 
+  filter(is.na(Category)) %>% 
+  filter(is_entire_diet=="FALSE")%>%# keep only the NA‑class rows
+  distinct(D.Item, B.Code) %>%         # one row per ingredient *per study*
+  count(D.Item, sort = TRUE, name = "Studies")   # how many studies
+
+kable(head(unclass_freq, 20),
+      caption = "Top 20 unclassified ingredients (ranked by # of studies)")
+
+
+```
 
 ### practice diet comparison 
 
@@ -3764,7 +3564,7 @@ quantify_practice_changes <- function(ingredients_clean, min_pct = 0.5) {
 
     # Collapse duplicate ingredient rows *within* each diet -------------------
     dt <- dt[, .(
-      D.Type_Nutri          = first(D.Type_Nutri),          # keep the category
+      Category          = first(Category),          # keep the category
       pct_diet        = sum(pct_diet),
       D.Unit.Amount   = first(D.Unit.Amount),
       D.Unit.Time     = first(D.Unit.Time),
@@ -3797,11 +3597,11 @@ quantify_practice_changes <- function(ingredients_clean, min_pct = 0.5) {
         dB <- dt[A.Level.Name == diet_B]
 
         grid <- merge(
-          dA[, .(D.Item, D.Type_Nutri, pct_A = pct_diet,
+          dA[, .(D.Item, Category, pct_A = pct_diet,
                    unit_A = paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals))],
-          dB[, .(D.Item, D.Type_Nutri, pct_B = pct_diet,
+          dB[, .(D.Item, Category, pct_B = pct_diet,
                    unit_B = paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals))],
-          by = c("D.Item", "D.Type_Nutri"), all = TRUE, allow.cartesian = FALSE
+          by = c("D.Item", "Category"), all = TRUE, allow.cartesian = FALSE
         )
 
         # Unit compatibility check -------------------------------------------
@@ -3827,13 +3627,13 @@ quantify_practice_changes <- function(ingredients_clean, min_pct = 0.5) {
         # Aggregate *by D.Type_Nutri* ----------------------------------------------
         fmt <- function(dt) {
           if (nrow(dt) == 0) return(NA_character_)
-          paste(paste0(dt$D.Type_Nutri, ":", round(dt$V1,2)), collapse = "; ")
+          paste(paste0(dt$Category, ":", round(dt$V1,2)), collapse = "; ")
         }
 
-        add_by_type  <- fmt(grid[pct_A == 0 & delta  > 0,  .(V1 = sum(delta)), by = D.Type_Nutri])
-        rem_by_type  <- fmt(grid[pct_B == 0 & delta  < 0,  .(V1 = -sum(delta)), by = D.Type_Nutri])
-        inc_by_type  <- fmt(grid[pct_A > 0 & pct_B > 0 & delta > 0,  .(V1 = sum(delta)), by = D.Type_Nutri])
-        dec_by_type  <- fmt(grid[pct_A > 0 & pct_B > 0 & delta < 0,  .(V1 = -sum(delta)), by = D.Type_Nutri])
+        add_by_type  <- fmt(grid[pct_A == 0 & delta  > 0,  .(V1 = sum(delta)), by = Category])
+        rem_by_type  <- fmt(grid[pct_B == 0 & delta  < 0,  .(V1 = -sum(delta)), by = Category])
+        inc_by_type  <- fmt(grid[pct_A > 0 & pct_B > 0 & delta > 0,  .(V1 = sum(delta)), by = Category])
+        dec_by_type  <- fmt(grid[pct_A > 0 & pct_B > 0 & delta < 0,  .(V1 = -sum(delta)), by = Category])
 
         # Practice label ------------------------------------------------------
         practice_type <- fifelse(total_added   > 0 & total_removed > 0, "substitution",
@@ -3898,18 +3698,18 @@ explode <- function(.data, col, kind) {                         # { 1
     mutate(across(all_of(col), ~ ifelse(is.na(.x) | .x == "", NA, .x))) %>% 
     separate_rows(all_of(col), sep = ";\\s*") %>%               # "A:10; B:20" → rows
     filter(!is.na(.data[[col]])) %>% 
-    separate(.data[[col]], into = c("D.Type_Nutri", "pct"),           # "A:10" → A | 10
+    separate(.data[[col]], into = c("Category", "pct"),           # "A:10" → A | 10
              sep = ":", convert = TRUE, fill = "right") %>% 
     mutate(
       # ─ collapse categories ────────────────────────────────────────────
-      D.Type_Nutri = case_when(
-        str_detect(D.Type_Nutri, regex("supplement",  ignore_case = TRUE)) ~ "Supplement",
-        str_detect(D.Type_Nutri, regex("concentrate", ignore_case = TRUE)) ~ "Concentrate",
-        TRUE                                                        ~ D.Type_Nutri
+      Category = case_when(
+        str_detect(Category, regex("supplement",  ignore_case = TRUE)) ~ "Supplement",
+        str_detect(Category, regex("concentrate", ignore_case = TRUE)) ~ "Concentrate",
+        TRUE                                                        ~ Category
       ),
       change_kind = kind
     ) %>% 
-    filter(D.Type_Nutri != "Entire Diet")                               # drop whole-diet rows
+    filter(Category != "Entire Diet")                               # drop whole-diet rows
 }                                                                 # } 1
 
 # ── 2 · Build a long table of ingredient-type moves ────────────────────
@@ -3922,12 +3722,12 @@ type_changes <- bind_rows(                                       # ( 2
 
 # ── 3 · Count how many comparisons show each Practice × Type combo ────
 summary <- type_changes %>% 
-  group_by(D.Type_Nutri, change_kind) %>% 
+  group_by(Category, change_kind) %>% 
   summarise(n_comparisons = n_distinct(pair_id), .groups = "drop")
 
 # ── 4 · Plot: bar height = number of comparisons ───────────────────────
 ggplot(summary,
-       aes(D.Type_Nutri, n_comparisons, fill = change_kind)) +
+       aes(Category, n_comparisons, fill = change_kind)) +
   geom_col(position = "dodge") +
   labs(title = "How often each practice affected each ingredient type",
        x     = "Ingredient type",
@@ -5493,18 +5293,18 @@ heat_tbl <- subs_db %>%
              n = n(), .groups = "drop") %>% 
   filter(n >= 3)
 
-ggplot(heat_tbl,
-       aes(removed, added, fill = mean_EI)) +
-  geom_tile(colour = "white") +
-  geom_text(aes(label = round(mean_pct,0)), size = 3) +   # % printed on tile
-  scale_fill_gradient2(low = "#2b83ba", mid = "white",
-                       high = "#d7191c", midpoint = 0,
-                       name = "Δ EI") +
-  facet_wrap(~ Product) +
-  labs(x = "Category removed", y = "Category added",
-       title = "Average EI shift (colour) and % DM swapped (number)") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# ggplot(heat_tbl,
+#        aes(removed, added, fill = mean_EI)) +
+#   geom_tile(colour = "white") +
+#   geom_text(aes(label = round(mean_pct,0)), size = 3) +   # % printed on tile
+#   scale_fill_gradient2(low = "#2b83ba", mid = "white",
+#                        high = "#d7191c", midpoint = 0,
+#                        name = "Δ EI") +
+#   facet_wrap(~ Product) +
+#   labs(x = "Category removed", y = "Category added",
+#        title = "Average EI shift (colour) and % DM swapped (number)") +
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 ```{r}
