@@ -116,6 +116,9 @@ Ing_classif%>%
   filter(is_entire_diet=="FALSE")
 
 diets <- read_csv("diets.csv")
+
+Ing_classif <- Ing_classif %>% 
+  filter(!D.Item %in% c("Salt", "Water"))
 ```
 
 
