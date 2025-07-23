@@ -1,0 +1,416 @@
+---
+title: "Ingredient classification"
+output: html_document
+date: "2025-07-22"
+---
+## 1. Purpose 
+
+The goal of this script is to develop and document a suite of deterministic rule based algorithms that assign individual feed ingredients to one of six nutritional categories (I – VI) on the basis of routine laboratory compositional data. Each algorithm embodies a distinct set of decision rules.
+
+## 2. Baseline classification 
+
+| Variable | Category I (High‑starch) | Category II (High‑fat) | Category III (Protein) | Category IV (Good forage) | Category V (Poor forage) | Category VI (Mineral/Vit) |
+|----------|-------------------------|------------------------|------------------------|---------------------------|--------------------------|---------------------------|
+| **GE (MJ kg⁻¹ DM)** | 170 – 190 | 300 – 380 | 180 – 200 | 160 – 180 | 150 – 170 | — |
+| **Ash (g kg⁻¹ DM)** | 20 – 40 | 0 – 10 | 50 – 80 | 70 – 100 | 60 – 100 | ≥ 500 |
+| **CP (g kg⁻¹ DM)** | 80 –120 | 0 – 50 | 350 – 500 | 120 – 200 | 30 – 80 | ≈ 0 |
+| **EE (g kg⁻¹ DM)** | 20 – 50 | 800 – 990 | 20 – 60 | 10 – 30 | 0 – 20 | < 1 |
+| **NDF (g kg⁻¹ DM)** | 100 – 200 | 0 – 50 | 100 – 300 | 400 – 500 | 600 – 750 | — |
+
+
+## 3. Classification methods 
+
+
+| **Method** | **R function** | **Core concept** | **Variables needed** | **One‑sentence rule** |
+|------------|----------------|------------------|----------------------|-----------------------|
+| **1** | `method1()` | Exact‑window filter | GE, Ash, CP, EE, NDF<br>(*all present*) | Assign to the *first* category in which **every variable** falls inside its strict baseline window. |
+| **2** | `method2()` | Exact ± 10 % filter | Same five | Same as M1 but each numeric bound is widened ± 10 %. |
+| **3** | `method3()` | Priority‑variable filter (strict) | Only the **priority** variables per category:<br> • I → NDF<br> • II → EE<br> • III–V → CP & NDF<br> • VI → Ash | If all priority variables exist *and* meet their strict windows, assign that category; missing non‑priority data are ignored. |
+| **4** | `method4()` | Priority‑variable ± 10 % | Same | Priority windows widened ± 10 %; non‑priority values (if present) still use strict windows and can only disqualify. |
+| **5** | `method5()` | Hierarchical decision tree (strict) | Any subset of GE, Ash, CP, EE, NDF | Gates tested in order:<br>`EE ≥ 80 → II` → else `Ash ≥ 50 → VI` → else `CP ≥ 35 & NDF ≤ 30 → III` → else `NDF ≤ 20 → I` → else `NDF ≥ 60 → V` → else `40 ≤ NDF ≤ 50 → IV` → else *unclassified*. |
+| **6** | `method6()` | Hierarchical tree ± 10 % | Same | Same gates as M5 but every numeric constant is multiplied by 0.9 (lower) and 1.1 (upper) before testing. |
+| **7** | `method7()` | Hierarchical ± 10 % plus text overrides | Same numerics **+** `D.Item`, `D.Type` | Start with Method 6 result, then override:<br> • `oil|tallow|fat|grease` in *D.Item* → **II**<br> • protein‑meal regex (distillers grain, soybean meal, …) → **III**<br> • `D.Type` ∈ “Supplement” *or* matches “supplement” → **VI** |
+
+*All concentration variables are in g·kg⁻¹ DM except GE (MJ·kg⁻¹ DM).*
+
+
+## 4. Hierachical decision tree
+
+```{r,echo=FALSE,warning=FALSE}
+# --------------------------------------------------------------
+# UPDATED FLOW‑CHART  (no NFC test)  –  Method 5 decision tree
+# --------------------------------------------------------------
+#  Install DiagrammeR if you do not have it:
+#  install.packages("DiagrammeR")
+
+library(DiagrammeR)
+
+feed_tree_nfc_removed <- grViz("
+digraph feed_tree {
+  graph [layout = dot, rankdir = TB]
+
+  # ----- Default styling -----
+  node [shape = rectangle,
+        style = filled,
+        fillcolor = LightYellow,
+        fontname = Helvetica,
+        fontsize = 12]
+
+  # ----- Decision nodes -----
+  n1  [label = 'EE ≥ 80 ?']
+  n3  [label = 'Ash ≥ 50 ?']
+  n5  [label = 'CP ≥ 35 &\\nNDF ≤ 30 ?']
+  n7  [label = 'NDF ≤ 20 ?']
+  n9  [label = 'NDF ≥ 60 ?']
+  n11 [label = '40 ≤ NDF ≤ 50 ?']
+
+  # ----- Terminal nodes -----
+  node [fillcolor = LightSkyBlue]
+  n2  [label = 'Category II\\nHigh‑fat']
+  n4  [label = 'Category VI\\nMineral/Vit']
+  n6  [label = 'Category III\\nProtein conc.']
+  n8  [label = 'Category I\\nHigh‑starch']
+  n10 [label = 'Category V\\nPoor forage']
+  n12 [label = 'Category IV\\nGood forage']
+  n13 [label = 'Unclassified']
+
+  # ----- Edges -----
+  n1  -> n2  [label = 'Yes']
+  n1  -> n3  [label = 'No']
+  n3  -> n4  [label = 'Yes']
+  n3  -> n5  [label = 'No']
+  n5  -> n6  [label = 'Yes']
+  n5  -> n7  [label = 'No']
+  n7  -> n8  [label = 'Yes']
+  n7  -> n9  [label = 'No']
+  n9  -> n10 [label = 'Yes']
+  n9  -> n11 [label = 'No']
+  n11 -> n12 [label = 'Yes']
+  n11 -> n13 [label = 'No']
+}
+")
+
+# Render in the Viewer or export as needed
+feed_tree_nfc_removed
+
+# Example export:
+# export_graph(feed_tree_nfc_removed, file_name = "feed_tree_method5.png", file_type = "PNG")
+
+
+```
+
+
+```{r, warning=FALSE,message=FALSE}
+
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+library(readr)
+library(utils)
+library(DT)
+
+Ing_classif <- read_csv("Ing_classif.csv")
+
+Ing_classif%>%
+  filter(is_entire_diet=="FALSE")
+
+diets <- read_csv("diets.csv")
+```
+
+
+```{r}
+## ───────────────────────────────────────────────────────────────────────
+##  0 ·  Packages
+## ──────────────────────────────────────────────────────────────────────
+
+
+## ───────────────────────────────────────────────────────────────────────
+##  1 ·  Build a lookup of ingredient “type” from the diets table
+## ───────────────────────────────────────────────────────────────────────
+type_lookup <- diets %>%                               # your diets data frame
+  select(B.Code, D.Item, D.Type) %>% 
+  distinct()
+
+## ───────────────────────────────────────────────────────────────────────
+##  2 ·  Pivot Ing_classif to wide  (one row = one ingredient)
+##       and join type information
+## ───────────────────────────────────────────────────────────────────────
+nutr_wide <- Ing_classif %>% 
+  filter(is_entire_diet=="FALSE")%>%
+  filter(DC.Variable %in% c("CP","EE","NDF","Ash","GE")) %>% 
+  mutate(DC.Value = as.numeric(DC.Value)) %>% 
+  pivot_wider(
+    id_cols      = c(B.Code, D.Item),
+    names_from   = DC.Variable,
+    values_from  = DC.Value,
+    values_fn    = list(DC.Value = mean),
+    values_fill  = NA
+  ) %>% 
+  left_join(type_lookup, by = c("B.Code", "D.Item"))
+
+## ───────────────────────────────────────────────────────────────────────
+##  3 ·  Numeric windows  (g kg‑1 DM except GE in MJ kg‑1 DM)
+## ───────────────────────────────────────────────────────────────────────
+win <- list(
+  GE  = list(I = c(170, 190), II = c(300, 380), III = c(180, 200),
+             IV = c(160, 180), V = c(150, 170)),
+  Ash = list(I = c( 20,  40), II = c(  0,  10), III = c( 50,  80),
+             IV = c( 70, 100), V = c( 60, 100), VI = c(500, 1000)),
+  CP  = list(I = c( 80, 120), II = c(  0,  50), III = c(350, 500),
+             IV = c(120, 200), V = c( 30,  80)),
+  EE  = list(I = c( 20,  50), II = c(800, 990), III = c( 20,  60),
+             IV = c( 10,  30), V = c(  0,  20)),
+  NDF = list(I = c(100, 200), II = c(  0,  50), III = c(100, 300),
+             IV = c(400, 500), V = c(600, 750))
+)
+expand10 <- function(x) c(x[1]*0.9, x[2]*1.1)
+
+## ───────────────────────────────────────────────────────────────────────
+##  4 ·  Priority variable lists  (Methods 3 & 4)
+## ───────────────────────────────────────────────────────────────────────
+priority <- list(
+  I  = c("NDF"),
+  II = c("EE"),
+  III= c("CP", "NDF"),
+  IV = c("NDF", "CP"),
+  V  = c("NDF", "CP"),
+  VI = c("Ash")
+)
+
+## ───────────────────────────────────────────────────────────────────────
+##  5 ·  Regex patterns for overrides (Method 7)
+## ───────────────────────────────────────────────────────────────────────
+regex_name <- list(
+  II = "\\b(oil|tallow|fat|grease)\\b",                                             # Cat II
+  III= "\\b(distillers?.*grain|soybean meal|canola meal|fish meal|blood meal)\\b"   # Cat III
+)
+vi_types   <- c("Supplement", "Non-ERA Feed")                                       # Cat VI
+vi_regex   <- regex("supplement", ignore_case = TRUE)
+
+## ───────────────────────────────────────────────────────────────────────
+##  6 ·  Helper utilities
+## ───────────────────────────────────────────────────────────────────────
+inside <- function(x, rng) !is.na(x) & x >= rng[1] & x <= rng[2]
+
+## ───────────────────────────────────────────────────────────────────────
+##  7 ·  Seven classification methods (no NFC)
+## ───────────────────────────────────────────────────────────────────────
+method1 <- function(df, w = win) {
+  df %>% mutate(
+    M1_Category = case_when(
+      inside(GE,  w$GE$I)  & inside(Ash, w$Ash$I)  &
+      inside(CP,  w$CP$I)  & inside(EE,  w$EE$I)   &
+      inside(NDF, w$NDF$I)                         ~ "I",
+      inside(GE,  w$GE$II) & inside(Ash, w$Ash$II) &
+      inside(CP,  w$CP$II) & inside(EE,  w$EE$II)  &
+      inside(NDF, w$NDF$II)                        ~ "II",
+      inside(GE,  w$GE$III)& inside(Ash, w$Ash$III)&
+      inside(CP,  w$CP$III)& inside(EE,  w$EE$III) &
+      inside(NDF, w$NDF$III)                       ~ "III",
+      inside(GE,  w$GE$IV) & inside(Ash, w$Ash$IV) &
+      inside(CP,  w$CP$IV) & inside(EE,  w$EE$IV)  &
+      inside(NDF, w$NDF$IV)                        ~ "IV",
+      inside(GE,  w$GE$V)  & inside(Ash, w$Ash$V)  &
+      inside(CP,  w$CP$V)  & inside(EE,  w$EE$V)   &
+      inside(NDF, w$NDF$V)                         ~ "V",
+      inside(Ash, w$Ash$VI)                        ~ "VI",
+      TRUE                                         ~ NA_character_
+    ))
+}
+method2 <- function(df) {
+  w10 <- map(win, ~ map(.x, expand10))
+  method1(df, w10) %>% rename(M2_Category = M1_Category)
+}
+
+method_priority <- function(df, w, out_name){
+  df %>% rowwise() %>% mutate(
+    "{out_name}" := {
+      dat <- c(CP=CP, EE=EE, NDF=NDF, Ash=Ash, GE=GE)
+      cat <- NA_character_
+      for(cl in names(priority)) {
+        req <- priority[[cl]]
+        if(all(!is.na(dat[req])) &&
+           all(map2_lgl(dat[req], req, \(v,r) inside(v, w[[r]][[cl]]))))
+        { cat <- cl; break }
+      }
+      cat
+    }) %>% ungroup()
+}
+method3 <- function(df) method_priority(df, win,  "M3_Category")
+method4 <- function(df){
+  w10 <- map(win, ~ map(.x, expand10))
+  method_priority(df, w10, "M4_Category")
+}
+
+tree_decide <- function(df, w){
+  df %>% mutate(
+    Category = case_when(
+      EE  >= w$EE$II [1]               ~ "II",
+      Ash >= w$Ash$VI[1]               ~ "VI",
+      CP  >= w$CP$III[1] & NDF <= w$NDF$III[2] ~ "III",
+      NDF <= w$NDF$I[2]                ~ "I",
+      NDF >= w$NDF$V[1]                ~ "V",
+      NDF >= w$NDF$IV[1] & NDF <= w$NDF$IV[2]  ~ "IV",
+      TRUE                             ~ NA_character_
+    )
+  )
+}
+method5 <- function(df) tree_decide(df, win) %>% rename(M5_Category = Category)
+method6 <- function(df){
+  w10 <- map(win, ~ map(.x, expand10))
+  tree_decide(df, w10) %>% rename(M6_Category = Category)
+}
+
+method7 <- function(df) {
+
+  # ------------------------------------------------------------------
+  # 1 · Ensure we have M6_Category
+  # ------------------------------------------------------------------
+  out <- if ("M6_Category" %in% names(df)) {
+           df                       # already present → keep as‑is
+         } else {
+           method6(df)              # not present     → run method6()
+         }
+
+  # ------------------------------------------------------------------
+  # 2 · Start M7 from M6
+  # ------------------------------------------------------------------
+  out$M7_Category <- out$M6_Category
+
+  # ------------------------------------------------------------------
+  # 3 · Name‑based overrides  (Cat II oils, Cat III protein meals)
+  # ------------------------------------------------------------------
+  oil_pat   <- "\\b(oil|tallow|fat|grease)\\b"
+  protein_pat <- "\\b(distillers?.*grain|soybean meal|canola meal|fish meal|blood meal)\\b"
+
+  out$M7_Category[str_detect(out$D.Item, regex(oil_pat, ignore_case = TRUE))]   <- "II"
+  out$M7_Category[str_detect(out$D.Item, regex(protein_pat, ignore_case = TRUE))] <- "III"
+
+  # ------------------------------------------------------------------
+  # 4 · Type‑based override for supplements / minerals (→ Cat VI)
+  # ------------------------------------------------------------------
+  sup_types <- c("Supplement", "Non-ERA Feed")
+  vi_hit <- !is.na(out$D.Type) &
+            (out$D.Type %in% sup_types |
+             str_detect(out$D.Type, regex("supplement", ignore_case = TRUE)))
+
+  out$M7_Category[vi_hit] <- "VI"
+
+  out
+}
+
+
+## ───────────────────────────────────────────────────────────────────────
+##  8 ·  Run all methods and inspect
+## ───────────────────────────────────────────────────────────────────────
+classif_all <- nutr_wide %>% 
+  method1() %>% 
+  method2() %>% 
+  method3() %>% 
+  method4() %>% 
+  method5() %>% 
+  method6() %>% 
+  method7()
+
+datatable(
+  classif_all %>% arrange(M7_Category),
+  caption  = "Classification of ingredients (sorted by M7 category)",
+  rownames = FALSE,
+  options  = list(pageLength = 30, dom = "tip")
+)
+
+```
+
+```{r}
+## 1 · list of method‑columns
+method_cols <- grep("^M[1-7]_Category$", names(classif_all), value = TRUE)
+
+## 2 · Coverage table  (one row per method)
+coverage_tbl <- map_dfr(method_cols, function(mc){
+  tibble(
+    Method    = sub("_Category$", "", mc),
+    Total     = nrow(classif_all),
+    Assigned  = sum(!is.na(classif_all[[mc]])),
+    Coverage  = round(Assigned / Total * 100, 1)  # %
+  )
+})
+
+## 3 · Counts per category
+counts_tbl <- classif_all %>% 
+  pivot_longer(all_of(method_cols),
+               names_to = "Method",
+               values_to = "Category") %>% 
+  filter(!is.na(Category)) %>% 
+  mutate(Method = sub("_Category$", "", Method)) %>% 
+  count(Method, Category, name = "n") %>% 
+  arrange(Method, desc(n))
+
+## 4 · Ten random ingredients per category
+set.seed(123)                       # for reproducibility
+sample_tbl <- classif_all %>% 
+  pivot_longer(all_of(method_cols),
+               names_to = "Method",
+               values_to = "Category") %>% 
+  filter(!is.na(Category)) %>% 
+  mutate(Method = sub("_Category$", "", Method)) %>% 
+  group_by(Method, Category) %>% 
+  slice_sample(n = 10, replace = FALSE) %>% 
+  summarise(Examples = paste(D.Item, collapse = "; "), .groups = "drop") %>% 
+  arrange(Method, Category)
+
+
+## ───────────────────────────────────────────────────────────────────────
+##  6 ·  Top‑10 “Unclassified” ingredients per method
+## ───────────────────────────────────────────────────────────────────────
+unclassified_tbl <- classif_all %>% 
+  pivot_longer(all_of(method_cols),
+               names_to  = "Method",
+               values_to = "Category") %>% 
+  filter(is.na(Category)) %>%          # keep only the NAs
+  mutate(Method = sub("_Category$", "", Method)) %>% 
+  count(Method, D.Item, sort = TRUE) %>%   # how many records of each item
+  group_by(Method) %>% 
+  slice_max(n, n = 10, with_ties = FALSE) %>%   # top‑10 per method
+  ungroup()
+
+## ───────────────
+## 5 · Inspect – interactive view with DT
+## ───────────────
+library(DT)
+
+# Coverage by method
+datatable(
+  coverage_tbl,
+  caption = "Coverage (number and % of ingredients classified)",
+  rownames = FALSE,
+  options = list(pageLength = 10, dom = "tip")
+)
+
+# Counts per category (long format)
+datatable(
+  counts_tbl,
+  caption = "Counts of ingredients in each category per method",
+  rownames = FALSE,
+  options = list(pageLength = 25, dom = "tip")
+)
+
+# Ten random examples per (Method, Category)
+datatable(
+  sample_tbl,
+  caption = "Random sample (≤10) of ingredients in every category",
+  rownames = FALSE,
+  options = list(pageLength = 25, dom = "tip")
+)
+
+# Top‑10 most frequent unclassified ingredients per method
+datatable(
+  unclassified_tbl,
+  caption = "Most frequent unclassified ingredients (top‑10 per method)",
+  rownames = FALSE,
+  options = list(pageLength = 25, dom = "tip")
+)
+
+
+```
+
