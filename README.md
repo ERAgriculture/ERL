@@ -17,6 +17,7 @@ Explore the rendered HTML files for detailed documentation:
 
 -   [Diet Ingredient Classification](https://eragriculture.github.io/ERL/classif_ingredients.html)
 
+-   [Data for feed intake estimations](https://eragriculture.github.io/ERL/Data_for_Feed_Intake_Estimations.html)
 ---
 
 ## Key Features
