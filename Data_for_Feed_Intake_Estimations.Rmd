@@ -1,0 +1,538 @@
+---
+title: "Data for feed intake estimations"
+author:
+  - name: "Lolita Muller"
+    email: "m.lolita@cgiar.org"
+    orcid: "0009-0002-8345-7219"
+  - name: "Peter Steward"
+    email: "p.steward@cgiar.org"
+    orcid: "0000-0003-3985-4911"
+date: "2025-02-19"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: show
+---
+
+This script prepares and summarizes livestock feed intake data to support the development of predictive models for estimating feed intake using various biological and nutritional variables. It merges cleaned extraction data with species, production stage, nutritional composition, digestibility, and outcome metrics such as body weight, daily gain, and milk or meat yield. The aim is to assess data coverage across species and variable combinations (e.g. BW + DMD, CP + ADG) and identify suitable subsets for building robust estimation models. The summary tables help evaluate where data is sufficient to support modeling efforts for different livestock groups.
+
+
+## 1) Load the data 
+
+```{r, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+library(readr)
+library(DT)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(purrr)
+library(stringr)
+library(knitr)
+
+merged_metadata <- readRDS("~/ERL/merged_metadata.rds")
+feed_intake <- read.csv("~/ERL/feed_intake.csv")
+
+```
+
+
+
+```{r,warning=FALSE}
+
+# ── 1) merge product info into the cleaned feed_intake ----------------------
+prod_tbl  <- merged_metadata$Prod.Out %>% 
+  select(B.Code,
+         Species   = P.Product,   # rename for clarity
+         Variety     = P.Variety,
+         P.Practice,
+         Stage     = Herd.Stage)  # keep stage here
+
+# ── build lookup from the rows that already have a species -------------------
+var_species_lu <- prod_tbl %>%                     # from previous step
+  filter(Species != "Not Found", !is.na(Variety)) %>% 
+  distinct(Variety, Species)                       # one row per variety
+
+# ── back-fill missing species ------------------------------------------------
+prod_tbl <- prod_tbl %>% 
+  left_join(var_species_lu, by = "Variety", suffix = c("", ".lu")) %>% 
+  mutate(
+    Species = if_else(Species == "Not Found" | is.na(Species),
+                      Species.lu, Species)
+  ) %>% 
+  select(-Species.lu)                              # drop helper column
+
+
+feed_intake <- feed_intake %>% 
+  left_join(prod_tbl, by = "B.Code")%>%
+  select(-c("X"))
+
+```
+
+## 2) Number of papers with feed intake info by species 
+
+This section summarizes how many unique papers include feed intake data for each species. The goal is to understand species-level data availability.
+
+```{r}
+# Number of unique papers per species
+papers_per_species <- feed_intake %>%
+  filter(!is.na(Species)) %>%
+  group_by(Species) %>%
+  summarise(
+    n_unique_papers = n_distinct(B.Code),
+    .groups = "drop"
+  ) %>%
+  arrange(Species)
+
+datatable(
+  papers_per_species,
+  caption = htmltools::tags$caption(
+    style = "caption-side: top; text-align: left; font-weight: bold;",
+    "Number of Unique Papers with Feed Intake Information by Species"
+  ),
+  options = list(
+    pageLength = 10,
+    autoWidth = TRUE
+  ),
+  rownames = FALSE
+)
+
+```
+
+
+
+
+## 3) Number of papers per variety 
+
+This summary table breaks down feed intake observations by both species and variety. It includes the number of observations and papers, as well as the average and standard deviation of reported feed intake values. This helps assess the data's granularity and distribution across different breeds or livestock types.
+
+```{r}
+## ── 3) summary table for Claudia --------------------------------------------
+fi_summary <- feed_intake %>% 
+  filter(!is.na(Species)) %>%              # ← drop NA species rows
+  group_by(Species, Variety) %>% 
+  summarise(
+    n_obs     = n(),
+    n_bcodes  = n_distinct(B.Code),        # ← number of unique B.Codes
+    mean_kg   = mean(ED.Mean.T, na.rm = TRUE),
+    sd_kg     = sd  (ED.Mean.T, na.rm = TRUE),
+    .groups   = "drop"
+  ) %>% 
+  mutate(
+    mean_kg = format(mean_kg, digits = 3, scientific = FALSE),
+    sd_kg   = format(sd_kg,   digits = 3, scientific = FALSE)
+  ) %>% 
+  arrange(Species, Variety)
+
+
+datatable(
+  fi_summary,
+  caption = htmltools::tags$caption(
+    style = "caption-side: top; text-align: left; font-weight: bold;",
+    "Summary of Feed Intake by Species and Variety"
+  ),
+  options = list(
+    pageLength = 10,
+    autoWidth = TRUE
+  ),
+  rownames = FALSE
+)
+
+```
+
+## 4) Join other variables
+
+To model feed intake effectively, we need to connect it with other biological outcome data. In this section, we join feed intake records with key variables such as bodyweight, average daily gain (ADG), milk yield, and meat yield. These variables serve as potential predictors in estimation models and allow us to quantify animal performance alongside feed intake.
+
+```{r}
+##############################################################################
+# 1) ─── Helper outcome tables (deduplicated) ────────────────────────────────
+##############################################################################
+bw_tbl <- merged_metadata$Data.Out %>%                       # start-BW (kg)
+  filter(Out.Subind == "Weight Gain", !is.na(Out.WG.Start)) %>% 
+  mutate(
+    Out.WG.Unit = tolower(Out.WG.Unit),
+    bw_kg = dplyr::case_when(
+      Out.WG.Unit == "g"  ~ Out.WG.Start / 1e3,
+      Out.WG.Unit == "mg" ~ Out.WG.Start / 1e6,
+      TRUE                ~ Out.WG.Start         # kg, unspecified, NA
+    )
+  ) %>% 
+  group_by(B.Code, A.Level.Name) %>% 
+  summarise(bw_kg = mean(bw_kg, na.rm = TRUE), .groups = "drop")
+
+adg_tbl <- merged_metadata$Data.Out %>%                      # ADG (g day-¹)
+  filter(Out.Subind == "Weight Gain", !is.na(ED.Mean.T)) %>% 
+  mutate(
+    Out.Unit   = tolower(trimws(Out.Unit)),
+    adg_g_day  = dplyr::case_when(
+      grepl("^kg", Out.Unit) ~ ED.Mean.T * 1e3,  # kg → g
+      grepl("^g",  Out.Unit) ~ ED.Mean.T,
+      TRUE                   ~ NA_real_
+    )
+  ) %>% 
+  group_by(B.Code, A.Level.Name) %>% 
+  summarise(adg_g_day = mean(adg_g_day, na.rm = TRUE), .groups = "drop")
+
+meat_yield_tbl <- merged_metadata$Data.Out %>%                      
+  filter(Out.Subind == "Meat Yield", !is.na(ED.Mean.T)) %>% 
+  mutate(
+    Out.Unit   = tolower(trimws(Out.Unit)),
+    meat_g_day  = dplyr::case_when(
+      grepl("^kg", Out.Unit) ~ ED.Mean.T * 1e3,  # kg → g
+      grepl("^g",  Out.Unit) ~ ED.Mean.T,
+      TRUE                   ~ NA_real_
+    )
+  ) %>% 
+  group_by(B.Code, A.Level.Name) %>% 
+  summarise(meat_g_day = mean(meat_g_day, na.rm = TRUE), .groups = "drop")
+
+milk_tbl <- merged_metadata$Data.Out %>%                     # milk (kg day-¹)
+  filter(Out.Subind == "Milk Yield", !is.na(ED.Mean.T)) %>% 
+  mutate(
+    Out.Unit      = tolower(trimws(Out.Unit)),
+    milk_kg_day   = dplyr::case_when(
+      grepl("^g",  Out.Unit) ~ ED.Mean.T / 1e3,
+      grepl("^kg", Out.Unit) ~ ED.Mean.T,
+      grepl("^l",  Out.Unit) ~ ED.Mean.T,       # 1 L ≈ 1 kg
+      TRUE                  ~ NA_real_
+    )
+  ) %>% 
+  group_by(B.Code, A.Level.Name) %>% 
+  summarise(milk_kg_day = mean(milk_kg_day, na.rm = TRUE), .groups = "drop")
+
+
+feed_intake_wide <- feed_intake %>%
+  ## ── 1.  Create tidy feed-intake columns ──────────────────────────────────
+  mutate(
+    feed_intake_unit   = paste0(Out.Unit.Amount, "/", Out.Unit.Time),  # e.g. "kg/day"
+    feed_intake_value  = ED.Mean.T,
+    feed_intake_error  = ED.Error
+  ) %>%
+  ## ── 2.  Drop raw / helper columns no longer needed ──────────────────────
+  select(-ED.Intake.Item.Raw,
+         -ED.Mean.T, -ED.Error, -Out.Subind,
+         -Out.WG.Start, -Out.WG.Unit,
+         -Out.Unit.Animals, -Out.Unit.Time, -Out.Unit.Amount) %>%
+  ## ── 3.  Join BW, ADG, Milk tables ───────────────────────────────────────
+  left_join(bw_tbl,   by = c("B.Code", "A.Level.Name")) %>%
+  left_join(adg_tbl,  by = c("B.Code", "A.Level.Name")) %>%
+  left_join(milk_tbl, by = c("B.Code", "A.Level.Name")) %>%
+  left_join(meat_yield_tbl, by = c("B.Code", "A.Level.Name")) %>%
+
+  ## ── 4.  Carry single-value outcomes within each study up / down ─────────
+  group_by(B.Code) %>%
+  tidyr::fill(bw_kg, adg_g_day, milk_kg_day,meat_g_day, .direction = "downup") %>%
+  ungroup() %>%
+  ## ── 5.  Keep only unique rows ───────────────────────────────────────────
+  distinct() %>%
+  ## ── 6.  Arrange final column order for readability ──────────────────────
+  relocate(
+  ED.Intake.Item,
+  feed_intake_unit:feed_intake_error,
+  bw_kg, adg_g_day, milk_kg_day,
+  .after = A.Level.Name
+)
+```
+
+## 5) add nutritional values and digestibility 
+
+Feed composition and digestibility are key drivers of intake and animal performance. In this section, we incorporate nutritional values—such as crude protein (CP), neutral detergent fiber (NDF), and others—and digestibility metrics like dry matter digestibility (DMD) into the dataset.
+
+Originally, we used only the raw nutritional data extracted directly from the papers. However, to improve completeness and consistency, we also **imputed missing nutritional values** using open data sources such as **Feedipedia** and the **ILRI feed composition database**. These reference datasets were linked to each diet ingredient using our AOM ontology, allowing for standardized nutritional estimates even when papers lacked complete reporting.
+
+The final merged dataset reflects a combination of reported and imputed values, joined based on whether each observation corresponds to an **entire diet** or a **single feed ingredient**.
+
+
+
+```{r}
+nutrition<-merged_metadata$Animals.Diet.Comp
+
+digestibility<-merged_metadata$Animals.Diet.Digest
+```
+
+```{r message=FALSE, warning=FALSE}
+
+nutrition_wide <- nutrition %>%
+  dplyr::mutate(DC.Value = as.numeric(DC.Value)) %>%
+  dplyr::group_by(B.Code, D.Item, DC.Variable,is_entire_diet) %>%
+  dplyr::summarise(
+    DC.Value = mean(DC.Value, na.rm = TRUE),
+    is_entire_diet = dplyr::first(is_entire_diet),
+    .groups = "drop"
+  ) %>%
+  tidyr::pivot_wider(
+    names_from  = DC.Variable,
+    values_from = DC.Value
+  ) %>%
+  dplyr::rename(A.Level.Name = D.Item) %>%
+  dplyr::rename_with(~ paste0(.x, "_nutrition"), .cols = -c(B.Code, A.Level.Name, is_entire_diet)) %>%
+  dplyr::select(-is_entire_diet)  # ← drop flag here
+
+# Digestibility -------------------------------------------------------------
+
+
+digestibility_wide <- digestibility %>%
+  dplyr::mutate(DD.Value = as.numeric(DD.Value)) %>%
+  dplyr::group_by(B.Code, D.Item, DD.Variable,is_entire_diet) %>%
+  dplyr::summarise(
+    DD.Value = mean(DD.Value, na.rm = TRUE),
+    is_entire_diet = dplyr::first(is_entire_diet),
+    .groups = "drop"
+  ) %>%
+  tidyr::pivot_wider(
+    names_from  = DD.Variable,
+    values_from = DD.Value
+  ) %>%
+  dplyr::rename(A.Level.Name = D.Item) %>%
+  dplyr::rename_with(~ paste0(.x, "_digest"), .cols = -c(B.Code, A.Level.Name, is_entire_diet)) %>%
+  dplyr::select(-is_entire_diet)  # ← drop flag here
+
+
+# ── 7) Merge nutrition & digestibility with feed_intake_wide --------------
+# Split based on is_entire_diet
+fi_entire <- feed_intake_wide %>% filter(is_entire_diet == TRUE)
+fi_partial <- feed_intake_wide %>% 
+  filter(is_entire_diet == FALSE | is.na(is_entire_diet))
+
+# Join each subset separately
+fi_entire <- fi_entire %>%
+  left_join(nutrition_wide,     by = c("B.Code", "A.Level.Name")) %>%
+  left_join(digestibility_wide, by = c("B.Code", "A.Level.Name"))
+
+fi_partial <- fi_partial %>%
+  left_join(nutrition_wide,     by = c("B.Code", "ED.Intake.Item" = "A.Level.Name")) %>%
+  left_join(digestibility_wide, by = c("B.Code", "ED.Intake.Item" = "A.Level.Name"))
+
+# Combine both and clean up
+feed_intake_wide <- bind_rows(fi_entire, fi_partial)
+
+
+# (Optional) expose unit look‑ups ------------------------------------------------
+# attr(nutrition_wide, "units")
+# attr(digestibility_wide, "units")
+```
+
+## 6) Complete raw feed intake data 
+
+This interactive table displays the complete merged dataset, now enriched with outcome metrics and feed characteristics. Each row corresponds to a treatment or diet observation, with harmonized units and identifiers. The `ED.Intake.Item` field shows whether the row corresponds to an entire diet or a specific feed ingredient.
+
+```{r}
+feed_intake_wide <- feed_intake_wide %>%
+  mutate(
+    ED.Intake.Item = if_else(
+      ED.Intake.Item == A.Level.Name,
+      "Entire Diet",
+      ED.Intake.Item
+    ),
+    is_entire_diet = if_else(
+      is.na(is_entire_diet),
+      FALSE,
+      is_entire_diet
+    )
+  )
+
+datatable(
+  feed_intake_wide,
+  caption = htmltools::tags$caption(
+    style = "caption-side: top; text-align: left; font-weight: bold;",
+    "Feed Intake Data — Wide Format with Diet Classification"
+  ),
+  options = list(
+    pageLength = 10,
+    scrollX = TRUE,        # Enable horizontal scroll for wide tables
+    autoWidth = TRUE
+  ),
+  rownames = FALSE
+)
+
+```
+
+## 7) Milk variables combinations 
+
+To guide model design, we assess which combinations of variables are commonly reported together. The function below builds summary tables showing how many studies and experimental units report key variable pairs (e.g., BW + DMD, BW + CP). This allows us to evaluate which variable combinations are best suited for predicting feed intake.
+
+These tables summarize data coverage across species for different combinations of predictor variables. Each "combo" shows how many studies include the required data on the same row. This is essential for determining feasible input combinations when building estimation models for each species.
+
+
+```{r}
+
+# ---------- Helper: strict coverage on ROWS (same observation) --------------
+build_coverage_strict <- function(df, exp_units = c("max","sum")) {
+  exp_units <- match.arg(exp_units)
+
+  rows <- df %>%
+    mutate(
+      units    = suppressWarnings(as.numeric(T.Animals)),
+      has_bw   = !is.na(bw_kg),
+      has_milk = !is.na(milk_kg_day),
+      has_dmd  = !is.na(DM_digest),
+      has_cp   = !is.na(CP_nutrition),
+      has_ndf  = !is.na(NDF_nutrition)
+    )
+
+  combos <- tribble(
+    ~Combo,     ~need_bw, ~need_milk, ~need_dmd, ~need_cp, ~need_ndf,
+    "Combo 1",   TRUE,     FALSE,      TRUE,      FALSE,    FALSE,   # BW + DMD
+    "Combo 2",   FALSE,    TRUE,       TRUE,      FALSE,    FALSE,   # Milk + DMD
+    "Combo 3",   TRUE,     TRUE,       TRUE,      FALSE,    FALSE,   # BW + Milk + DMD
+    "Combo 4",   TRUE,     FALSE,      FALSE,     TRUE,     FALSE,   # BW + CP
+    "Combo 5",   TRUE,     FALSE,      FALSE,     FALSE,    TRUE,    # BW + NDF
+    "Combo 6",   TRUE,     FALSE,      FALSE,     TRUE,     TRUE     # BW + CP + NDF
+  )
+
+  qualifies <- function(x, bw, milk, dmd, cp, ndf) {
+    ok <- rep(TRUE, nrow(x))
+    if (bw)   ok <- ok & x$has_bw
+    if (milk) ok <- ok & x$has_milk
+    if (dmd)  ok <- ok & x$has_dmd
+    if (cp)   ok <- ok & x$has_cp
+    if (ndf)  ok <- ok & x$has_ndf
+    ok
+  }
+
+  purrr::pmap_dfr(combos, function(Combo, need_bw, need_milk, need_dmd, need_cp, need_ndf) {
+    row_idx <- qualifies(rows, need_bw, need_milk, need_dmd, need_cp, need_ndf)
+
+    # studies with at least one qualifying row
+    studies_n <- n_distinct(rows$B.Code[row_idx])
+
+    # experimental units: per-study max (or sum) across qualifying rows
+    units_sum <- rows[row_idx, ] %>%
+      group_by(B.Code) %>%
+      summarise(
+        u = if (exp_units == "max")
+              if (all(is.na(units))) NA_real_ else max(units, na.rm = TRUE)
+            else
+              sum(units, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      summarise(sum = sum(u, na.rm = TRUE), .groups = "drop") %>%
+      pull(sum)
+
+    tibble(
+      Combo = Combo,
+      `Bodyweight` = ifelse(need_bw,   "X", ""),
+      `Milk yield` = ifelse(need_milk, "X", ""),
+      `DMD`        = ifelse(need_dmd,  "X", ""),
+      `CP`         = ifelse(need_cp,   "X", ""),
+      `NDF`        = ifelse(need_ndf,  "X", ""),
+      Studies = studies_n,
+      `Experimental units` = units_sum
+    )
+  }) %>%
+    mutate(Combo = paste0("Combo ", row_number()))
+}
+
+# ---------- Build tables for each species (strict) --------------------------
+fi_cattle <- feed_intake_wide %>% filter(!is.na(Species) & str_detect(tolower(Species), "cattle"))
+fi_goats  <- feed_intake_wide %>% filter(!is.na(Species) & str_detect(tolower(Species), "goat"))
+fi_sheep  <- feed_intake_wide %>% filter(!is.na(Species) & str_detect(tolower(Species), "sheep"))
+
+cov_cattle_strict <- build_coverage_strict(fi_cattle, exp_units = "max")  # or "sum"
+cov_goats_strict  <- build_coverage_strict(fi_goats,  exp_units = "max")
+cov_sheep_strict  <- build_coverage_strict(fi_sheep,  exp_units = "max")
+
+# ---------- Print -----------------------------------------------------------
+kable(cov_cattle_strict, caption = "Coverage (Cattle) — strict, same-row variables")
+kable(cov_goats_strict,  caption = "Coverage (Goats) — strict, same-row variables")
+kable(cov_sheep_strict,  caption = "Coverage (Sheep) — strict, same-row variables")
+
+```
+
+## 8) Meat variable combinations
+
+Here, we generate more specific coverage tables evaluating which subsets of variables co-occur in the same records. These stricter filters help refine modeling strategies for distinct livestock types.
+
+```{r}
+
+# ---------- helper: Table 2 (strict, same-row variables) ----------
+build_table2 <- function(df, exp_units = c("max","sum")) {
+  exp_units <- match.arg(exp_units)
+
+  rows <- df %>%
+    mutate(
+      units     = suppressWarnings(as.numeric(T.Animals)),
+      has_bw    = !is.na(bw_kg),          # Bodyweight
+      has_adg   = !is.na(adg_g_day),      # Daily gain
+      has_dmd   = !is.na(DM_digest),      # DMD
+      has_cp    = !is.na(CP_nutrition),   # CP
+      has_ndf   = !is.na(NDF_nutrition)   # NDF
+    )
+
+  defs <- tribble(
+    ~Combo,        ~need_bw, ~need_adg, ~need_dmd, ~need_cp, ~need_ndf,
+    "DMD+BW",       TRUE,     FALSE,     TRUE,      FALSE,    FALSE,
+    "BW+DG+DMD",    TRUE,     TRUE,      TRUE,      FALSE,    FALSE,
+    "BW+CP",        TRUE,     FALSE,     FALSE,     TRUE,     FALSE,
+    "BW+CP+ADG",    TRUE,     TRUE,      FALSE,     TRUE,     FALSE
+  )
+
+  qualifies <- function(x, bw, adg, dmd, cp, ndf) {
+    ok <- rep(TRUE, nrow(x))
+    if (bw)  ok <- ok & x$has_bw
+    if (adg) ok <- ok & x$has_adg
+    if (dmd) ok <- ok & x$has_dmd
+    if (cp)  ok <- ok & x$has_cp
+    if (ndf) ok <- ok & x$has_ndf
+    ok
+  }
+
+  purrr::pmap_dfr(defs, function(Combo, need_bw, need_adg, need_dmd, need_cp, need_ndf) {
+    row_idx <- qualifies(rows, need_bw, need_adg, need_dmd, need_cp, need_ndf)
+
+    # studies with at least one qualifying row
+    studies_n <- n_distinct(rows$B.Code[row_idx])
+
+    # experimental units: per-study max (or sum) across qualifying rows
+    units_sum <- rows[row_idx, ] %>%
+      group_by(B.Code) %>%
+      summarise(
+        u = if (exp_units == "max")
+              if (all(is.na(units))) NA_real_ else max(units, na.rm = TRUE)
+            else
+              sum(units, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      summarise(total = sum(u, na.rm = TRUE), .groups = "drop") %>%
+      pull(total)
+
+    tibble(
+      Combo = Combo,
+      `Bodyweight` = ifelse(need_bw,  "X", ""),
+      `Daily gain` = ifelse(need_adg, "X", ""),
+      `DMD`        = ifelse(need_dmd, "X", ""),
+      `CP`         = ifelse(need_cp,  "X", ""),
+      `NDF`        = ifelse(need_ndf, "X", ""),
+      Studies = studies_n,
+      `Experimental units` = units_sum
+    )
+  })
+}
+
+# ---------- subsets ----------
+# Cattle (non‑dairy): keep varieties typically Zebu/Beef (adjust pattern to your data)
+fi_cattle_nd <- feed_intake_wide %>%
+  filter(!is.na(Species) & str_detect(tolower(Species), "cattle")) %>%
+  filter(str_detect(tolower(Variety),
+                    "zebu|beef|boran|brahman|sanga|nguni|bunaji|fulani|ankole|afrikaner"))
+
+# Goats and Sheep
+fi_goats <- feed_intake_wide %>%
+  filter(!is.na(Species) & str_detect(tolower(Species), "goat"))
+fi_sheep <- feed_intake_wide %>%
+  filter(!is.na(Species) & str_detect(tolower(Species), "sheep"))
+
+# ---------- build tables ----------
+tab2_cattle <- build_table2(fi_cattle_nd, exp_units = "max")
+tab2_goats  <- build_table2(fi_goats,     exp_units = "max")
+tab2_sheep  <- build_table2(fi_sheep,     exp_units = "max")
+
+# ---------- print ----------
+kable(tab2_cattle, caption = "Table 2 — Non‑dairy cattle (Zebu/Beef): strict, same-row variables")
+kable(tab2_goats,  caption = "Table 2 — Goats: strict, same-row variables")
+kable(tab2_sheep,  caption = "Table 2 — Sheep: strict, same-row variables")
+
+```
+
