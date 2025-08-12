@@ -3965,14 +3965,14 @@ purpose_by_code <- merged_metadata$Data.Out %>%
 
 
 
-ingredients_cleaned <- ingredients %>%
+ingredients <- ingredients %>%
   mutate(
     D.Amount = ifelse(D.Unit.Amount == "g", D.Amount / 1000, D.Amount),
     D.Unit.Amount = ifelse(D.Unit.Amount == "g", "kg", D.Unit.Amount)
   )
 
 # Step 3: Keep only diets where all units are now consistent (all in kg)
-diet_valid_units <- ingredients_cleaned %>%
+diet_valid_units <- ingredients%>%
   group_by(B.Code, A.Level.Name) %>%
   filter(n_distinct(D.Unit.Amount, na.rm = TRUE) == 1) %>%
   ungroup()
@@ -4033,21 +4033,24 @@ Reconstructs the gross energy of the entire diet from the weighted average of GE
 # --- Calculate GE_diet (MJ/kg) ONLY if all ingredients have GE ---
 
 # 1. Join GE values to ingredient amounts
+# Collapse Gross_energy to mean DC.Value per D.Item
+gross_energy_mean <- Gross_energy %>%
+  filter(!is_entire_diet) %>%
+  group_by(D.Item) %>%
+  summarise(DC.Value = mean(DC.Value, na.rm = TRUE), .groups = "drop")
+
+# Join by D.Item only
 ingredients_with_GE <- ingredients %>%
   mutate(Diet_ID = paste(B.Code, A.Level.Name, sep = "__")) %>%
-  left_join(
-    Gross_energy %>%
-      filter(!is_entire_diet) %>%
-      select(B.Code, D.Item, DC.Value),
-    by = c("B.Code", "D.Item")
-  ) %>%
+  left_join(gross_energy_mean, by = "D.Item") %>%
   mutate(
     D.Amount_kg = case_when(
-      D.Unit.Amount == "g" ~ D.Amount / 1000,
+      D.Unit.Amount == "g"  ~ D.Amount / 1000,
       D.Unit.Amount == "kg" ~ D.Amount,
       TRUE ~ NA_real_
     )
   )
+
 
 # 2. Count ingredients with/without GE
 ingredient_counts <- ingredients_with_GE %>%
@@ -4885,7 +4888,7 @@ method7 <- function(df){
   out <- if ("M6_Category" %in% names(df)) df else method6(df)
   out$M7_Category <- out$M6_Category
 
-  # normalize for matching ONLY (stored D.Item already canonicalized)
+  # use the same canonicalization as upstream
   item_norm <- canonicalize_item(out$D.Item)
 
   # Cat II: oils/fats
@@ -4894,7 +4897,7 @@ method7 <- function(df){
   out$M7_Category[is_oil] <- "II"
 
   # Cat III: protein meals + fish (but NOT fish oil)
-  protein_pat <- "\\b(distillers?.*grain|soybean meal|canola meal|fish meal|blood meal)\\b"
+  protein_pat <- "\\b(distillers?.*grain|soybean ground|canola meal|fish ground|blood ground)\\b"
   is_pmeal    <- str_detect(item_norm, regex(protein_pat, TRUE))
   is_fish     <- str_detect(item_norm, regex("\\bfish\\b", TRUE)) &
                  !str_detect(item_norm, regex("\\bfish\\s*oil\\b", TRUE))
@@ -4906,10 +4909,14 @@ method7 <- function(df){
                  (out$D.Type %in% sup_types |
                   str_detect(out$D.Type, regex("supplement", TRUE)))
   is_shell    <- str_detect(item_norm, regex("\\boyster\\s*shells?\\b", TRUE))
-  out$M7_Category[vi_type_hit | is_shell] <- "VI"
+  is_cellulose <- str_detect(
+  item_norm,
+  regex("\\b(cellulose|micro\\s*-?crystalline\\s+cellulose|carboxy\\s*methyl\\s*cellulose|\\bMCC\\b|\\bCMC\\b)\\b", TRUE))
+  out$M7_Category[vi_type_hit | is_shell|is_cellulose] <- "VI"
 
   out
 }
+
 
 # Run all methods so we can inspect coverage; M7 uses M6 base + overrides
 classif_ing <- canon_ing %>%   # ← use canonical means for INGREDIENTS
@@ -5440,6 +5447,203 @@ transition_table <- switch_counts %>%
 
 
 ```
+
+
+```{r}
+suppressPackageStartupMessages({
+  library(dplyr); library(tidyr); library(stringr)
+})
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 0) Ensure prerequisites exist (or build them)
+#    Assumes you already ran your classification and practice code earlier.
+# ─────────────────────────────────────────────────────────────────────────────
+method_col <- "M7_Category"
+
+# (A) Per-row INGREDIENT classifications (classif_ing_rows)
+if (!exists("classif_ing_rows")) {
+  stopifnot(exists("nutr_ing"),
+            exists("method1"), exists("method2"), exists("method3"),
+            exists("method4"), exists("method5"), exists("method6"), exists("method7"))
+  classif_ing_rows <- nutr_ing %>%
+    method1() %>% method2() %>% method3() %>% method4() %>%
+    method5() %>% method6() %>% method7()
+}
+
+# (B) Weight-gain (ADG) standardisation (wg_clean)
+if (!exists("wg_clean")) {
+  stopifnot(exists("merged_metadata"), exists("weights_unique"))
+  is_wg_subind <- function(x){
+    str_detect(
+      tolower(x),
+      "(^|\\b)(weight\\s*gain|daily\\s*average\\s*weight\\s*gain|average\\s*daily\\s*weight\\s*gain|adg)(\\b|$)"
+    )
+  }
+  wg <- merged_metadata$Data.Out %>% filter(Out.Subind == "Weight Gain" | is_wg_subind(Out.Subind))
+  wg_clean <- wg %>%
+    mutate(unit_raw = tolower(str_squish(Out.Unit)),
+           value    = suppressWarnings(as.numeric(ED.Mean.T))) %>%
+    filter(str_detect(unit_raw, "/d|/day| per day") | str_detect(unit_raw, "g/kg metabolic weight")) %>%
+    mutate(
+      amount_unit = case_when(str_starts(unit_raw, "mg") ~ "mg",
+                              str_starts(unit_raw, "g")  ~ "g",
+                              str_starts(unit_raw, "kg") ~ "kg",
+                              TRUE ~ NA_character_),
+      gain_kg = case_when(amount_unit == "mg" ~ value/1e6,
+                          amount_unit == "g"  ~ value/1e3,
+                          amount_unit == "kg" ~ value,
+                          TRUE ~ NA_real_)
+    ) %>%
+    left_join(
+      weights_unique %>% select(B.Code, A.Level.Name, BW_start_kg = Out.WG.Start),
+      by = c("B.Code","A.Level.Name")
+    ) %>%
+    mutate(
+      ADG_kg = case_when(
+        str_detect(unit_raw, "g/kg metabolic weight") & !is.na(value) & !is.na(BW_start_kg)
+          ~ (value/1000) * (BW_start_kg^0.75),
+        TRUE ~ gain_kg
+      )
+    ) %>%
+    filter(!is.na(ADG_kg) & ADG_kg > 0) %>%
+    select(B.Code, A.Level.Name, ADG_kg)
+}
+
+# (C) Daily milk/meat yields (yield_d_clean)
+if (!exists("yield_d_clean")) {
+  stopifnot(exists("yield_data"))
+  MILK_DENSITY <- 1.03
+  yield_d_clean <- yield_data %>%
+    filter(Out.Subind %in% c("Milk Yield", "Meat Yield")) %>%
+    mutate(
+      Yield_kg_day = case_when(
+        Out.Subind == "Milk Yield" & Out.Unit == "l/individual/day"  ~ ED.Mean.T * MILK_DENSITY,
+        Out.Subind == "Milk Yield" & Out.Unit == "kg/individual/day" ~ ED.Mean.T,
+        Out.Subind == "Meat Yield" & Out.Unit == "kg/individual/day" ~ ED.Mean.T,
+        TRUE ~ NA_real_
+      )
+    ) %>%
+    filter(!is.na(Yield_kg_day) & Yield_kg_day > 0) %>%
+    select(B.Code, A.Level.Name, Out.Subind, Yield_kg_day)
+}
+
+# (D) Emissions table (GE_combined) must exist
+if (!exists("GE_combined")) {
+  stop("GE_combined (with CH4_kg_year) is required but not found.")
+}
+
+# (E) Practice comparisons table (practice_tbl) must exist (you just built it)
+if (!exists("practice_tbl")) {
+  stop("practice_tbl is required (built by classify_diet_practice) but not found.")
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1) Build per-paper flags for your five conditions
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 1) All ingredient rows are classified (by M7)
+ing_status <- classif_ing_rows %>%
+  group_by(B.Code) %>%
+  summarise(
+    ing_n               = n(),
+    ing_n_classified    = sum(!is.na(.data[[method_col]])),
+    ingredients_all_classified = ing_n > 0 & (ing_n_classified == ing_n),
+    .groups = "drop"
+  )
+
+# 2) Has at least one control–treatment pair and an identified practice
+practice_status <- practice_tbl %>%
+  group_by(B.Code) %>%
+  summarise(
+    n_pairs                = n(),
+    has_practice_any       = any(!is.na(Practice)),
+    has_actionable_practice= any(Practice %in% c("Addition","Substitution")),
+    .groups = "drop"
+  )
+
+# 3) Has ADG data
+adg_status <- wg_clean %>%
+  group_by(B.Code) %>%
+  summarise(has_adg = any(!is.na(ADG_kg) & ADG_kg > 0), .groups = "drop")
+
+# 4) Has milk or meat yield data
+yield_status <- yield_d_clean %>%
+  group_by(B.Code) %>%
+  summarise(has_yield = any(!is.na(Yield_kg_day) & Yield_kg_day > 0), .groups = "drop")
+
+# 5) Has emission data
+emis_status <- GE_combined %>%
+  group_by(B.Code) %>%
+  summarise(has_emissions = any(!is.na(CH4_kg_year) & CH4_kg_year > 0), .groups = "drop")
+
+# Universe of papers
+all_bcodes <- bind_rows(
+  ing_status %>% select(B.Code),
+  practice_status %>% select(B.Code),
+  adg_status %>% select(B.Code),
+  yield_status %>% select(B.Code),
+  emis_status %>% select(B.Code)
+) %>% distinct()
+
+# Merge flags; treat missing as FALSE
+paper_flags <- all_bcodes %>%
+  left_join(ing_status,      by = "B.Code") %>%
+  left_join(practice_status, by = "B.Code") %>%
+  left_join(adg_status,      by = "B.Code") %>%
+  left_join(yield_status,    by = "B.Code") %>%
+  left_join(emis_status,     by = "B.Code") %>%
+  mutate(
+    ingredients_all_classified = coalesce(ingredients_all_classified, FALSE),
+    has_practice_any           = coalesce(has_practice_any, FALSE),
+    has_actionable_practice    = coalesce(has_actionable_practice, FALSE),
+    has_adg                    = coalesce(has_adg, FALSE),
+    has_yield                  = coalesce(has_yield, FALSE),
+    has_emissions              = coalesce(has_emissions, FALSE),
+    all5_anypractice           = ingredients_all_classified & has_practice_any        & has_adg & has_yield & has_emissions,
+    all5_actionable            = ingredients_all_classified & has_actionable_practice & has_adg & has_yield & has_emissions
+  )
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2) Counts + handy lists
+# ─────────────────────────────────────────────────────────────────────────────
+counts_overall <- tibble(
+  metric = c(
+    "papers_total",
+    "ingredients_all_classified",
+    "has_practice_any",
+    "has_actionable_practice",
+    "has_adg",
+    "has_yield",
+    "has_emissions",
+    "ALL FIVE (any practice)",
+    "ALL FIVE (actionable only)"
+  ),
+  n = c(
+    nrow(paper_flags),
+    sum(paper_flags$ingredients_all_classified),
+    sum(paper_flags$has_practice_any),
+    sum(paper_flags$has_actionable_practice),
+    sum(paper_flags$has_adg),
+    sum(paper_flags$has_yield),
+    sum(paper_flags$has_emissions),
+    sum(paper_flags$all5_anypractice),
+    sum(paper_flags$all5_actionable)
+  )
+)
+
+bcodes_all5_any        <- paper_flags %>% filter(all5_anypractice)  %>% pull(B.Code)
+bcodes_all5_actionable <- paper_flags %>% filter(all5_actionable)   %>% pull(B.Code)
+
+# Quick preview (comment out if you’re knitting)
+counts_overall
+paper_flags %>% arrange(desc(all5_actionable), desc(all5_anypractice))
+# bcodes_all5_any
+# bcodes_all5_actionable
+
+```
+
+
+
 
 ## 18) Link emissions to productivity data 
 
