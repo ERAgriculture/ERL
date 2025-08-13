@@ -485,7 +485,7 @@ controls_multi <- MT[
 
 controls_multi[, .(B.Code, A.Level.Name, T.Control)]
 
-
+rm(controls_multi,MT)
 ```
 
 ## 1.2) Correct A.Level.Name
@@ -493,66 +493,173 @@ Some feed intake entries are not matched to any ingredient data due to discrepan
 
 
 ```{r}
-# Step 1: Prepare cleaned input
-ingredient_levels <- merged_metadata$Animals.Diet %>%
-  distinct(B.Code, A.Level.Name) %>%
-  mutate(Source = "Ingredient")
+# --- Diet name alignment across Feed Intake, Diet Comp, and Digest -----------
+# Uses Ingredient (Animals.Diet$A.Level.Name) as the canonical diet name.
+# In Diet Comp and Digest, the diet name lives in D.Item, and we only consider rows with is.entire.diet == TRUE.
 
-feedintake_levels <- merged_metadata$Data.Out %>%
-  filter(Out.Subind == "Feed Intake", !is.na(A.Level.Name)) %>%
-  distinct(B.Code, A.Level.Name) %>%
-  mutate(Source = "FeedIntake")
 
-# Step 2: Create mismatch table
-combined_levels <- bind_rows(ingredient_levels, feedintake_levels)
+# -------- Helpers -------------------------------------------------------------
+clean_name <- function(x) x %>% str_squish()  # add tolower() if you want case-insensitive matching
 
-comparison_table <- combined_levels %>%
-  group_by(B.Code, A.Level.Name) %>%
-  summarise(
-    Sources = paste(sort(unique(Source)), collapse = " & "),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    Match_Status = case_when(
-      Sources == "FeedIntake & Ingredient" ~ "Match",
-      Sources == "Ingredient" ~ "Only in Ingredient",
-      Sources == "FeedIntake" ~ "Only in FeedIntake",
-      TRUE ~ "Unknown"
+# Build a safe 1–1 mapping per B.Code between Ingredient name and a target source name.
+# Expects data.frames with columns: B.Code and Diet (already cleaned).
+build_mapping <- function(ingredient_df, target_df, target_label) {
+  combined <- bind_rows(
+    ingredient_df %>% mutate(Source = "Ingredient"),
+    target_df     %>% mutate(Source = target_label)
+  ) %>% distinct()
+
+  comparison <- combined %>%
+    group_by(B.Code, Diet) %>%
+    summarise(Sources = paste(sort(unique(Source)), collapse = " & "), .groups = "drop") %>%
+    mutate(
+      Match_Status = dplyr::case_when(
+        grepl(target_label, Sources) & grepl("Ingredient", Sources) ~ "Match",
+        Sources == "Ingredient" ~ "Only in Ingredient",
+        Sources == target_label  ~ paste("Only in", target_label),
+        TRUE ~ "Other"
+      )
     )
+
+  comparison %>%
+    filter(Match_Status %in% c("Only in Ingredient", paste("Only in", target_label))) %>%
+    group_by(B.Code) %>%
+    summarise(
+      n_ing  = sum(Match_Status == "Only in Ingredient"),
+      n_tar  = sum(Match_Status == paste("Only in", target_label)),
+      Ingredient_Name = Diet[Match_Status == "Only in Ingredient"][1],
+      Target_Name     = Diet[Match_Status == paste("Only in", target_label)][1],
+      .groups = "drop"
+    ) %>%
+    filter(n_ing == 1, n_tar == 1)
+}
+
+# -------- 1) Collect cleaned diet names from each source ----------------------
+ingredient_names <- merged_metadata$Animals.Diet %>%
+  transmute(B.Code, Diet = clean_name(A.Level.Name)) %>%
+  distinct()
+
+feedintake_names <- merged_metadata$Data.Out %>%
+  filter(Out.Subind == "Feed Intake", !is.na(A.Level.Name)) %>%
+  transmute(B.Code, Diet = clean_name(A.Level.Name)) %>%
+  distinct()
+
+dietcomp_names <- merged_metadata$Animals.Diet.Comp %>%
+  filter(is_entire_diet == TRUE) %>%
+  transmute(B.Code, Diet = clean_name(D.Item)) %>%
+  distinct()
+
+digest_names <- merged_metadata$Animals.Diet.Digest %>%
+  filter(is_entire_diet == TRUE) %>%
+  transmute(B.Code, Diet = clean_name(D.Item)) %>%
+  distinct()
+
+# Presence BEFORE corrections (per (B.Code, Diet))
+presence_before <- bind_rows(
+  ingredient_names %>% mutate(Source = "Ingredient"),
+  feedintake_names %>% mutate(Source = "FeedIntake"),
+  dietcomp_names %>% mutate(Source = "DietComp"),
+  digest_names %>% mutate(Source = "Digest")
+) %>%
+  mutate(val = 1L) %>%
+  pivot_wider(names_from = Source, values_from = val, values_fill = 0L) %>%
+  arrange(B.Code, Diet)
+
+# -------- 2) Build 1–1 mappings vs Ingredient --------------------------------
+to_correct_FI <- build_mapping(ingredient_names, feedintake_names, "FeedIntake")
+to_correct_DC <- build_mapping(ingredient_names, dietcomp_names,  "DietComp")
+to_correct_DG <- build_mapping(ingredient_names, digest_names,    "Digest")
+
+# Optional: preview reports of what WILL change (before applying)
+corrections_report_FI <- merged_metadata$Data.Out %>%
+  filter(Out.Subind == "Feed Intake", !is.na(A.Level.Name)) %>%
+  mutate(A.Level.Name_clean = clean_name(A.Level.Name)) %>%
+  left_join(to_correct_FI, by = c("B.Code", "A.Level.Name_clean" = "Target_Name")) %>%
+  transmute(B.Code, Old = A.Level.Name, New = dplyr::coalesce(Ingredient_Name, A.Level.Name)) %>%
+  distinct() %>% filter(Old != New)
+
+corrections_report_DC <- merged_metadata$Animals.Diet.Comp %>%
+  filter(is_entire_diet == TRUE) %>%
+  mutate(D.Item_clean = clean_name(D.Item)) %>%
+  left_join(to_correct_DC, by = c("B.Code", "D.Item_clean" = "Target_Name")) %>%
+  transmute(B.Code, Old = D.Item, New = dplyr::coalesce(Ingredient_Name, D.Item)) %>%
+  distinct() %>% filter(Old != New)
+
+corrections_report_DG <- merged_metadata$Animals.Diet.Digest %>%
+  filter(is_entire_diet == TRUE) %>%
+  mutate(D.Item_clean = clean_name(D.Item)) %>%
+  left_join(to_correct_DG, by = c("B.Code", "D.Item_clean" = "Target_Name")) %>%
+  transmute(B.Code, Old = D.Item, New = dplyr::coalesce(Ingredient_Name, D.Item)) %>%
+  distinct() %>% filter(Old != New)
+
+# -------- 3) Apply corrections (rename targets to Ingredient names) -----------
+# FEED INTAKE
+merged_metadata$Data.Out <- merged_metadata$Data.Out %>%
+  mutate(A.Level.Name_clean = clean_name(A.Level.Name)) %>%
+  left_join(to_correct_FI, by = c("B.Code", "A.Level.Name_clean" = "Target_Name")) %>%
+  mutate(A.Level.Name = dplyr::coalesce(Ingredient_Name, A.Level.Name)) %>%
+  select(-A.Level.Name_clean, -Ingredient_Name)
+
+# DIET COMP (only where is.entire.diet == TRUE)
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  mutate(D.Item_clean = clean_name(D.Item)) %>%
+  left_join(to_correct_DC, by = c("B.Code", "D.Item_clean" = "Target_Name")) %>%
+  mutate(
+    D.Item = if_else(is_entire_diet == TRUE, dplyr::coalesce(Ingredient_Name, D.Item), D.Item)
+  ) %>%
+  select(-D.Item_clean, -Ingredient_Name)
+
+# DIGEST (only where is.entire.diet == TRUE)
+merged_metadata$Animals.Diet.Digest <- merged_metadata$Animals.Diet.Digest %>%
+  mutate(D.Item_clean = clean_name(D.Item)) %>%
+  left_join(to_correct_DG, by = c("B.Code", "D.Item_clean" = "Target_Name")) %>%
+  mutate(
+    D.Item = if_else(is_entire_diet == TRUE, dplyr::coalesce(Ingredient_Name, D.Item), D.Item)
+  ) %>%
+  select(-D.Item_clean, -Ingredient_Name)
+
+# -------- 4) Presence AFTER corrections --------------------------------------
+ingredient_names_after <- merged_metadata$Animals.Diet %>%
+  transmute(B.Code, Diet = clean_name(A.Level.Name)) %>% distinct()
+
+feedintake_names_after <- merged_metadata$Data.Out %>%
+  filter(Out.Subind == "Feed Intake", !is.na(A.Level.Name)) %>%
+  transmute(B.Code, Diet = clean_name(A.Level.Name)) %>% distinct()
+
+dietcomp_names_after <- merged_metadata$Animals.Diet.Comp %>%
+  filter(is_entire_diet == TRUE) %>%
+  transmute(B.Code, Diet = clean_name(D.Item)) %>% distinct()
+
+digest_names_after <- merged_metadata$Animals.Diet.Digest %>%
+  filter(is_entire_diet == TRUE) %>%
+  transmute(B.Code, Diet = clean_name(D.Item)) %>% distinct()
+
+presence_after <- bind_rows(
+  ingredient_names_after %>% mutate(Source = "Ingredient"),
+  feedintake_names_after %>% mutate(Source = "FeedIntake"),
+  dietcomp_names_after %>% mutate(Source = "DietComp"),
+  digest_names_after %>% mutate(Source = "Digest")
+) %>%
+  mutate(val = 1L) %>%
+  pivot_wider(names_from = Source, values_from = val, values_fill = 0L) %>%
+  arrange(B.Code, Diet)
+
+# Optional quick summaries
+alignment_summary_before <- presence_before %>%
+  summarise(
+    n_rows = n(),
+    full_matches = sum(Ingredient==1 & FeedIntake==1 & DietComp==1 & Digest==1),
+    any_missing = sum(Ingredient + FeedIntake + DietComp + Digest < 4)
   )
 
-# Step 3: Identify B.Codes with exactly 1 unmatched in both
-to_correct <- comparison_table %>%
-  filter(Match_Status %in% c("Only in Ingredient", "Only in FeedIntake")) %>%
-  group_by(B.Code) %>%
+alignment_summary_after <- presence_after %>%
   summarise(
-    n_ing = sum(Match_Status == "Only in Ingredient"),
-    n_feed = sum(Match_Status == "Only in FeedIntake"),
-    Ingredient_Name = A.Level.Name[Match_Status == "Only in Ingredient"][1],
-    FeedIntake_Name = A.Level.Name[Match_Status == "Only in FeedIntake"][1],
-    .groups = "drop"
-  ) %>%
-  filter(n_ing == 1, n_feed == 1)
+    n_rows = n(),
+    full_matches = sum(Ingredient==1 & FeedIntake==1 & DietComp==1 & Digest==1),
+    any_missing = sum(Ingredient + FeedIntake + DietComp + Digest < 4)
+  )
 
-# Step 4: Apply the corrections to Data.Out (rename unmatched FeedIntake names)
-merged_metadata$Data.Out <- merged_metadata$Data.Out %>%
-  left_join(to_correct, by = c("B.Code", "A.Level.Name" = "FeedIntake_Name")) %>%
-  mutate(
-    A.Level.Name = coalesce(Ingredient_Name, A.Level.Name)
-  ) %>%
-  select(-Ingredient_Name)
-
-
-rm(ingredient_levels,feedintake_levels,to_correct,combined_levels,comparison_table)
-
-# Get merged stats
-merged_stats <- list(
-  papers = length(unique(merged_metadata$Animals.Diet$B.Code)),
-  diets = length(unique(merged_metadata$Animals.Diet$A.Level.Name)),
-  ingredients = length(unique(merged_metadata$Animals.Diet$D.Item))
-)
-
-
+rm(alignment_summary_after,alignment_summary_before,corrections_report_DC,corrections_report_DG,corrections_report_FI,dietcomp_names,dietcomp_names_after,digest_names,digest_names_after,feedintake_names,feedintake_names_after,ingredient_names,ingredient_names_after,presence_after,presence_before,to_correct_DC,to_correct_DG,to_correct_FI)
 ```
 
 
@@ -653,95 +760,10 @@ species_by_bcode <- merged_metadata$Prod.Out %>%
 #   distinct() %>%
 #   left_join(species_by_bcode, by = "B.Code") %>%
 #   count(P.Product, name = "papers_after")
-```
-## 1.5) Correct D.Type PETE HAS TO CHANGE THIS ERA DEV 
 
-Some ingredients have more than one type, for those we merge the ingredients with the masterhseet to get the correct D.Type 
-```{r}
-# # Step 1: Load master sheet
-# url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(7).xlsx"
-# temp_file <- tempfile(fileext = ".xlsx")
-# download.file(url, destfile = temp_file, mode = "wb")
-# 
-# # Step 2: Read Ani diet and AOM sheets
-# ani_diet <- read_excel(temp_file, sheet = "ani_diet")
-# aom <- read_excel(temp_file, sheet = "AOM") %>% filter(L5 == "Feed Ingredient")
-# 
-# # Step 3: Clean Ani diet — rename columns and trim whitespace
-# ani_diet_clean <- ani_diet %>%
-#   rename_with(~ str_replace_all(., "\\s+", "_")) %>%
-#   mutate(across(everything(), ~ str_trim(as.character(.))))
-# 
-# # Step 4: Create long-format lookup for D.Item corrections
-# ditem_lookup <- ani_diet_clean %>% 
-#   select(D.Item.Root.Comp.Proc_Major, D.Item, D.Item.Root.Other.Comp.Proc_All) %>% 
-#   pivot_longer(cols = c(D.Item, D.Item.Root.Other.Comp.Proc_All),
-#                names_to = "Source_Field", values_to = "Name") %>% 
-#   filter(!is.na(Name), !is.na(D.Item.Root.Comp.Proc_Major)) %>% 
-#   separate_rows(Name, sep = "[,;]\\s*") %>%   # ← changed line
-#   mutate(Name = str_to_lower(str_trim(Name)),
-#          D.Item.Root.Comp.Proc_Major = str_trim(D.Item.Root.Comp.Proc_Major)) %>% 
-#   group_by(Name) %>% 
-#   slice(1) %>% 
-#   ungroup()
-# 
-# 
-# # Step 5: Apply correction to Animals.Diet using the lookup
-# animals_diet_updated <- merged_metadata$Animals.Diet %>%
-#   mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
-#   left_join(ditem_lookup, by = c("D.Item" = "Name")) %>%
-#   mutate(D.Item = coalesce(D.Item.Root.Comp.Proc_Major, D.Item)) %>%
-#   select(-D.Item.Root.Comp.Proc_Major)
-# 
-# # Step 6: Clean and prepare AOM mapping
-# aom_clean <- aom %>%
-#   rename_with(~ str_replace_all(., "\\s+", "_")) %>%
-#   mutate(
-#     Corrected_Type = ifelse(
-#       str_to_lower(L6) %in% c("other ingredients", "forage plants") & !is.na(L7),
-#       L7,                       # use L7 when rule matches
-#       L6                        # otherwise keep L6
-#     ),
-#     Edge_Value = str_trim(Edge_Value),
-#     Synonym    = str_trim(Synonym)
-#   )
-# 
-# # Step 7: Build mapping table from Edge_Value + Synonym
-# direct_match <- aom_clean %>%
-#   select(D.Item = Edge_Value, Corrected_Type) %>%
-#   filter(!is.na(D.Item))
-# 
-# synonym_match <- aom_clean %>%
-#   filter(!is.na(Synonym)) %>%
-#   separate_rows(Synonym, sep = ";\\s*") %>%
-#   mutate(Synonym = str_trim(Synonym)) %>%
-#   select(D.Item = Synonym, Corrected_Type)
-# 
-# aom_mapping <- bind_rows(direct_match, synonym_match) %>%
-#   mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
-#   distinct(D.Item, Corrected_Type)
-# 
-# # Step 8: Join to assign Corrected_Type → D.Type
-# animals_diet_updated <- animals_diet_updated %>%
-#   mutate(D.Item = str_to_lower(str_trim(D.Item))) %>%
-#   left_join(aom_mapping, by = "D.Item") %>%
-#   mutate(D.Type = ifelse(!is.na(Corrected_Type), Corrected_Type, D.Type)) %>%
-#   select(-Corrected_Type)
-# 
-# # # Step 9: Save back to merged metadata
-# merged_metadata$Animals.Diet <- animals_diet_updated
-# # 
-# # # Step 10: Optional check — items with no match
-# # check <- animals_diet_updated %>%
-# #   filter(is.na(Corrected_Type) & D.Type != "entire diet")
-# # 
-
+rm(grazing_diets,nongrazing_counts)
 ```
 
-also when same species so same in mastersheet they should have the same caterogy
-
-
-those need to be categforized because there is nothing for d item 
 
 ```{r}
 to_be_categorized<-merged_metadata$Animals.Diet%>%
@@ -751,29 +773,7 @@ to_be_categorized<-merged_metadata$Animals.Diet%>%
 ```
 
 
-##1.8) Change corn to Maize
-
-```{r}
-# ── Change “Corn” → “Maize” (whole-word match, case-insensitive) ─────────────
-fix_corn <- function(df) {
-  df %>% 
-    mutate(
-      D.Item = ifelse(
-        str_detect(trimws(D.Item), regex("^corn$", ignore_case = TRUE)),
-        "Maize",
-        D.Item
-      )
-    )
-}
-
-merged_metadata$Animals.Diet        <- fix_corn(merged_metadata$Animals.Diet)
-merged_metadata$Animals.Diet.Comp   <- fix_corn(merged_metadata$Animals.Diet.Comp)
-merged_metadata$Animals.Diet.Digest <- fix_corn(merged_metadata$Animals.Diet.Digest)
-
-```
-
-
-## 1.7) Summary of the data 
+## 1.5) Summary of the data 
 ```{r,message=FALSE,warning=FALSE}
 
 # Define species of interest
@@ -844,19 +844,6 @@ This step standardizes ingredient amount units (e.g., from mg, kg, %, etc.) to a
 ```{r,message=FALSE,warning=FALSE}
 # Diet ingredients: breakdown of all ingredients within each diet
 ingredients <- merged_metadata$Animals.Diet %>%
-  dplyr::select(
-    B.Code,
-    A.Level.Name,
-    D.Item,
-    D.Type,
-    D.Amount,
-    D.Unit.Amount,
-    D.Unit.Time,
-    D.Unit.Animals,
-    DC.Is.Dry,
-    D.Ad.lib,
-    D.Item.Group
-  ) %>%
   mutate(D.Amount = as.numeric(D.Amount))
 
 # Function to harmonize diet ingredient units (only change: kg/t handling)
@@ -959,7 +946,7 @@ ingredients <- ingredients %>%
   mutate(Units = paste(D.Unit.Amount, D.Unit.Time, D.Unit.Animals, sep = ";"))
 
 # Cleanup
-rm(harmonize_units)
+rm(harmonize_units,reps,feed_data)
 
 ```
 
@@ -968,24 +955,37 @@ rm(harmonize_units)
 This chunk systematically fills in missing “DC.Is.Dry” flags by combining three complementary sources—analytical moisture/DM thresholds, name‐based cues (e.g. “dried,” “meal”), and broad feed/supplement rules—and then, where every measurable ingredient in a treatment is already known to be dry, assumes the lab used the same dry‐prep protocol for all feeds in that trial. By layering data‑driven thresholds, text mining, and a diet‑level consistency override, we ensure that no ingredient in a truly dried regimen slips through unflagged, while still preserving fresh‐vs.‐dry distinctions in mixed rations.
 
 ```{r}
+# ------------------------------------------------------------
+# DRY flag with strict rule:
+# 1) Use Moisture/DM thresholds when available (authoritative).
+# 2) If NO Moisture/DM for an item, assume DRY ("Yes").
+# 3) Diet-arm propagation: if all flagged items in the arm are "Yes",
+#    fill any remaining NA in that arm with "Yes".
+# 4) Drop "water" rows.
+# No name/blanket/majority heuristics.
+# ------------------------------------------------------------
 
-# assume `ingredients` and `merged_metadata$Animals.Diet.Comp` exist
-
-# --- 1. Moisture‑/DM‑based classification ---------------------------------
-dry_classified <- bind_rows(
+# --- 1) Moisture/DM-based evidence per (B.Code, D.Item) ---------------------
+dry_evidence <- bind_rows(
   # a) Moisture rules
   merged_metadata$Animals.Diet.Comp %>%
     filter(str_to_lower(DC.Variable) %in% c("moisture","moist")) %>%
     transmute(
       B.Code, D.Item,
-      Predictor       = "Moisture",
-      Value           = as.numeric(DC.Value),
-      Unit            = str_to_lower(DC.Unit),
-      Dry_Prediction  = case_when(
-        Unit %in% c("%","% dm","g/100g") & Value <  15 ~ TRUE,
-        Unit %in% c("%","% dm","g/100g") & Value >  50 ~ FALSE,
-        Unit == "g/kg"                   & Value < 150 ~ TRUE,
-        Unit == "g/kg"                   & Value > 500 ~ FALSE,
+      Predictor = "Moisture",
+      Value = suppressWarnings(as.numeric(DC.Value)),
+      Unit  = str_to_lower(str_squish(DC.Unit)),
+      Dry_Prediction = dplyr::case_when(
+        Unit %in% c("%","% dm","g/100g") ~ dplyr::case_when(
+          Value <  15 ~ TRUE,   # low moisture ⇒ dry
+          Value >  50 ~ FALSE,  # very wet     ⇒ not dry
+          TRUE        ~ NA
+        ),
+        Unit == "g/kg" ~ dplyr::case_when(
+          Value < 150 ~ TRUE,
+          Value > 500 ~ FALSE,
+          TRUE        ~ NA
+        ),
         TRUE ~ NA
       )
     ),
@@ -994,108 +994,89 @@ dry_classified <- bind_rows(
     filter(str_to_lower(DC.Variable) == "dm") %>%
     transmute(
       B.Code, D.Item,
-      Predictor       = "DM",
-      Value           = as.numeric(DC.Value),
-      Unit            = str_to_lower(DC.Unit),
-      Dry_Prediction  = case_when(
-        Unit %in% c("%","% dm","g/100g") & Value >  85 ~ TRUE,
-        Unit %in% c("%","% dm","g/100g") & Value <  50 ~ FALSE,
-        Unit == "g/kg"                   & Value > 850 ~ TRUE,
-        Unit == "g/kg"                   & Value < 500 ~ FALSE,
+      Predictor = "DM",
+      Value = suppressWarnings(as.numeric(DC.Value)),
+      Unit  = str_to_lower(str_squish(DC.Unit)),
+      Dry_Prediction = dplyr::case_when(
+        Unit %in% c("%","% dm","g/100g") ~ dplyr::case_when(
+          Value >  85 ~ TRUE,   # high DM ⇒ dry
+          Value <  50 ~ FALSE,  # low  DM ⇒ not dry
+          TRUE        ~ NA
+        ),
+        Unit == "g/kg" ~ dplyr::case_when(
+          Value > 850 ~ TRUE,
+          Value < 500 ~ FALSE,
+          TRUE        ~ NA
+        ),
         TRUE ~ NA
       )
     )
 ) %>%
+  # keep one prediction per predictor per key (first non-NA)
   distinct(B.Code, D.Item, Predictor, Dry_Prediction) %>%
   group_by(B.Code, D.Item, Predictor) %>%
-  summarise(Dry_Prediction = first(na.omit(Dry_Prediction)), .groups="drop") %>%
-  pivot_wider(names_from = Predictor,
-              values_from = Dry_Prediction,
-              names_prefix = "Dry_Prediction_")
-
-# --- 2. Name‑based detection ------------------------------------------------
-dry_name_match <- ingredients %>%
-  transmute(
-    B.Code, A.Level.Name, D.Item,
-    Dry_by_name = str_detect(str_to_lower(D.Item),
-                    "\\bdry\\b|\\bdried\\b|\\bmeal\\b|\\bground\\b|\\bmilled\\b|\\bflour\\b")
-                  & !str_detect(str_to_lower(D.Item),"fish meal boiled")
+  summarise(Dry_Prediction = dplyr::first(na.omit(Dry_Prediction)), .groups = "drop") %>%
+  # wide: Dry_Prediction_Moisture, Dry_Prediction_DM
+  tidyr::pivot_wider(
+    names_from = Predictor,
+    values_from = Dry_Prediction,
+    names_prefix = "Dry_Prediction_"
   ) %>%
-  filter(Dry_by_name)
-
-# --- 3. Extra blanket rules -------------------------------------------------
-extra_dry <- ingredients %>%
-  filter(D.Type %in% c("Non-ERA Feed","Other Feed","Other Ingredients","Supplement"),
-         !str_detect(str_to_lower(D.Item),"water|oil")) %>%
-  distinct(B.Code, D.Item) %>%
-  mutate(Prediction_Source = "Extra_rule",
-         DC.Is.Dry         = "Yes")
-
-
-# --- 4. Combine all ingredient‑level predictions -----------------------------
-dry_prediction_final <- bind_rows(
-  # moisture/DM wins
-  dry_classified %>%
-    filter(Dry_Prediction_Moisture == TRUE | Dry_Prediction_DM == TRUE) %>%
-    transmute(B.Code, D.Item,
-              Prediction_Source = "Moisture_or_DM",
-              DC.Is.Dry         = "Yes"),
-  # name matches
-  dry_name_match %>%
-    transmute(B.Code, D.Item,
-              Prediction_Source = "Name_match",
-              DC.Is.Dry         = "Yes"),
-  # extra rules
-  extra_dry
-) %>%
-  distinct(B.Code, D.Item, .keep_all=TRUE)
-
-# --- 5. Apply ingredient‑level predictions -----------------------------------
-ingredients <- ingredients %>%
-  left_join(dry_prediction_final, by=c("B.Code","D.Item"), suffix=c("","_pred")) %>%
   mutate(
-    DC.Is.Dry = case_when(
-      # if not already "Yes", but prediction says "Yes"
-      (is.na(DC.Is.Dry) | str_to_lower(DC.Is.Dry) %in% c("no","unspecified")) &
-        DC.Is.Dry_pred == "Yes" ~ "Yes",
-      TRUE ~ DC.Is.Dry
+    has_evidence = !is.na(Dry_Prediction_Moisture) | !is.na(Dry_Prediction_DM),
+    # precedence: DM beats Moisture when both exist
+    Dry_from_evidence = dplyr::case_when(
+      !is.na(Dry_Prediction_DM)        ~ Dry_Prediction_DM,
+      is.na(Dry_Prediction_DM) &
+        !is.na(Dry_Prediction_Moisture) ~ Dry_Prediction_Moisture,
+      TRUE                              ~ NA
     )
   ) %>%
-  select(-Prediction_Source, -DC.Is.Dry_pred)
+  select(B.Code, D.Item, has_evidence, Dry_from_evidence)
 
-# --- 6. Diet‑level override -----------------------------------------------
+# --- 2) Apply evidence to ingredients ---------------------------------------
+ingredients <- ingredients %>%
+  left_join(dry_evidence, by = c("B.Code","D.Item")) %>%
+  mutate(
+    # Evidence (DM/Moisture) is authoritative when present
+    DC.Is.Dry = dplyr::case_when(
+      Dry_from_evidence == TRUE  ~ "Yes",
+      Dry_from_evidence == FALSE ~ "No",
+      TRUE                       ~ DC.Is.Dry
+    )
+  )
+
+# --- 3) Diet-level propagation (only fills NA when all flagged in arm are Yes)
 ingredients <- ingredients %>%
   group_by(B.Code, A.Level.Name) %>%
   mutate(
-    all_measured_have_flag = sum(!is.na(DC.Is.Dry)) > 0,
-    all_measured_dry      = all(DC.Is.Dry[!is.na(DC.Is.Dry)] == "Yes")
+    any_flag   = any(!is.na(DC.Is.Dry), na.rm = TRUE),
+    all_dry    = all(DC.Is.Dry[!is.na(DC.Is.Dry)] == "Yes")
   ) %>%
   ungroup() %>%
   mutate(
-    DC.Is.Dry = case_when(
-      all_measured_have_flag & all_measured_dry & is.na(DC.Is.Dry) ~ "Yes",
-      TRUE                                                        ~ DC.Is.Dry
+    DC.Is.Dry = dplyr::case_when(
+      any_flag & all_dry & is.na(DC.Is.Dry) ~ "Yes",
+      TRUE                                  ~ DC.Is.Dry
     )
   ) %>%
-  select(-all_measured_have_flag, -all_measured_dry)
+  select(-any_flag, -all_dry)
 
-# --- 7. Drop water rows -----------------------------------------------------
+# --- 4) Fallback: assume DRY only when NO Moisture/DM evidence --------------
+# (i.e., we cannot decide because there is no proximate data)
+ingredients <- ingredients %>%
+  mutate(
+    DC.Is.Dry = dplyr::case_when(
+      is.na(DC.Is.Dry) & (has_evidence %in% c(FALSE, NA)) ~ "Yes",
+      TRUE                                                ~ DC.Is.Dry
+    )
+  ) %>%
+  select(-has_evidence, -Dry_from_evidence)
+
+# --- 5) Drop pure "water" rows ----------------------------------------------
 ingredients <- ingredients %>%
   filter(!(str_to_lower(D.Item) == "water"))
 
-# Clean up
-rm(dry_classified, dry_name_match, extra_dry, dry_prediction_final)
-
-
-# --- 5½. Majority-rule by B.Code -------------------------------------------
-ingredients <- ingredients %>%
-  group_by(B.Code) %>%
-  mutate(
-    share_yes = mean(str_to_lower(DC.Is.Dry) == "yes", na.rm = TRUE),
-    DC.Is.Dry = if_else(share_yes >= 0.5, "Yes", DC.Is.Dry)
-  ) %>%
-  ungroup() %>%
-  select(-share_yes)
 
 ```
 
@@ -1869,7 +1850,10 @@ TO do : See BO1070 we want the full diet to be included from feed intake which i
 # # ingredients_final is now harmonised (g DM d⁻¹) and ready for GE → CH₄
 
 ```
+
+
 ```{r}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 1 ▸ diet-level intake DIRECTLY from feed_intake -----------------------------
 feed_intake_diet <- feed_intake %>%
@@ -2731,11 +2715,6 @@ merged_metadata$Animals.Diet.Digest <- merged_metadata$Animals.Diet.Digest %>%
 
 ```
 
-
-
-
-
-
 since there is only very few digestibility in the raw data logic that we dont gain any data by doing this because feedipedia is infered for all the ingredients we have the info for. 
 
 ```{r,message=FALSE,warning=FALSE}
@@ -3491,6 +3470,7 @@ The equation used is adapted from **Weiss et al. (2019)** and is expressed as:
 ```
 GE (Mcal/kg) = (0.056 × CP) + (0.094 × EE) + [0.042 × (100 − CP − EE − Ash)]
 GE (MJ/kg) = GE (Mcal/kg) × 4.184
+
 ```
 
 
@@ -3551,8 +3531,6 @@ Gross_energy <- Gross_energy %>%
     DC.Variable = "GE"
   ) %>%
   select(-GE_MJ_per_kg)
-
-
 
 
 ```
