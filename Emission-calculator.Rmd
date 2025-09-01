@@ -328,10 +328,28 @@ mt_camel <- diet_key[
        "Herd.Start.Weight","Herd.Start.Weight.Unit")]
 
 ## 3·5 Data.Out (unchanged) --------------------------------------------------
-data_camel <- camel$Data.Out[
-  diet_key,  on = .(B.Code, T.Name)][
-  herd_info, on = .(B.Code,Herd.Level.Name,Herd.Sublevel.Name)][
-  , .(B.Code, A.Level.Name,
+## 3·5 Data.Out (left-join + boolean-only Entire Diet) ------------------------
+# Keep ALL rows from camel$Data.Out; attach A.Level.Name via (B.Code, T.Name),
+# then attach herd fields via (B.Code, Herd.Level.Name, Herd.Sublevel.Name).
+
+data_camel <- merge(
+  camel$Data.Out,
+  diet_key,
+  by = c("B.Code","T.Name"),
+  all.x = TRUE
+)
+
+data_camel <- merge(
+  data_camel,
+  herd_info,
+  by = c("B.Code","Herd.Level.Name","Herd.Sublevel.Name"),
+  all.x = TRUE
+)
+
+# Select/rename to your schema and enforce the boolean Entire Diet rule
+data_camel <- data_camel[
+  , .(B.Code,
+      A.Level.Name,
       ED.Intake.Item,
       T.Name,
       D.Item.Root.Comp.Proc_Major,
@@ -340,7 +358,16 @@ data_camel <- camel$Data.Out[
       ED.Mean.T, ED.Error, Out.Unit, Out.Subind,
       Out.WG.Start = as.numeric(Herd.Start.Weight),
       Out.WG.Unit  = as.character(Herd.Start.Weight.Unit),
-      T.Animals)][, Source := "camel"]
+      T.Animals)
+][
+  # Boolean-only tagging: if camel says entire diet, force the token
+  , ED.Intake.Item := fifelse(ED.Intake.Item.is_entire_diet == TRUE,
+                              "Entire Diet", ED.Intake.Item)
+][
+  , Source := "camel"
+]
+
+
 
 prod_camel <- camel$Herd.Out[
   , .(B.Code,
@@ -381,39 +408,72 @@ merged_metadata <- list(
 
 merged_metadata$Data.Out <- merged_metadata$Data.Out %>% 
   mutate(
+    ## 0 ────────────────────────────────────────────────────────────────
+    ## normalize any variant spelling to a single "Entire Diet" token
+    ED.Intake.Item = case_when(
+      grepl("^\\s*entire\\s*diet\\s*$", tolower(coalesce(ED.Intake.Item, ""))) ~ "Entire Diet",
+      TRUE ~ ED.Intake.Item
+    ),
+
     ## 1 ────────────────────────────────────────────────────────────────
-    ## overwrite ED.Intake.Item with D.Item.Root.Comp.Proc_Major when it exists
+    ## overwrite with root ONLY for ingredient rows (never for "Entire Diet")
     ED.Intake.Item = if_else(
-      !is.na(D.Item.Root.Comp.Proc_Major) & D.Item.Root.Comp.Proc_Major != "",
+      !is.na(D.Item.Root.Comp.Proc_Major) & D.Item.Root.Comp.Proc_Major != "" &
+        !grepl("^Entire Diet$", coalesce(ED.Intake.Item, "")),
       D.Item.Root.Comp.Proc_Major,
       ED.Intake.Item
     ),
-    
+
     ## 2 ────────────────────────────────────────────────────────────────
-    ## if ED.Intake.Item is still NA/blank, use T.Name
+    ## if still NA/blank, use T.Name
     ED.Intake.Item = if_else(
       (is.na(ED.Intake.Item) | ED.Intake.Item == "") & 
         !is.na(T.Name) & T.Name != "",
       T.Name,
       ED.Intake.Item
     ),
-    
+
     ## 3 ────────────────────────────────────────────────────────────────
-    ## overwrite is_entire_diet from helper column when it exists
-    is_entire_diet = if_else(
-      !is.na(ED.Intake.Item.is_entire_diet) & ED.Intake.Item.is_entire_diet != "",
-      ED.Intake.Item.is_entire_diet,
-      is_entire_diet
+    ## set entire-diet flag from helper OR from the token
+    is_entire_diet = case_when(
+      !is.na(ED.Intake.Item.is_entire_diet) & ED.Intake.Item.is_entire_diet != "" ~ ED.Intake.Item.is_entire_diet,
+      grepl("^Entire Diet$", coalesce(ED.Intake.Item, "")) ~ TRUE,
+      TRUE ~ is_entire_diet
     )
-  ) %>% 
-  
-  ## 4 ─────────────────────────────────────────────────────────────────
-  ## drop all helper columns that are no longer needed
-  select(
-    -D.Item.Root.Comp.Proc_Major,
-    -ED.Intake.Item.is_entire_diet,
-    -T.Name
   )
+  
+
+
+# 1) Build a lookup from MT with squished whitespace
+mt_key <- as.data.table(camel$MT.Out)[
+  , .(B.Code,
+      T.Name_core = str_squish(as.character(T.Name)),
+      A.Level.Name = str_squish(as.character(A.Level.Name)))
+][
+  # keep one row per (B.Code, T.Name_core), preferring non-NA A.Level.Name
+  order(!is.na(A.Level.Name))
+][
+  , .SD[.N], by = .(B.Code, T.Name_core)
+]
+
+# 2) Prepare Data.Out: derive a "core" T.Name by stripping anything after "||"
+dt <- as.data.table(merged_metadata$Data.Out)
+dt[Source == "camel",
+   T.Name_core := str_squish(sub("\\|\\|.*$", "", as.character(T.Name)))]
+
+# 3) Left join to fill A.Level.Name where NA
+dt[Source == "camel" & (is.na(A.Level.Name) | A.Level.Name == ""),
+   A.Level.Name := mt_key[.SD, on = .(B.Code, T.Name_core), A.Level.Name]
+]
+
+# 4) Clean up helper
+dt[, T.Name_core := NULL]
+
+# 5) Write back
+merged_metadata$Data.Out <- dt
+
+
+
 
 ```
 
@@ -711,6 +771,67 @@ merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
 
 ```
 
+```{r}
+
+# Define species of interest
+species_list <- c("Cattle", "Sheep", "Goat")
+
+# Initialize result containers
+species_summary <- list()
+bcode_table <- list()
+
+# Loop over each species
+for (species in species_list) {
+  
+  # All B.Codes for this species
+  species_bcodes <- merged_metadata$Prod.Out %>%
+    filter(P.Product == species) %>%
+    pull(B.Code) %>%
+    unique()
+  
+  # Feed intake B.Codes
+  feed_data <- merged_metadata$Data.Out %>%
+    filter(B.Code %in% species_bcodes, !is.na(ED.Mean.T)) %>%
+    filter(Out.Subind=="Feed Intake")%>%
+    select(B.Code, D.Item = ED.Intake.Item)
+  
+  feed_bcodes <- unique(feed_data$B.Code)
+  
+  # GE B.Codes
+  ge_data <- merged_metadata$Animals.Diet.Comp %>%
+    filter(B.Code %in% species_bcodes, DC.Variable == "GE", !is.na(DC.Value)) %>%
+    select(B.Code, D.Item)
+  
+  ge_bcodes <- unique(ge_data$B.Code)
+  
+  # Matched B.Codes (join on both B.Code and D.Item)
+  matched_bcodes <- inner_join(feed_data, ge_data, by = c("B.Code", "D.Item")) %>%
+    pull(B.Code) %>%
+    unique()
+  
+  # Store species-level summary
+  species_summary[[species]] <- tibble(
+    Species = species,
+    Total_BCodes = length(species_bcodes),
+    With_FEED = length(feed_bcodes),
+    With_GE = length(ge_bcodes),
+    With_BOTH = length(matched_bcodes)
+  )
+  
+  # Store long-format bcode list
+  bcode_table[[species]] <- tibble(
+    B.Code = c(species_bcodes, feed_bcodes, ge_bcodes, matched_bcodes),
+    Category = rep(c("All", "With_FEED", "With_GE", "With_BOTH"), 
+                   times = c(length(species_bcodes), length(feed_bcodes), length(ge_bcodes), length(matched_bcodes))),
+    Species = species
+  ) %>% distinct()
+}
+
+# Bind results
+species_summary_df <- bind_rows(species_summary)
+bcode_table_df <- bind_rows(bcode_table)
+
+```
 
 ## 1.4 Take out grazing experiments 
 
@@ -1117,14 +1238,15 @@ species_by_bcode <- merged_metadata$Prod.Out %>%
   select(B.Code, P.Product) %>%
   distinct()
 
-# 2. Papers per species before filtering
-# papers_after <- ingredients %>%
-#   select(B.Code) %>%
-#   distinct() %>%
-#   left_join(species_by_bcode, by = "B.Code") %>%
-#   count(P.Product, name = "papers_after")
+#2. Papers per species before filtering
+papers_after <- ingredients %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_after")
 
 ```
+
 
 ### 2.2) Filter data with acceptable units
 
@@ -1660,6 +1782,9 @@ ingredients <- ingredients %>%
 ingredients <- ingredients %>%
   filter(!str_starts(D.Item.Group, "Base"))
 
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  filter(!str_starts(D.Item, "Base"))
+
 
 ```
 
@@ -1888,6 +2013,94 @@ feed_intake_diet <- feed_intake_diet %>%
 ```
 
 expand basal diets and see in feed intake if we have the basal diet for each treatment 
+```{r}
+
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(DT)
+library(readr)
+
+# --- Source data shortcuts ----------------------------------------------------
+fi_raw <- merged_metadata$Data.Out %>% 
+  filter(Out.Subind == "Feed Intake")
+
+species_info <- merged_metadata$Prod.Out %>%
+  distinct(B.Code, Species = P.Product)
+
+diets_per_paper <- merged_metadata$Animals.Diet %>%
+  distinct(B.Code, A.Level.Name) %>%
+  count(B.Code, name = "n_diets")
+
+# --- Helper: detect "Entire Diet" rows in feed intake ------------------------
+fi_marked <- fi_raw %>%
+  mutate(
+    ED.Intake.Item   = str_squish(coalesce(ED.Intake.Item, "")),
+    ED.Intake.Item.Raw = str_squish(coalesce(ED.Intake.Item.Raw, "")),
+    is_entire_diet_row = 
+      ED.Intake.Item == "" |
+      str_detect(ED.Intake.Item,  regex("^entire\\s*diet$", ignore_case = TRUE)) |
+      str_detect(ED.Intake.Item.Raw, regex("^entire\\s*diet$", ignore_case = TRUE))
+  )
+
+# --- Summaries per paper (B.Code) --------------------------------------------
+fi_by_paper <- fi_marked %>%
+  group_by(B.Code) %>%
+  summarise(
+    n_feed_rows           = n(),
+    n_with_value          = sum(!is.na(ED.Mean.T)),
+    n_with_unit           = sum(!is.na(Out.Unit)),
+    n_entire_diet_rows    = sum(is_entire_diet_row, na.rm = TRUE),
+    has_feed_intake       = any(!is.na(ED.Mean.T)),
+    has_entire_diet_intake= any(is_entire_diet_row & !is.na(ED.Mean.T), na.rm = TRUE),
+    .groups = "drop"
+  )
+
+all_papers <- merged_metadata$Animals.Diet %>% 
+  distinct(B.Code) %>%
+  left_join(species_info, by = "B.Code") %>%
+  left_join(diets_per_paper, by = "B.Code") %>%
+  left_join(fi_by_paper, by = "B.Code") %>%
+  mutate(
+    n_diets                = replace_na(n_diets, 0L),
+    n_feed_rows            = replace_na(n_feed_rows, 0L),
+    n_with_value           = replace_na(n_with_value, 0L),
+    n_with_unit            = replace_na(n_with_unit, 0L),
+    n_entire_diet_rows     = replace_na(n_entire_diet_rows, 0L),
+    has_feed_intake        = replace_na(has_feed_intake, FALSE),
+    has_entire_diet_intake = replace_na(has_entire_diet_intake, FALSE),
+    Status = if_else(has_feed_intake, "Has feed-intake data", "No feed-intake data")
+  ) %>%
+  select(
+    B.Code, Species, n_diets,
+    Status,
+    n_feed_rows, n_with_value, n_with_unit, n_entire_diet_rows,
+    has_entire_diet_intake
+  ) %>%
+  arrange(Species, desc(Status), B.Code)
+
+# --- Handy vectors if you need them elsewhere --------------------------------
+with_feed_intake    <- all_papers %>% filter(Status == "Has feed-intake data") %>% pull(B.Code)
+without_feed_intake <- all_papers %>% filter(Status == "No feed-intake data")  %>% pull(B.Code)
+
+# --- Save CSV ----------------------------------------------------------------
+write_csv(all_papers, "paper_feed_intake_summary.csv")
+
+# --- Show interactive table --------------------------------------------------
+datatable(
+  all_papers,
+  rownames = FALSE,
+  filter = "top",
+  extensions = c("Buttons"),
+  options = list(
+    pageLength = 25,
+    dom = "Bfrtip",
+    buttons = list("copy", "csv", "excel"),
+    autoWidth = TRUE
+  )
+)
+
+```
 
 ## 6) Complete the nutrition and digestibility papers
 
@@ -1957,6 +2170,7 @@ merged_metadata$Animals.Diet.Digest <- bind_rows(merged_metadata$Animals.Diet.Di
 ```
 
 
+
 ```{r}
 # --- Step 5: Ensure each ingredient has a row for each nutrition variable ---
 comp_completion <- merged_metadata$Animals.Diet.Comp %>%
@@ -1989,6 +2203,55 @@ merged_metadata$Animals.Diet.Comp <- bind_rows(merged_metadata$Animals.Diet.Comp
 merged_metadata$Animals.Diet.Digest <- bind_rows(merged_metadata$Animals.Diet.Digest, digest_completion)
 
 rm(comp_completion,comp_missing,digest_completion,digest_missing)
+
+```
+
+
+##fill is entire diet column 
+```{r}
+library(dplyr)
+library(stringr)
+
+# Build lookups from Animals.Diet (ingredients and diets)
+ingredient_lookup <- merged_metadata$Animals.Diet %>%
+  transmute(B.Code,
+            token = str_squish(str_to_lower(as.character(D.Item)))) %>%
+  filter(token != "") %>%
+  distinct() %>%
+  mutate(is_ingredient_token = TRUE)
+
+diet_lookup <- merged_metadata$Animals.Diet %>%
+  transmute(B.Code,
+            token = str_squish(str_to_lower(as.character(A.Level.Name)))) %>%
+  filter(token != "") %>%
+  distinct() %>%
+  mutate(is_diet_token = TRUE)
+
+# Helper to fill is_entire_diet in a given table (Comp or Digest)
+fill_is_entire <- function(df) {
+  df %>%
+    mutate(
+      D.Item_norm = str_squish(str_to_lower(as.character(D.Item))),
+      is_entire_literal = str_detect(D.Item_norm, "^(entire|whole)\\s*diet$")
+    ) %>%
+    left_join(ingredient_lookup, by = c("B.Code", "D.Item_norm" = "token")) %>%
+    left_join(diet_lookup,       by = c("B.Code", "D.Item_norm" = "token")) %>%
+    mutate(
+      is_entire_diet = case_when(
+        is_entire_literal           ~ TRUE,   # literal Entire/Whole Diet
+        !is.na(is_ingredient_token) ~ FALSE,  # matches ingredient
+        !is.na(is_diet_token)       ~ TRUE,   # matches diet name
+        TRUE                        ~ FALSE
+      ),
+      # Optional: if you keep is_group in these tables and want groups never entire:
+      is_entire_diet = if ("is_group" %in% names(.)) if_else(is_group, FALSE, is_entire_diet) else is_entire_diet
+    ) %>%
+    select(-D.Item_norm, -is_entire_literal, -is_ingredient_token, -is_diet_token)
+}
+
+# Apply to both tables AFTER your completion/bind steps
+merged_metadata$Animals.Diet.Comp   <- fill_is_entire(merged_metadata$Animals.Diet.Comp)
+merged_metadata$Animals.Diet.Digest <- fill_is_entire(merged_metadata$Animals.Diet.Digest)
 
 ```
 
@@ -2186,15 +2449,14 @@ feedipedia <- read_parquet(temp_file)
 ## download AOM with the correspondance between feedipedia codes and diet items 
 
 # Define the raw URL for the Excel file
-url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(11).xlsx"
+url <- "https://github.com/Mlolita26/ERA_Docs/raw/main/era_master_sheet(13).xlsx"
 
-# Download the file to a temporary location
 temp_file <- tempfile(fileext = ".xlsx")
 download.file(url, destfile = temp_file, mode = "wb")
 
-# Read only the sheet called "AOM"
+
 mastersheet <- read_excel(temp_file, sheet = "AOM") %>%
-  filter(L5=="Feed Ingredient")
+  filter(L5 == "Feed Ingredient")
 
 mastersheet$Feedipedia <- as.numeric(sub(".*node/", "", mastersheet$Feedipedia))
 
@@ -2432,15 +2694,15 @@ merged_metadata$Animals.Diet.Digest <- merged_metadata$Animals.Diet.Digest %>%
 species_by_bcode <- merged_metadata$Prod.Out %>%
   distinct(B.Code, P.Product)
 
-# # Step 2: Filter Comp table for GE values
-# ge_papers <- merged_metadata$Animals.Diet.Comp %>%
-#   filter(DC.Variable == "GE", !is.na(DC.Value)) %>%
-#   distinct(B.Code) %>%
-#   left_join(species_by_bcode, by = "B.Code") %>%
-#   count(P.Product, name = "papers_with_GE")
-# 
-# # View result
-# ge_papers
+# Step 2: Filter Comp table for GE values
+ge_papers <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value)) %>%
+  distinct(B.Code) %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_with_GE")
+
+# View result
+ge_papers
 
 ```
 
@@ -2518,6 +2780,41 @@ message(sprintf("⚠︎  Digestibility rows with >10 %% deviation: %s",
 # 5 ▸ optional interactive view ---------------------------------------------
 # DT::datatable(qc_nutrition, caption = "Nutrition >10 % difference")
 # DT::datatable(qc_digestibility, caption = "Digestibility >10 % difference")
+
+```
+## some matching is wrong 
+
+```{r}
+# 1) Build node–page crosswalk from Feedipedia
+id_pairs <- feedipedia %>%
+  distinct(feedipedia_node, page_node) %>%
+  filter(!is.na(feedipedia_node) & !is.na(page_node))
+
+id_xwalk <- bind_rows(
+  id_pairs %>% mutate(type = "feedipedia_node", lookup_id = feedipedia_node),
+  id_pairs %>% mutate(type = "page_node",      lookup_id = page_node)
+) %>%
+  distinct(lookup_id, feedipedia_node, type)
+
+# 2) Compare mastersheet codes with Feedipedia IDs
+audit_fp <- mastersheet %>%
+  filter(!is.na(Feedipedia)) %>%
+  mutate(Feedipedia = as.numeric(Feedipedia)) %>%
+  left_join(id_xwalk, by = c("Feedipedia" = "lookup_id")) %>%
+  mutate(
+    status = case_when(
+      type == "feedipedia_node" ~ "OK (node match)",
+      type == "page_node"       ~ "Wrong (page match → should use node)",
+      is.na(type)               ~ "Unresolved (no match in feedipedia)"
+    )
+  ) %>%
+  select(Edge_Value, Feedipedia, feedipedia_node, status) %>%
+  distinct()
+
+# 3) Inspect mis-matches
+audit_fp %>%
+  arrange(status, Edge_Value) %>%
+  print(n = 50)
 
 ```
 
@@ -2855,11 +3152,7 @@ coverage_feedipedia <- merged_metadata$Animals.Diet.Comp %>%
 ```{r}
 ## Link data to ILRI database
 
-# Define the raw URL for the Excel file
-url <- "https://raw.githubusercontent.com/Mlolita26/ERA_Docs/main/era_master_sheet(11).xlsx"
 
-# Download the file to a temporary location
-temp_file <- tempfile(fileext = ".xlsx")
 download.file(url, destfile = temp_file, mode = "wb")
 
 # ---- Load ILRI nutrition data ----
@@ -3418,44 +3711,63 @@ Gross_energy_check <- Gross_energy %>%
 ## 12.3) Gross energy for non nutritional items 
 
 ```{r}
+library(dplyr)
+library(stringr)
 
-# ── 1 · Identify the non-energy ingredients ───────────────────────────────────
-nonenergy_types <- c("Non-ERA Feed", "Supplement")   # ← NEW: add more if needed
+# ── A · Define patterns for name-based matching ───────────────────────────────
+salt_pat  <- "(?i)\\b(salt|sodium\\s*chloride|nacl|mineral\\s*(lick|block))\\b"
+water_pat <- "(?i)\\bwater\\b"
 
-# ── 1 · Look-up table of those items ─────────────────────────────────────────
-nonenergy_lookup <- merged_metadata$Animals.Diet %>%   # or use `ingredients`
-  filter(D.Type %in% nonenergy_types) %>%              # ← NEW: %in% the vector
-  distinct(B.Code, D.Item)
+# false positives to exclude (extend if you see more)
+exclude_pat <- "(?i)\\b(water\\s*hyacinth|saltbush)\\b"
 
-# ── 2 · Make sure every (paper × item) has a GE row ───────────────────────────
-missing_nonera_ge <- nonenergy_lookup %>% 
-  anti_join(                                               # keep only those
-    Gross_energy %>% filter(DC.Variable == "GE") %>%       # already in GE table
-      select(B.Code, D.Item),
+# ── B · Type-based lookup (as you had) ────────────────────────────────────────
+nonenergy_types <- c("Non-ERA Feed", "Supplement")   # add more types if you have them
+
+type_lookup <- merged_metadata$Animals.Diet %>%
+  filter(D.Type %in% nonenergy_types) %>%
+  distinct(B.Code, D.Item) %>%
+  mutate(flag_nonenergy = TRUE)
+
+# ── C · Name-based lookup for salt/water (avoids false positives) ─────────────
+name_lookup <- merged_metadata$Animals.Diet %>%
+  mutate(item_lc = str_squish(str_to_lower(D.Item))) %>%
+  filter(
+    (str_detect(item_lc, salt_pat) | str_detect(item_lc, water_pat)) &
+      !str_detect(item_lc, exclude_pat)
+  ) %>%
+  distinct(B.Code, D.Item) %>%
+  mutate(flag_nonenergy = TRUE)
+
+# ── D · Union both lookups (type + name) ──────────────────────────────────────
+nonenergy_lookup <- bind_rows(type_lookup, name_lookup) %>%
+  distinct(B.Code, D.Item, .keep_all = TRUE)
+
+# ── E · Ensure every (B.Code, D.Item) in lookup has a GE row (fill 0 if missing)
+missing_nonenergy_ge <- nonenergy_lookup %>%
+  anti_join(
+    Gross_energy %>% filter(DC.Variable == "GE") %>% select(B.Code, D.Item),
     by = c("B.Code", "D.Item")
-  ) %>% 
-  mutate(
+  ) %>%
+  transmute(
+    B.Code, D.Item,
     DC.Variable = "GE",
     DC.Value    = 0,
     DC.Unit     = "MJ/kg",
     GE_source   = "assumed_zero"
   )
 
-# ── 3 · Bind and override (value, unit, source) for every Non-ERA row ─────────
-Gross_energy <- Gross_energy %>% 
-  # add the rows that were completely missing
-  bind_rows(missing_nonera_ge) %>% 
-  
-  # tag which rows are Non-ERA so we can overwrite them
-  left_join(nonenergy_lookup %>% mutate(flag_nonera = TRUE),
-            by = c("B.Code", "D.Item")) %>% 
-  
+# ── F · Bind, tag, and overwrite all matching rows to zero GE ─────────────────
+Gross_energy <- Gross_energy %>%
+  bind_rows(missing_nonenergy_ge) %>%
+  left_join(nonenergy_lookup, by = c("B.Code", "D.Item")) %>%
   mutate(
-    DC.Value  = if_else(DC.Variable == "GE" & flag_nonera, 0, DC.Value),
-    DC.Unit   = if_else(DC.Variable == "GE" & flag_nonera, "MJ/kg", DC.Unit),
-    GE_source = if_else(DC.Variable == "GE" & flag_nonera, "assumed_zero", GE_source)
-  ) %>% 
-  select(-flag_nonera)                                       # tidy up
+    DC.Value  = if_else(DC.Variable == "GE" & flag_nonenergy, 0, DC.Value),
+    DC.Unit   = if_else(DC.Variable == "GE" & flag_nonenergy, "MJ/kg", DC.Unit),
+    GE_source = if_else(DC.Variable == "GE" & flag_nonenergy, "assumed_zero", GE_source)
+  ) %>%
+  select(-flag_nonenergy)
+                             # tidy up
 
 
 ```
@@ -3569,26 +3881,35 @@ kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ E
 As we did in 9) we are inferring again GE data after estimation by proximal nutritional composition. 
 
 ```{r}
+library(dplyr)
+
+# 1) Per-ingredient mean GE (exclude entire diets; treat NA as FALSE just for this calc)
 ingredient_means <- Gross_energy %>%
-  filter(is_entire_diet == FALSE, !is.na(DC.Value)) %>%
-  group_by(D.Item, DC.Variable) %>%
+  mutate(`_is_entire_diet` = coalesce(is_entire_diet, FALSE)) %>%   # NA -> FALSE
+  filter(DC.Variable == "GE", `_is_entire_diet` == FALSE, !is.na(DC.Value)) %>%
+  group_by(D.Item) %>%
   summarise(mean_value = mean(DC.Value, na.rm = TRUE), .groups = "drop")
 
-# --- Fill Missing Values with Mean ---
+# 2) Join and fill missing GE for ingredient rows only
 Gross_energy <- Gross_energy %>%
-  left_join(ingredient_means, by = c("D.Item", "DC.Variable")) %>%
+  left_join(ingredient_means, by = "D.Item") %>%
+  mutate(`_is_entire_diet` = coalesce(is_entire_diet, FALSE)) %>%   # NA -> FALSE (decision only)
   mutate(
     GE_source = case_when(
-      is.na(DC.Value) & !is_entire_diet & !is.na(mean_value) ~ "inferred_from_same_ingredient-Step2",
+      DC.Variable == "GE" & is.na(DC.Value) & `_is_entire_diet` == FALSE & !is.na(mean_value)
+        ~ "inferred_from_same_ingredient-Step2",
       TRUE ~ GE_source
     ),
     DC.Value = if_else(
-      is.na(DC.Value) & !is_entire_diet & !is.na(mean_value),
+      DC.Variable == "GE" & is.na(DC.Value) & `_is_entire_diet` == FALSE & !is.na(mean_value),
       mean_value,
       DC.Value
-    )
+    ),
+    # normalize unit whenever GE has a value (original or imputed)
+    DC.Unit = if_else(DC.Variable == "GE" & !is.na(DC.Value), "MJ/kg", DC.Unit)
   ) %>%
-  select(-mean_value)
+  select(-mean_value, -`_is_entire_diet`)
+
 ```
 
 
@@ -3830,6 +4151,15 @@ bcode_list_both <- species_total %>%
 # Show the B.Codes table
 knitr::kable(bcode_list_both, caption = "B.Codes with BOTH GE (DC.Value) and Feed Intake (D.Amount)")
 
+
+```
+```{r}
+Gross_energy <- Gross_energy %>%
+  filter(!str_starts(D.Item, "Base"))
+
+missing_GE_items <- Gross_energy %>%   # replace with your dataframe name
+  filter(DC.Variable == "GE", is.na(DC.Value)) %>%
+  count(D.Item, sort = TRUE, name = "n_missing")
 
 ```
 
@@ -4234,6 +4564,95 @@ Ym = case_when(
 
 ```
 
+```{r}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 0) Keep only ingredient GE (not entire diet) and choose ONE value per item
+#    using a priority order of sources you already created upstream.
+#    Adjust the order if you prefer a different hierarchy.
+# ──────────────────────────────────────────────────────────────────────────────
+ge_priority <- c(
+  "raw data",
+  "feedipedia",
+  "predicted_from_Weiss_GE",
+  "predicted_from_Weiss_DE",
+  "inferred_from_same_ingredient-Step2",
+  "inferred_from_same_ingredient",
+  "assumed_zero"
+)
+
+GE_ingredients_best <- Gross_energy %>%
+  filter(is_entire_diet == FALSE, DC.Variable == "GE") %>%
+  mutate(
+    # normalize source label text
+    GE_source = str_squish(tolower(GE_source)),
+    # ensure unit is MJ/kg
+    DC.Unit   = "MJ/kg",
+    # rank by source priority
+    src_rank  = match(GE_source, ge_priority)
+  ) %>%
+  arrange(B.Code, D.Item, src_rank, desc(!is.na(DC.Value))) %>%
+  group_by(B.Code, D.Item) %>%
+  # keep the single best row per (B.Code, D.Item)
+  slice_head(n = 1) %>%
+  ungroup() %>%
+  transmute(
+    B.Code,
+    D.Item,
+    GE_MJ_per_kg = as.numeric(DC.Value),
+    GE_source
+  )
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 1) Ingredients only + attach GE + compute per-ingredient GE intake (MJ/day)
+#    NOTE: we keep your existing columns intact and just append new ones.
+# ──────────────────────────────────────────────────────────────────────────────
+ingredients_enriched <- ingredients %>%
+  # enforce "ingredients only" (i.e., exclude entire-diet pseudo-rows if present)
+  filter(D.Type != "Entire Diet") %>%
+
+  # join GE per (B.Code, D.Item)
+  left_join(GE_ingredients_best, by = c("B.Code", "D.Item")) %>%
+
+  # convert amounts to kg/day (where possible)
+  mutate(
+    D.Unit.Amount = str_squish(tolower(D.Unit.Amount)),
+    Amount_kg_day = case_when(
+      D.Unit.Amount == "kg" ~ D.Amount,
+      D.Unit.Amount == "g"  ~ D.Amount / 1000,
+      TRUE ~ NA_real_  # unsupported units remain NA
+    ),
+
+    # GE intake contributed by this ingredient (MJ/day)
+    GE_MJ_day = if_else(!is.na(GE_MJ_per_kg) & !is.na(Amount_kg_day),
+                        GE_MJ_per_kg * Amount_kg_day,
+                        NA_real_)
+  )
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 2) (Optional) Quick diagnostics
+# ──────────────────────────────────────────────────────────────────────────────
+n_total_ing   <- nrow(ingredients_enriched)
+n_with_GE     <- sum(!is.na(ingredients_enriched$GE_MJ_per_kg))
+n_with_GEint  <- sum(!is.na(ingredients_enriched$GE_MJ_day))
+
+message("Ingredients total: ", n_total_ing,
+        " | with GE (MJ/kg): ", n_with_GE,
+        " | with GE intake (MJ/day): ", n_with_GEint)
+
+# If you want to keep only your original columns + added GE columns in a view:
+ingredients_view <- ingredients_enriched %>%
+  select(
+    B.Code, A.Level.Name, D.Item, D.Type, D.Amount, D.Unit.Amount, D.Unit.Time,
+    D.Unit.Animals, DC.Is.Dry, D.Ad.lib, D.Item.Group, Source, Units,
+    T.Animals, Out.WG.Start, Out.WG.Unit, basal_intake_status,
+    Prediction_Source, Prediction_Source.from_AName, from_feed_intake,
+    T.Name, T.Control,
+    # New appended columns:
+    GE_MJ_per_kg, GE_source, Amount_kg_day, GE_MJ_day
+  )
+
+```
 
 
 ```{r,message=FALSE,warning=FALSE}
@@ -4569,6 +4988,101 @@ total_ingredients <- diet_data_filtered %>%
 cat("Total unique diets:", total_diets, "\n")
 cat("Total unique ingredients:", total_ingredients, "\n")
 ```
+
+```{r}
+library(dplyr)
+library(stringr)
+library(tidyr)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 0) Keep only ingredient GE (not entire diet) and choose ONE value per item
+#    using a priority order of sources you already created upstream.
+#    Adjust the order if you prefer a different hierarchy.
+# ──────────────────────────────────────────────────────────────────────────────
+ge_priority <- c(
+  "raw data",
+  "feedipedia",
+  "predicted_from_Weiss_GE",
+  "predicted_from_Weiss_DE",
+  "inferred_from_same_ingredient-Step2",
+  "inferred_from_same_ingredient",
+  "assumed_zero"
+)
+
+GE_ingredients_best <- Gross_energy %>%
+  filter( DC.Variable == "GE") %>%
+  mutate(
+    # normalize source label text
+    GE_source = str_squish(tolower(GE_source)),
+    # ensure unit is MJ/kg
+    DC.Unit   = "MJ/kg",
+    # rank by source priority
+    src_rank  = match(GE_source, ge_priority)
+  ) %>%
+  arrange(B.Code, D.Item, src_rank, desc(!is.na(DC.Value))) %>%
+  group_by(B.Code, D.Item) %>%
+  # keep the single best row per (B.Code, D.Item)
+  slice_head(n = 1) %>%
+  ungroup() %>%
+  transmute(
+    B.Code,
+    D.Item,
+    GE_MJ_per_kg = as.numeric(DC.Value),
+    GE_source
+  )
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 1) Ingredients only + attach GE + compute per-ingredient GE intake (MJ/day)
+#    NOTE: we keep your existing columns intact and just append new ones.
+# ──────────────────────────────────────────────────────────────────────────────
+ingredients_enriched <- ingredients %>%
+  # enforce "ingredients only" (i.e., exclude entire-diet pseudo-rows if present)
+  filter(D.Type != "Entire Diet") %>%
+
+  # join GE per (B.Code, D.Item)
+  left_join(GE_ingredients_best, by = c("B.Code", "D.Item")) %>%
+
+  # convert amounts to kg/day (where possible)
+  mutate(
+    D.Unit.Amount = str_squish(tolower(D.Unit.Amount)),
+    Amount_kg_day = case_when(
+      D.Unit.Amount == "kg" ~ D.Amount,
+      D.Unit.Amount == "g"  ~ D.Amount / 1000,
+      TRUE ~ NA_real_  # unsupported units remain NA
+    ),
+
+    # GE intake contributed by this ingredient (MJ/day)
+    GE_MJ_day = if_else(!is.na(GE_MJ_per_kg) & !is.na(Amount_kg_day),
+                        GE_MJ_per_kg * Amount_kg_day,
+                        NA_real_)
+  )
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 2) (Optional) Quick diagnostics
+# ──────────────────────────────────────────────────────────────────────────────
+n_total_ing   <- nrow(ingredients_enriched)
+n_with_GE     <- sum(!is.na(ingredients_enriched$GE_MJ_per_kg))
+n_with_GEint  <- sum(!is.na(ingredients_enriched$GE_MJ_day))
+
+message("Ingredients total: ", n_total_ing,
+        " | with GE (MJ/kg): ", n_with_GE,
+        " | with GE intake (MJ/day): ", n_with_GEint)
+
+# If you want to keep only your original columns + added GE columns in a view:
+ingredients_view <- ingredients_enriched %>%
+  select(
+    B.Code, A.Level.Name, D.Item, D.Type, D.Amount, D.Unit.Amount, D.Unit.Time,
+    D.Unit.Animals, DC.Is.Dry, D.Ad.lib, D.Item.Group, Source, Units,
+    T.Animals, Out.WG.Start, Out.WG.Unit, basal_intake_status,
+    Prediction_Source, Prediction_Source.from_AName, from_feed_intake,
+    T.Name, T.Control,
+    # New appended columns:
+    GE_MJ_per_kg, GE_source, Amount_kg_day, GE_MJ_day
+  )
+
+```
+
+
 | Variable | Category I (High‑starch) | Category II (High‑fat) | Category III (Protein) | Category IV (Good forage) | Category V (Poor forage) | Category VI (Mineral/Vit) |
 |----------|-------------------------|------------------------|------------------------|---------------------------|--------------------------|---------------------------|
 | **GE (MJ kg⁻¹ DM)** | 170 – 190 | 300 – 380 | 180 – 200 | 160 – 180 | 150 – 170 | — |
