@@ -5464,6 +5464,79 @@ Ing_classif <- Ing_classif %>%
 
 ```
 
+add items where nutrition estimated by models 
+```{r}
+
+# 0) Canonicalizer (match the one you use later)
+if (!exists("canonicalize_item")) {
+  clean_key <- function(x) x %>% str_trim() %>% str_squish() %>% str_to_lower()
+  canonicalize_item <- function(x) {
+    clean_key(x) %>%
+      str_replace("^unspecified\\s+molasses$", "molasses") %>%
+      str_replace_all("\\bbran\\b", "offal")
+  }
+}
+
+# 1) Point to your CSV (edit the path as needed)
+# csv_path <- file.choose()
+csv_path <- "Ingredients_nutrition_unmatched_GPT.csv"  # <- change if saved elsewhere
+
+# 2) Read & clean the CSV (strip tildes, parse numbers)
+csv_raw <- readr::read_csv(csv_path, show_col_types = FALSE)
+
+
+# 2) Clean + build canonical join key; parse numbers (robust to "NA", "~")
+csv_clean <- csv_raw %>%
+  mutate(
+    D.Item_can = canonicalize_item(D.Item),
+    GE  = suppressWarnings(readr::parse_number(as.character(GE))),
+    Ash = suppressWarnings(readr::parse_number(as.character(Ash))),
+    CP  = suppressWarnings(readr::parse_number(as.character(CP))),
+    EE  = suppressWarnings(readr::parse_number(as.character(EE))),
+    NDF = suppressWarnings(readr::parse_number(as.character(NDF)))
+  ) %>%
+  select(D.Item_can, GE, Ash, CP, EE, NDF)
+
+# 3) Long-format replacement table (only non-missing values)
+csv_long <- csv_clean %>%
+  pivot_longer(
+    cols = c(GE, Ash, CP, EE, NDF),
+    names_to = "DC.Variable",
+    values_to = "DC.Value_new"
+  ) %>%
+  filter(!is.na(DC.Value_new))
+
+# 4) Prepare Ing_classif with same canonical key
+Ing_classif <- Ing_classif %>%
+  mutate(
+    D.Item_can = canonicalize_item(D.Item),
+    DC.Value = ifelse(
+      DC.Variable %in% c("GE","Ash","CP","EE","NDF"),
+      suppressWarnings(as.numeric(DC.Value)),
+      DC.Value
+    )
+  )
+
+# 5) Join and override ONLY where CSV provides a value
+Ing_classif <- Ing_classif %>%
+  left_join(csv_long, by = c("D.Item_can", "DC.Variable")) %>%
+  mutate(
+    overridden = !is.na(DC.Value_new),
+    DC.Value   = if_else(overridden, DC.Value_new, DC.Value)
+  ) %>%
+  select(-DC.Value_new)
+
+# (Optional) Quick report: how many values were actually overridden
+override_counts <- Ing_classif %>%
+  filter(overridden) %>%
+  count(DC.Variable, name = "n_overridden")
+print(override_counts)
+
+# Drop helper flag
+Ing_classif$overridden <- NULL
+# ---- end CSV override block ----
+```
+
 
 ```{r}
 # --- Helpers ---------------------------------------------------------------
@@ -5913,6 +5986,7 @@ summary_by_product <- paper_status %>%
 kable(summary_by_product, caption = "Papers with complete diet/ingredient classification (within selected papers)")
 
 ```
+
 ```{r}
 ingredients <-ingredients%>%
   filter(D.Item!="salt")
@@ -5924,7 +5998,7 @@ unmatched_ing_m7 <- ingredients %>%
   arrange(D.Item)
 ```
 
-### k means 
+### k means for ingredients 
 ```{r}
 
 
@@ -6170,6 +6244,489 @@ unmatched_ing_m7 <- ingredients %>%
   arrange(D.Item)
 ```
 
+
+## classifying diets 
+
+
+
+```{r}
+# ─────────────────────────────────────────────────────────────────────────────
+# Reclassify ONLY unmatched diets, then merge back
+# Requires in env:
+#   unmatched_diet (B.Code, D.Item ...), diet_percentage, canon_ing, classif_ing,
+#   classif_diet (initial classifications), canonicalize_item(), method1..method7()
+# ─────────────────────────────────────────────────────────────────────────────
+
+unmatched_diet <- classif_diet %>%
+  # standardize the diet key
+  mutate(D.Item = canonicalize_item(D.Item)) %>%
+  # not yet classified by M7
+  filter(is.na(M7_Category)) %>%
+  select(any_of(c(
+    "scope","B.Code","D.Item","CP","NDF","Ash","EE","GE","M7_Category"
+  ))) %>%
+  distinct()
+
+# 0) Keys for unmatched diets (canonicalize to be safe)
+unmatched_keys <- unmatched_diet %>%
+  mutate(D.Item = canonicalize_item(D.Item)) %>%
+  distinct(B.Code, D.Item)
+
+# 1) Diet % for unmatched diets only (canonical keys + proportions)
+diet_perc_unmatched <- diet_percentages %>%
+  mutate(
+    D.Item       = canonicalize_item(D.Item),        # ingredient
+    A.Level.Name = canonicalize_item(A.Level.Name),  # diet/treatment
+    w_prop       = suppressWarnings(as.numeric(Percentage_of_Diet))/100
+  ) %>%
+  semi_join(unmatched_keys, by = c("B.Code","A.Level.Name" = "D.Item"))
+
+# 2) Build whole-diet nutrients when ALL ingredients have GE/Ash/CP/EE/NDF
+diet_perc_nutr <- diet_perc_unmatched %>%
+  left_join(canon_ing %>% select(D.Item, GE, Ash, CP, EE, NDF), by = "D.Item")
+
+diet_ok <- diet_perc_nutr %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    n_ing = n(),
+    all_complete = all(!is.na(GE) & !is.na(Ash) & !is.na(CP) & !is.na(EE) & !is.na(NDF) & !is.na(w_prop)),
+    .groups = "drop"
+  ) %>% filter(all_complete)
+
+diet_nutrients_from_perc_unmatched <- diet_perc_nutr %>%
+  semi_join(diet_ok, by = c("B.Code","A.Level.Name")) %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    wsum   = sum(w_prop, na.rm = TRUE),
+    GE     = sum(GE  * w_prop, na.rm = TRUE) / wsum,
+    Ash    = sum(Ash * w_prop, na.rm = TRUE) / wsum,
+    CP     = sum(CP  * w_prop, na.rm = TRUE) / wsum,
+    EE     = sum(EE  * w_prop, na.rm = TRUE) / wsum,
+    NDF    = sum(NDF * w_prop, na.rm = TRUE) / wsum,
+    .groups = "drop"
+  ) %>%
+  mutate(D.Item = A.Level.Name) %>%
+  select(B.Code, D.Item, GE, Ash, CP, EE, NDF)
+
+# 3) M1–M7 on unmatched diets, preferring computed nutrients where available
+nutr_diet_unmatched <- unmatched_keys %>%
+  left_join(diet_nutrients_from_perc_unmatched, by = c("B.Code","D.Item"))
+
+classif_diet_unmatched <- nutr_diet_unmatched %>%
+  method1() %>% method2() %>% method3() %>% method4() %>%
+  method5() %>% method6() %>% method7() %>%
+  mutate(Patch_Method = if_else(!is.na(M7_Category), "M7_numeric_from_perc", NA_character_))
+
+# 4) Fallback for any still NA: most prevalent ingredient category (no thresholds)
+ing_cat_map <- classif_ing %>%
+  select(D.Item, Ingredient_Category=M7_Category) %>%
+  distinct()
+
+topcat_unmatched <- diet_perc_unmatched %>%
+  left_join(ing_cat_map, by = "D.Item") %>%
+  filter(!is.na(Ingredient_Category), !is.na(w_prop)) %>%
+  group_by(B.Code, A.Level.Name, Ingredient_Category) %>%
+  summarise(prop = sum(w_prop, na.rm = TRUE), .groups = "drop") %>%
+  group_by(B.Code, A.Level.Name) %>%
+  slice_max(prop, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  transmute(
+    B.Code,
+    D.Item = A.Level.Name,
+    M7_Category_fallback = Ingredient_Category,
+    Patch_Method_fallback = "by_category_dominance",
+    Diet_Category_prop_top = prop
+  )
+
+# Apply fallback only where M7 still NA
+classif_diet_unmatched <- classif_diet_unmatched %>%
+  left_join(topcat_unmatched, by = c("B.Code","D.Item")) %>%
+  mutate(
+    used_fallback = is.na(M7_Category) & !is.na(M7_Category_fallback),
+    M7_Category   = coalesce(M7_Category, M7_Category_fallback),
+    Patch_Method  = coalesce(Patch_Method, if_else(used_fallback, Patch_Method_fallback, NA_character_))
+  ) %>%
+  select(-used_fallback, -any_of(c("M7_Category_fallback","Patch_Method_fallback")))
+
+# --- ensure method column exists and stamp initial M7 rows once ---
+if (!"Diet_Category_method" %in% names(classif_diet)) {
+  classif_diet <- classif_diet %>%
+    mutate(Diet_Category_method = if_else(!is.na(M7_Category), "M7_numeric", NA_character_))
+}
+
+# 5) Merge the patch back WITHOUT overriding pre-classified diets
+classif_diet_2nd <- classif_diet %>%
+  left_join(
+    classif_diet_unmatched %>%
+      select(B.Code, D.Item,
+             M7_Category_patch = M7_Category,
+             Patch_Method,
+             Diet_Category_prop_top),
+    by = c("B.Code","D.Item")
+  ) %>%
+  mutate(
+    used_patch  = is.na(M7_Category) & !is.na(M7_Category_patch),
+    M7_Category = coalesce(M7_Category, M7_Category_patch),
+    Diet_Category_method = case_when(
+      used_patch & Patch_Method == "M7_numeric_from_perc"  ~ "M7_numeric_from_perc",
+      used_patch & Patch_Method == "by_category_dominance" ~ "by_category_dominance",
+      TRUE                                                 ~ Diet_Category_method
+    )
+  ) %>%
+  select(-M7_Category_patch, -Patch_Method) %>%
+  relocate(Diet_Category_method, .after = M7_Category)
+
+roman_to_name <- function(x) dplyr::recode(
+  x,
+  "I"   = "High-starch",
+  "II"  = "High-fat",
+  "III" = "Protein",
+  "IV"  = "Good forage",
+  "V"   = "Poor forage",
+  "VI"  = "Mineral/Vitamin",
+  .default = x, .missing = NA_character_
+)
+
+classif_diet_2nd <- classif_diet_2nd %>%
+  mutate(across(dplyr::matches("^M[1-7]_Category$"), roman_to_name))
+
+# (Optional) quick coverage report for the patch run
+patched_n <- sum(classif_diet_2nd$used_patch, na.rm = TRUE)
+message("Patched (newly classified) diets: ", patched_n)
+classif_diet$used_patch <- NULL
+
+
+```
+
+
+```{r}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Coverage & method breakdown (with consistent keys)
+#   Uses: diet_percentages, nutr_diet, classif_diet, classif_diet_2nd
+#   Assumes: canonicalize_item() exists; if not, define a minimal one here
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Fallback canonicalizer if not already defined
+if (!exists("canonicalize_item")) {
+  clean_key <- function(x) gsub("\\s+", " ", trimws(tolower(x)))
+  canonicalize_item <- function(x) {
+    x <- clean_key(x)
+    x <- gsub("^unspecified\\s+molasses$", "molasses", x)
+    x <- gsub("\\bbran\\b", "offal", x)
+    x
+  }
+}
+
+# --- Universe of diets (union of % table and nutrient table), canonicalized ---
+all_diets <- dplyr::full_join(
+  diet_percentages %>%
+    dplyr::transmute(B.Code, DietKey = canonicalize_item(A.Level.Name)) %>%
+    dplyr::distinct(),
+  nutr_diet %>%
+    dplyr::transmute(B.Code, DietKey = canonicalize_item(D.Item)) %>%
+    dplyr::distinct(),
+  by = c("B.Code","DietKey")
+) %>% dplyr::distinct()
+
+# --- Stage flags (all keys canonicalized) ---
+# Stage 1: initial M7 (pre-patch)
+stage1_flags <- classif_diet %>%
+  dplyr::transmute(B.Code,
+                   DietKey = canonicalize_item(D.Item),
+                   stage1  = !is.na(M7_Category))
+
+# Stage 2: classified via M7 after building diet nutrients from ingredient %
+stage2_flags <- classif_diet_2nd %>%
+  dplyr::transmute(B.Code,
+                   DietKey = canonicalize_item(D.Item),
+                   stage2  = Diet_Category_method == "M7_numeric_from_perc")
+
+# Stage 3: classified via dominant ingredient category (fallback)
+stage3_flags <- classif_diet_2nd %>%
+  dplyr::transmute(B.Code,
+                   DietKey = canonicalize_item(D.Item),
+                   stage3  = Diet_Category_method == "by_category_dominance")
+
+# --- Combine & compute incremental + cumulative coverage ---
+coverage <- all_diets %>%
+  dplyr::left_join(stage1_flags, by = c("B.Code","DietKey")) %>%
+  dplyr::left_join(stage2_flags, by = c("B.Code","DietKey")) %>%
+  dplyr::left_join(stage3_flags, by = c("B.Code","DietKey")) %>%
+  dplyr::mutate(dplyr::across(c(stage1, stage2, stage3),
+                              ~ tidyr::replace_na(., FALSE))) %>%
+  dplyr::summarise(
+    diets_total          = dplyr::n(),
+    # Stage 1
+    classified_stage1    = sum(stage1),
+    pct_stage1           = round(100 * classified_stage1 / diets_total, 1),
+    # Stage 2 (incremental = not stage1, but stage2)
+    inc_stage2           = sum(!stage1 & stage2),
+    cum_stage2           = classified_stage1 + inc_stage2,
+    pct_cum_stage2       = round(100 * cum_stage2 / diets_total, 1),
+    # Stage 3 (incremental = not in stage1/2, but stage3)
+    inc_stage3           = sum(!stage1 & !stage2 & stage3),
+    cum_final            = cum_stage2 + inc_stage3,
+    pct_cum_final        = round(100 * cum_final / diets_total, 1)
+  )
+
+print(coverage)
+
+# --- Final method breakdown (use the final table; keys canonicalized) --------
+final_method_breakdown <- all_diets %>%
+  dplyr::left_join(
+    classif_diet_2nd %>%
+      dplyr::transmute(B.Code,
+                       DietKey = canonicalize_item(D.Item),
+                       M7_Category, Diet_Category_method),
+    by = c("B.Code","DietKey")
+  ) %>%
+  dplyr::mutate(method = dplyr::case_when(
+    is.na(M7_Category)                              ~ "Unclassified",
+    Diet_Category_method == "by_category_dominance" ~ "Fallback: dominance",
+    Diet_Category_method == "M7_numeric_from_perc"  ~ "M7 from % nutrients",
+    TRUE                                            ~ "M7 initial"
+  )) %>%
+  dplyr::count(method, name = "n") %>%
+  dplyr::mutate(pct = round(100 * n / sum(n), 1)) %>%
+  dplyr::arrange(dplyr::desc(n))
+
+print(final_method_breakdown)
+
+# --- Optional: quick diagnostics for key mismatches --------------------------
+# cat("Stage1 keys missing in all_diets: ",
+#     nrow(dplyr::anti_join(stage1_flags, all_diets, by = c("B.Code","DietKey"))), "\n")
+# cat("Stage2 keys missing in all_diets: ",
+#     nrow(dplyr::anti_join(stage2_flags, all_diets, by = c("B.Code","DietKey"))), "\n")
+# cat("Stage3 keys missing in all_diets: ",
+#     nrow(dplyr::anti_join(stage3_flags, all_diets, by = c("B.Code","DietKey"))), "\n")
+
+
+```
+
+
+##k means diet
+
+```{r}
+# ─────────────────────────────────────────────────────────────────────────────
+# Nearest-window (priority, ±10%, gated II/VI) for remaining unclassified diets
+# Works after you have `classif_diet_2nd` (post M7 + % nutrients + dominance).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Reuse windows/priority/helpers if already defined; otherwise define them
+if (!exists("win")) {
+  win <- list(
+    GE  = list(I=c(170,190), II=c(300,380), III=c(180,200), IV=c(160,180), V=c(150,170)),
+    Ash = list(I=c(20,40),   II=c(0,10),   III=c(50,80),   IV=c(70,100),  V=c(60,100), VI=c(500,1000)),
+    CP  = list(I=c(80,120),  II=c(0,50),   III=c(350,500), IV=c(120,200), V=c(30,80)),
+    EE  = list(I=c(20,50),   II=c(80,990), III=c(20,60),   IV=c(10,30),   V=c(0,20)),
+    NDF = list(I=c(100,200), II=c(0,50),   III=c(100,300), IV=c(400,500), V=c(600,750))
+  )
+}
+if (!exists("priority")) {
+  priority <- list(
+    I  = c("NDF","CP"),
+    II = c("EE"),
+    III= c("CP","NDF"),
+    IV = c("NDF","CP"),
+    V  = c("NDF","CP"),
+    VI = c("Ash")
+  )
+}
+expand10 <- function(x) c(x[1]*0.9, x[2]*1.1)
+w10 <- purrr::map(win, ~ purrr::map(.x, expand10))  # ±10% windows
+
+std_violation <- function(x, rng) {
+  if (is.na(x) || any(is.na(rng))) return(NA_real_)
+  L <- rng[1]; U <- rng[2]; W <- U - L; if (W <= 0) return(NA_real_)
+  if (x < L) (L - x)/W else if (x > U) (x - U)/W else 0
+}
+
+# 1) Pull remaining unclassified diets that have *some* nutrient info
+diets_left <- classif_diet_2nd %>%
+  dplyr::filter(is.na(M7_Category)) %>%
+  dplyr::mutate(dplyr::across(c(GE, Ash, CP, EE, NDF),
+                              ~ suppressWarnings(as.numeric(.)))) %>%
+  # drop rows where ALL five are NA
+  dplyr::filter(!(is.na(GE) & is.na(Ash) & is.na(CP) & is.na(EE) & is.na(NDF))) %>%
+  dplyr::select(B.Code, D.Item, GE, Ash, CP, EE, NDF) %>%
+  dplyr::distinct()
+
+# If nothing to do, exit gracefully
+if (nrow(diets_left) > 0) {
+
+  # 2) Score each diet against categories (priority variables + gates)
+  cats <- names(priority)
+  missing_penalty <- 0.75
+  gate_ii_lb  <- w10$EE$II[1]   # require EE high enough for cat II
+  gate_vi_lb  <- w10$Ash$VI[1]  # require Ash high enough for cat VI
+
+  scores <- matrix(NA_real_, nrow = nrow(diets_left), ncol = length(cats))
+  colnames(scores) <- cats
+
+  for (j in seq_along(cats)) {
+    cat <- cats[j]
+    req <- priority[[cat]]
+
+    vlist <- lapply(req, function(v) {
+      x   <- as.numeric(diets_left[[v]])
+      rng <- w10[[v]][[cat]]
+      vapply(x, std_violation, rng = rng, FUN.VALUE = numeric(1))
+    })
+    vmat <- do.call(cbind, vlist)
+    vmat[is.na(vmat)] <- missing_penalty
+    s <- rowMeans(vmat)
+
+    if (cat == "II") {
+      ee <- diets_left$EE
+      s[is.na(ee) | ee < gate_ii_lb] <- Inf
+    }
+    if (cat == "VI") {
+      ash <- diets_left$Ash
+      s[is.na(ash) | ash < gate_vi_lb] <- Inf
+    }
+    scores[, j] <- s
+  }
+
+  best_idx <- apply(scores, 1, which.min)
+  second_idx <- apply(scores, 1, function(v) order(v, na.last = TRUE)[2])
+
+  diet_results <- diets_left %>%
+    dplyr::mutate(
+      Assigned_Category    = cats[best_idx],
+      Distance_Closest     = round(scores[cbind(seq_len(nrow(scores)), best_idx)], 3),
+      Second_Best_Category = cats[second_idx],
+      Distance_Second      = round(scores[cbind(seq_len(nrow(scores)), second_idx)], 3)
+    )
+
+  # 3) Merge back *without overriding* any previously assigned categories
+  classif_diet_3rd <- classif_diet_2nd %>%
+    dplyr::left_join(
+      diet_results %>% dplyr::select(B.Code, D.Item, Assigned_Category),
+      by = c("B.Code","D.Item")
+    ) %>%
+    dplyr::mutate(
+      used_nearest = is.na(M7_Category) & !is.na(Assigned_Category),
+      M7_Category  = dplyr::coalesce(M7_Category, Assigned_Category),
+      Diet_Category_method = dplyr::case_when(
+        used_nearest ~ "nearest_window_diet",
+        TRUE         ~ Diet_Category_method
+      )
+    ) %>%
+    dplyr::select(-Assigned_Category)
+
+  # 4) Optional: add a full-text label for readability
+  roman_to_name <- function(x) dplyr::recode(
+    x,
+    "I"   = "High-starch",
+    "II"  = "High-fat",
+    "III" = "Protein",
+    "IV"  = "Good forage",
+    "V"   = "Poor forage",
+    "VI"  = "Mineral/Vitamin",
+    .default = x, .missing = NA_character_
+  )
+  classif_diet_3rd <- classif_diet_3rd %>%
+    dplyr::mutate(M7_Category_full = roman_to_name(M7_Category))
+
+  # 5) Replace your working table
+  classif_diet_2nd <- classif_diet_3rd
+
+  # 6) Quick message
+  newly_classified <- sum(classif_diet_2nd$Diet_Category_method == "nearest_window_diet", na.rm = TRUE)
+  message("Nearest-window (diet) classified additional diets: ", newly_classified)
+} else {
+  message("No remaining unclassified diets with any nutrient info to process.")
+}
+
+```
+```{r}
+# ─────────────────────────────────────────────────────────────────────────────
+# Coverage summary after all methods (initial M7, % nutrients, dominance, nearest)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Universe of diets (union of % table and nutrient table)
+all_diets <- dplyr::full_join(
+  diet_percentages %>%
+    dplyr::transmute(B.Code, DietKey = canonicalize_item(A.Level.Name)) %>%
+    dplyr::distinct(),
+  nutr_diet %>%
+    dplyr::transmute(B.Code, DietKey = D.Item) %>%
+    dplyr::distinct(),
+  by = c("B.Code","DietKey")
+) %>% dplyr::distinct()
+
+# Pull method tags from the FINAL table
+flags <- all_diets %>%
+  dplyr::left_join(
+    classif_diet_2nd %>%
+      dplyr::transmute(
+        B.Code,
+        DietKey = D.Item,
+        method = Diet_Category_method,
+        classified = !is.na(M7_Category)
+      ),
+    by = c("B.Code","DietKey")
+  ) %>%
+  dplyr::mutate(
+    stage_init = method == "M7_numeric",
+    stage_perc = method == "M7_numeric_from_perc",
+    stage_dom  = method == "by_category_dominance",
+    stage_near = method == "nearest_window_diet"
+  ) %>%
+  tidyr::replace_na(list(
+    stage_init = FALSE, stage_perc = FALSE, stage_dom = FALSE, stage_near = FALSE,
+    classified = FALSE
+  ))
+
+# Incremental & cumulative coverage
+coverage_all <- flags %>%
+  dplyr::summarise(
+    diets_total    = dplyr::n(),
+    # Stage 1 (initial only)
+    classified_s1  = sum(stage_init),
+    pct_s1         = round(100 * classified_s1 / diets_total, 1),
+
+    # Stage 2 (new, not in stage 1)
+    inc_s2         = sum(!stage_init & stage_perc),
+    cum_s2         = classified_s1 + inc_s2,
+    pct_cum_s2     = round(100 * cum_s2 / diets_total, 1),
+
+    # Stage 3 (new, not in stage 1/2)
+    inc_s3         = sum(!stage_init & !stage_perc & stage_dom),
+    cum_s3         = cum_s2 + inc_s3,
+    pct_cum_s3     = round(100 * cum_s3 / diets_total, 1),
+
+    # Stage 4 (new, not in stage 1/2/3)
+    inc_s4         = sum(!stage_init & !stage_perc & !stage_dom & stage_near),
+    cum_final      = cum_s3 + inc_s4,
+    pct_cum_final  = round(100 * cum_final / diets_total, 1)
+  )
+
+print(coverage_all)
+
+# Final method breakdown (how many diets ended up with each path)
+final_method_breakdown <- all_diets %>%
+  dplyr::left_join(
+    classif_diet_2nd %>% dplyr::select(B.Code, DietKey = D.Item, M7_Category, Diet_Category_method),
+    by = c("B.Code","DietKey")
+  ) %>%
+  dplyr::mutate(method_readable = dplyr::case_when(
+    is.na(M7_Category)                          ~ "Unclassified",
+    Diet_Category_method == "M7_numeric"        ~ "M7 initial",
+    Diet_Category_method == "M7_numeric_from_perc"  ~ "M7 from % nutrients",
+    Diet_Category_method == "by_category_dominance" ~ "Fallback: dominance",
+    Diet_Category_method == "nearest_window_diet"   ~ "Nearest-window diet",
+    TRUE ~ Diet_Category_method
+  )) %>%
+  dplyr::count(method_readable, name = "n") %>%
+  dplyr::mutate(pct = round(100 * n / sum(n), 1)) %>%
+  dplyr::arrange(dplyr::desc(n))
+
+print(final_method_breakdown)
+
+```
+
 ## papers with ing classified 
 
 ```{r}
@@ -6225,8 +6782,6 @@ knitr::kable(
 )
 
 ```
-
-
 
 ### 19 practice diet comparison 
 
@@ -6422,6 +6977,7 @@ practice_tbl <- classify_diet_practice(
 )
 
 ```
+
 
 ```{r}
 suppressPackageStartupMessages({
@@ -7610,6 +8166,7 @@ p_sub <- ggplot(
   theme_bw() +
   theme(panel.grid.minor = element_blank(),
         legend.position = "right")
+
 
 if (FACET_BY_SPECIES) {
   p_sub <- p_sub + facet_wrap(~ Species, ncol = 1, scales = "free_y")
