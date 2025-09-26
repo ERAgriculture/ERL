@@ -1,0 +1,1338 @@
+---
+title: "Data library nutrition"
+output: html_document
+date: "2025-09-11"
+---
+## 1) Set up 
+This section installs and loads required packages, connects to the S3 bucket containing ERA data, and loads both the livestock and camel metadata into memory.
+
+```{r,message=FALSE,warning=FALSE}
+# Install and load 'pacman' package manager if not already installed
+
+library(ERAg)
+library(stringr)
+library(knitr)
+library(dplyr)
+library(DT)
+library(readxl)
+library(tidyr)
+library(arrow)
+library(ggplot2)
+library(data.table)
+library(purrr)
+library(janitor)
+library(ggalt)
+
+# Set up connection to S3 bucket
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+era_s3 <- "s3://digital-atlas/era"
+
+# -------------------------
+# Load LATEST skinny_cow
+# -------------------------
+# List the files in the s3 bucket
+files <- s3$dir_ls(file.path(era_s3, "data"))
+
+# Identify the latest skinny_cow_2022-YYYY-MM-DD.RData file
+files <- tail(grep(".RData$", grep("skinny_cow_2022", files, value = TRUE), value = TRUE), 1)
+
+# Download to local if not already present
+save_path <- file.path(getwd(), basename(files))
+if (!file.exists(save_path)) {
+  s3$file_download(files, save_path, overwrite = TRUE)
+}
+
+# Load the data (as a list of objects)
+livestock_metadata <- miceadds::load.Rdata2(file = basename(save_path), path = dirname(save_path))
+
+# -------------------------
+# Build D.Item -> D.Type lookup from 2025-04-11.1 (source-of-truth)
+# -------------------------
+src_file <- file.path(era_s3, "data/skinny_cow_2022-2025-04-11.1.RData")
+src_local <- file.path(getwd(), basename(src_file))
+if (!file.exists(src_local)) {
+  s3$file_download(src_file, src_local, overwrite = TRUE)
+}
+src_obj <- miceadds::load.Rdata2(file = basename(src_local), path = dirname(src_local))
+
+# Ensure data.table
+lookup_dt <- as.data.table(src_obj$Animals.Diet)[
+  , .(D.Item = str_squish(as.character(D.Item)),
+      D.Type = str_squish(as.character(D.Type)))
+][
+  !is.na(D.Item) & nzchar(D.Item) & !is.na(D.Type) & nzchar(D.Type)
+]
+
+# Resolve any (D.Item, D.Type) duplicates by taking the most frequent D.Type per D.Item
+lookup_dt <- lookup_dt[
+  , .N, by = .(D.Item, D.Type)
+][
+  order(D.Item, -N)
+][
+  , .SD[1], by = D.Item
+][
+  , .(D.Item, D.Type)
+]
+
+# -------------------------
+# Backfill D.Type into latest Animals.Diet
+# -------------------------
+diet_latest <- as.data.table(livestock_metadata$Animals.Diet)
+
+# Normalize join key to match lookup normalization
+diet_latest[, D.Item := str_squish(as.character(D.Item))]
+
+# Add D.Type column if missing
+if (!"D.Type" %in% names(diet_latest)) {
+  diet_latest[, D.Type := NA_character_]
+} else {
+  diet_latest[, D.Type := as.character(D.Type)]
+}
+
+# Join and fill only missing D.Type
+diet_latest <- merge(
+  diet_latest, lookup_dt,
+  by = "D.Item", all.x = TRUE, suffixes = c("", ".src")
+)
+diet_latest[is.na(D.Type) & !is.na(D.Type.src), D.Type := D.Type.src]
+diet_latest[, D.Type.src := NULL]
+
+# Write back into the loaded object
+livestock_metadata$Animals.Diet <- diet_latest
+
+
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+# Set up connection to S3 bucket for camel data
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+era_s3 <- "s3://digital-atlas/era"
+
+# List RData files related to courageous_camel_2024
+camel_files <- s3$dir_ls(file.path(era_s3, "data"))
+camel_files <- grep("courageous_camel_2024_draft_.*\\.RData$", camel_files, value = TRUE)
+
+# Helper function to extract date and version
+parse_versions <- function(fnames) {
+  base <- sub(".*_draft_", "", fnames)
+  base <- sub("\\.RData$", "", base)
+  
+  date_part <- sub("\\..*$", "", base)
+  version_part <- ifelse(grepl("\\.", base),
+                         as.integer(sub("^.*\\.", "", base)),
+                         0L)
+  
+  data.frame(
+    file = fnames,
+    date = as.Date(date_part),
+    version = version_part,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Parse file names and determine latest
+version_info <- parse_versions(basename(camel_files))
+latest <- version_info[order(version_info$date, version_info$version, decreasing = TRUE), ][1, ]
+latest_file <- camel_files[basename(camel_files) == latest$file]
+
+# Download the file if not already present
+save_path <- file.path(getwd(), basename(latest_file))
+if (!file.exists(save_path)) {
+  s3$file_download(latest_file, save_path, overwrite = TRUE)
+}
+
+# Load the data
+camel <- miceadds::load.Rdata2(file = basename(save_path), path = dirname(save_path))
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+##############################################################################
+# Canonical column templates (ALL use a D.Item field) ------------------------
+##############################################################################
+diet_cols   <- c("B.Code","A.Level.Name","D.Item",
+                 "D.Type","D.Amount","D.Unit.Amount","D.Unit.Time",
+                 "D.Unit.Animals","DC.Is.Dry","D.Ad.lib","D.Item.Group")
+
+diet_cols_ext <- c(diet_cols, "D.Item.Root.Comp.Proc_Major")   # keep root too
+
+mt_cols   <- c("B.Code","A.Level.Name","V.Level.Name",
+               "T.Animals","T.Name","T.Control")
+
+comp_cols <- c("B.Code","D.Item","is_group","is_entire_diet",
+               "DC.Variable","DC.Value","DC.Unit")
+
+digest_cols <- c("B.Code","D.Item","is_group","is_entire_diet",
+                 "DD.Variable","DD.Value","DD.Unit")
+
+data_cols <- c("B.Code","A.Level.Name","Out.Code.Joined",
+               "ED.Intake.Item","ED.Intake.Item.Raw",
+               "ED.Mean.T","ED.Error","Out.Subind","Out.Unit",
+               "Out.WG.Start","Out.WG.Unit",
+               "is_entire_diet","is_group","T.Animals","T.Name","Country")
+
+prod_cols <- c("B.Code","P.Product","P.Variety","P.Practice")
+
+##############################################################################
+# 1. LIVESTOCK tables --------------------------------------------------------
+##############################################################################
+## 1·1 Diet ------------------------------------------------------------------
+diet_livestock <- copy(livestock_metadata$Animals.Diet)[
+  , ..diet_cols_ext][, Source := "livestock"]
+
+## 1·2 Lookup table :  (B.Code , FeedName)  ➜  Canonical root ---------------
+lookup_ditem <- rbindlist(list(
+  diet_livestock[
+    !is.na(D.Item) &
+    !is.na(D.Item.Root.Comp.Proc_Major),
+    .(B.Code,
+      FeedName  = D.Item,
+      Canonical = D.Item.Root.Comp.Proc_Major)],
+  diet_livestock[
+    !is.na(D.Item.Root.Comp.Proc_Major),
+    .(B.Code,
+      FeedName  = D.Item.Root.Comp.Proc_Major,
+      Canonical = D.Item.Root.Comp.Proc_Major)]
+))[
+  , .SD[1], by = .(B.Code, FeedName)]
+
+setkey(lookup_ditem, B.Code, FeedName)
+
+## 1·3 MT --------------------------------------------------------------------
+mt_cols_ls  <- intersect(mt_cols, names(livestock_metadata$MT.Out))
+mt_livestock <- livestock_metadata$MT.Out[, ..mt_cols_ls][
+  , `:=`(Out.WG.Start = NA_real_,
+         Out.WG.Unit  = NA_character_,
+         Source       = "livestock")]
+
+## 1·4 Composition -----------------------------------------------------------
+comp_livestock <- merge(
+  livestock_metadata$Animals.Diet.Comp,
+  lookup_ditem,
+  by.x = c("B.Code","D.Item"),
+  by.y = c("B.Code","FeedName"),
+  all.x = TRUE, allow.cartesian = TRUE
+)[
+  , D.Item := fcoalesce(Canonical, D.Item)
+][
+  , Canonical := NULL
+][
+  , ..comp_cols
+][, Source := "livestock"]
+
+## 1·5 Digestibility ---------------------------------------------------------
+digest_livestock <- merge(
+  livestock_metadata$Animals.Diet.Digest,
+  lookup_ditem,
+  by.x = c("B.Code","D.Item"),
+  by.y = c("B.Code","FeedName"),
+  all.x = TRUE, allow.cartesian = TRUE
+)[
+  , D.Item := fcoalesce(Canonical, D.Item)
+][
+  , Canonical := NULL
+][
+  , ..digest_cols
+][, Source := "livestock"]
+
+## 1·6 Data.Out  (canonicalise Intake item) ----------------------------------
+# Canonicalise Intake item in Data.Out and keep legacy column names expected by data_cols
+dt <- merge(
+  livestock_metadata$Data.Out,
+  lookup_ditem,
+  by.x = c("B.Code","ED.Intake.Item"),
+  by.y = c("B.Code","FeedName"),
+  all.x = TRUE, allow.cartesian = TRUE
+)
+
+# Use Canonical when present, then drop it
+dt[, ED.Intake.Item := fcoalesce(Canonical, ED.Intake.Item)]
+dt[, Canonical := NULL]
+
+# Map new column names back to old ones (so downstream ..data_cols still works)
+if ("ED.Intake.Item.is_group" %in% names(dt) && !"is_group" %in% names(dt)) {
+  setnames(dt, "ED.Intake.Item.is_group", "is_group")
+}
+if ("ED.Intake.Item.is_entire_diet" %in% names(dt) && !"is_entire_diet" %in% names(dt)) {
+  setnames(dt, "ED.Intake.Item.is_entire_diet", "is_entire_diet")
+}
+
+# Now select the standard columns and tag the source
+data_livestock <- dt[, ..data_cols][, Source := "livestock"]
+
+
+## 1·7 Product ---------------------------------------------------------------
+var_ls <- livestock_metadata$Var.Out[
+  , .(P.Variety  = first(na.omit(V.Level.Name)),
+      P.Practice = first(na.omit(V.Animal.Practice))), by = B.Code]
+
+prod_livestock <- livestock_metadata$Prod.Out[
+  , .(B.Code, P.Product)][var_ls, on = "B.Code"][
+  , Source := "livestock"]
+
+##############################################################################
+# 2. CAMEL helper keys (unchanged) ------------------------------------------
+##############################################################################
+diet_key <- camel$MT.Out[
+  , .(B.Code, T.Name, A.Level.Name, T.Control,
+      Herd.Level.Name, Herd.Sublevel.Name)]
+
+herd_info <- camel$Herd.Out[
+  , .(B.Code, Herd.Level.Name, Herd.Sublevel.Name,
+      Herd.Sex, Herd.Stage,
+      V.Var, V.Animal.Practice,
+      T.Animals              = Herd.N,
+      Herd.Start.Weight      = Herd.Start.Weight,
+      Herd.Start.Weight.Unit = Herd.Start.Weight.Unit)]
+
+##############################################################################
+# 3. CAMEL tables  – use root when present, fallback to D.Item --------------
+##############################################################################
+## 3·1 Diet ------------------------------------------------------------------
+diet_camel <- copy(camel$Animal.Diet)[
+  , D.Item := fcoalesce(D.Item.Root.Comp.Proc_Major, D.Item)
+][
+  , ..diet_cols
+][, Source := "camel"]
+
+## 3·2 Composition -----------------------------------------------------------
+comp_camel <- copy(camel$Animal.Diet.Comp)[
+  , D.Item := fcoalesce(D.Item.Root.Comp.Proc_Major, D.Item)
+][
+  , `:=`(DC.Variable = DN.Variable,
+         DC.Value    = DN.Value,
+         DC.Unit     = DN.Unit)
+][
+  , ..comp_cols
+][, Source := "camel"]
+
+## 3·3 Digestibility ---------------------------------------------------------
+digest_camel <- copy(camel$Animal.Diet.Digest)[
+  , D.Item := fcoalesce(D.Item.Root.Comp.Proc_Major, D.Item)
+][
+  , ..digest_cols
+][, Source := "camel"]
+
+## 3·4 MT.Out (unchanged) ----------------------------------------------------
+mt_camel <- diet_key[
+  herd_info, on = .(B.Code,Herd.Level.Name,Herd.Sublevel.Name), nomatch = 0L][
+  camel$MT.Out[
+    , .(B.Code, A.Level.Name, T.Name,
+        T.Start.Weight,
+        T.Start.Weight.Unit = `T.Start.Weight. Unit`)],
+  on = .(B.Code,A.Level.Name,T.Name), nomatch = 0L][
+  , `:=`(T.Start.Weight      = as.numeric(T.Start.Weight),
+         Herd.Start.Weight   = as.numeric(Herd.Start.Weight),
+         T.Start.Weight.Unit = as.character(T.Start.Weight.Unit),
+         Herd.Start.Weight.Unit = as.character(Herd.Start.Weight.Unit))][
+  , `:=`(Out.WG.Start = fcoalesce(T.Start.Weight, Herd.Start.Weight),
+         Out.WG.Unit  = fifelse(!is.na(T.Start.Weight),
+                                T.Start.Weight.Unit,
+                                Herd.Start.Weight.Unit),
+         Source       = "camel")][
+  , !c("T.Start.Weight","T.Start.Weight.Unit",
+       "Herd.Start.Weight","Herd.Start.Weight.Unit")]
+
+## 3·5 Data.Out (unchanged) --------------------------------------------------
+## 3·5 Data.Out (left-join + boolean-only Entire Diet) ------------------------
+# Keep ALL rows from camel$Data.Out; attach A.Level.Name via (B.Code, T.Name),
+# then attach herd fields via (B.Code, Herd.Level.Name, Herd.Sublevel.Name).
+
+data_camel <- merge(
+  camel$Data.Out,
+  diet_key,
+  by = c("B.Code","T.Name"),
+  all.x = TRUE
+)
+
+data_camel <- merge(
+  data_camel,
+  herd_info,
+  by = c("B.Code","Herd.Level.Name","Herd.Sublevel.Name"),
+  all.x = TRUE
+)
+
+# Select/rename to your schema and enforce the boolean Entire Diet rule
+data_camel <- data_camel[
+  , .(B.Code,
+      Country,
+      A.Level.Name,
+      
+      ED.Intake.Item,
+      T.Name,
+      D.Item.Root.Comp.Proc_Major,
+      ED.Intake.Item.is_entire_diet,
+      ED.Intake.Item.Raw = ED.Intake.Item,
+      ED.Mean.T, ED.Error, Out.Unit, Out.Subind,
+      Out.WG.Start = as.numeric(Herd.Start.Weight),
+      Out.WG.Unit  = as.character(Herd.Start.Weight.Unit),
+      T.Animals)
+][
+  # Boolean-only tagging: if camel says entire diet, force the token
+  , ED.Intake.Item := fifelse(ED.Intake.Item.is_entire_diet == TRUE,
+                              "Entire Diet", ED.Intake.Item)
+][
+  , Source := "camel"
+]
+
+
+
+prod_camel <- camel$Herd.Out[
+  , .(B.Code,
+      P.Product  = V.Product,
+      P.Variety  = V.Var,
+      P.Practice = V.Animal.Practice,
+      Herd.Stage)][, Source := "camel"]
+
+##############################################################################
+# 4. Combine camel + livestock ----------------------------------------------
+##############################################################################
+diet_livestock_final <- diet_livestock[
+  , `:=`(D.Item = D.Item.Root.Comp.Proc_Major,
+         D.Item.Root.Comp.Proc_Major = NULL)]
+
+diet_all   <- rbindlist(list(diet_livestock_final, diet_camel), fill = TRUE)
+mt_all     <- rbindlist(list(mt_livestock, mt_camel), fill = TRUE)
+comp_all   <- rbindlist(list(comp_livestock, comp_camel), fill = TRUE)
+digest_all <- rbindlist(list(digest_livestock, digest_camel), fill = TRUE)
+data_all   <- rbindlist(list(data_livestock, data_camel), fill = TRUE)
+prod_all   <- rbindlist(list(prod_livestock, prod_camel), fill = TRUE)
+
+##############################################################################
+# 5. Master list -------------------------------------------------------------
+##############################################################################
+merged_metadata <- list(
+  Animals.Diet        = diet_all,
+  MT.Out              = mt_all,
+  Animals.Diet.Comp   = comp_all,
+  Animals.Diet.Digest = digest_all,
+  Data.Out            = data_all,
+  Prod.Out            = prod_all
+)
+
+```
+
+
+```{r}
+rm(list = setdiff(ls(), c("merged_metadata")))
+
+```
+
+
+
+## 6) Complete the nutrition and digestibility papers
+
+Not all ingredients and diets are currently included in the digestibility and composition tables—only those for which data is available. We aim to add the missing ones to help complete the dataset and enable more comprehensive analysis.
+when basal diet amount is expressed in % deduce first from the total and then see the feed intake vfalue 
+
+```{r}
+
+## 1 · ingredient‑level rows (what you already had)
+items_tbl <- merged_metadata$Animals.Diet %>% 
+  distinct(B.Code, A.Level.Name, D.Item, Source) %>% 
+  mutate(
+    D.Item         = coalesce(D.Item, A.Level.Name),   # fall back to level name
+    kind           = "Item",
+    is_group = FALSE
+  ) %>% 
+  select(B.Code, D.Item, kind,is_group, Source)
+
+## 2 · group‑level rows (PP, “Cactus‑Acacia …”, etc.)
+groups_tbl <- merged_metadata$Animals.Diet %>% 
+  filter(!is.na(D.Item.Group)) %>%              # keep only lines that have a group tag
+  distinct(B.Code, D.Item.Group, Source) %>% 
+  mutate(
+    kind           = "Group",
+    is_group = TRUE) %>% 
+  rename(D.Item = D.Item.Group) %>% 
+  select(B.Code, D.Item, kind,is_group, Source)
+
+## 3 · bind the two together and drop duplicates
+all_diet_items <- bind_rows(items_tbl, groups_tbl) %>% distinct()
+
+
+
+# --- Step 2: Get unique variables in the nutrition and digestibility datasets ---
+nutrition_variables <- unique(na.omit(merged_metadata$Animals.Diet.Comp$DC.Variable))
+digestibility_variables <- unique(na.omit(merged_metadata$Animals.Diet.Digest$DD.Variable))
+
+# --- Step 3: Expand to full grid of all D.Item × variables (by B.Code and Source) ---
+# Nutrition (Comp)
+comp_missing <- all_diet_items %>%
+  crossing(DC.Variable = nutrition_variables) %>%
+  anti_join(
+    merged_metadata$Animals.Diet.Comp %>% select(B.Code, D.Item,is_group, DC.Variable),
+    by = c("B.Code", "D.Item", "DC.Variable","is_group")
+  ) %>%
+  mutate(
+    DC.Value = NA_real_,
+    DC.Unit = NA_character_
+  )
+
+# Digestibility (Digest)
+digest_missing <- all_diet_items %>%
+  crossing(DD.Variable = digestibility_variables) %>%
+  anti_join(
+    merged_metadata$Animals.Diet.Digest %>% select(B.Code, D.Item,is_group, DD.Variable),
+    by = c("B.Code", "D.Item", "DD.Variable","is_group")
+  ) %>%
+  mutate(
+    DD.Value = NA_real_,
+    DD.Unit = NA_character_
+  )
+
+# --- Step 4: Bind the missing values into the existing datasets ---
+merged_metadata$Animals.Diet.Comp <- bind_rows(merged_metadata$Animals.Diet.Comp, comp_missing)
+merged_metadata$Animals.Diet.Digest <- bind_rows(merged_metadata$Animals.Diet.Digest, digest_missing)
+
+```
+
+
+
+
+```{r}
+# --- Step 5: Ensure each ingredient has a row for each nutrition variable ---
+comp_completion <- merged_metadata$Animals.Diet.Comp %>%
+  distinct(B.Code, D.Item, is_entire_diet, Source) %>%
+  crossing(DC.Variable = nutrition_variables) %>%
+  anti_join(
+    merged_metadata$Animals.Diet.Comp %>% select(B.Code, D.Item, DC.Variable),
+    by = c("B.Code", "D.Item", "DC.Variable")
+  ) %>%
+  mutate(
+    DC.Value = NA_real_,
+    DC.Unit = NA_character_
+  )
+
+# --- Step 6: Ensure each ingredient has a row for each digestibility variable ---
+digest_completion <- merged_metadata$Animals.Diet.Digest %>%
+  distinct(B.Code, D.Item, is_entire_diet, Source) %>%
+  crossing(DD.Variable = digestibility_variables) %>%
+  anti_join(
+    merged_metadata$Animals.Diet.Digest %>% select(B.Code, D.Item, DD.Variable),
+    by = c("B.Code", "D.Item", "DD.Variable")
+  ) %>%
+  mutate(
+    DD.Value = NA_real_,
+    DD.Unit = NA_character_
+  )
+
+# --- Step 7: Bind additional completion rows ---
+merged_metadata$Animals.Diet.Comp <- bind_rows(merged_metadata$Animals.Diet.Comp, comp_completion)
+merged_metadata$Animals.Diet.Digest <- bind_rows(merged_metadata$Animals.Diet.Digest, digest_completion)
+
+rm(comp_completion,comp_missing,digest_completion,digest_missing)
+
+```
+
+```{r}
+
+# ── 2.  Build a “variable → units” summary table ───────────────────────────────
+table_units <- merged_metadata$Animals.Diet.Comp %>%
+  # keep rows where a unit is actually recorded
+  filter(!is.na(DC.Unit) & DC.Unit != "NA" & str_trim(DC.Unit) != "") %>%
+  # one row per unique (variable, unit) pair
+  distinct(DC.Variable, DC.Unit) %>%
+  # collapse multiple units for the same variable into a single comma-separated
+  group_by(DC.Variable) %>%
+  summarise(units = paste(sort(unique(DC.Unit)), collapse = ", "),
+            .groups = "drop") %>%
+  arrange(DC.Variable)
+
+# ── 3.  Inspect / export ───────────────────────────────────────────────────────
+print(table_units)
+```
+
+
+```{r}
+
+
+animals <- merged_metadata$Animals.Diet.Comp %>%
+  mutate(value_num = suppressWarnings(as.numeric(DC.Value)))
+
+# --- 1. Define canonical unit targets ----------------------------------------
+var_classes <- list(
+  gkg = c("ADF","ADL","Ash","CF","CFbr","CFibre","CH","CP","CT",
+          "Ca","Calcium","Cell","Cellu","Cfat","CFat","NDF","NDS","NFE",
+          "Hem","Hemicell","Lig","Lignin","Lys","Met","OM","P","Phos",
+          "Thr","Phenol","Tannins","Tan","TP","TG","TL","Zn","Mg","K"),
+  MJkg = c("GE","ME","NE","DE"),
+  mgkg = c("Fe","Mn","Cu","NH3","Se"),
+  pct  = c("Moist","Moisture","FA","EAA","NEAA","MN","Pro","VitA") # variables usually kept as %
+)
+
+# --- 2. Build conversion table ----------------------------------------------
+conv_table <- tribble(
+  ~DC.Unit,          ~class,   ~factor,     ~std_unit,
+  "%",               "gkg",    10,          "g/kg",
+  "% DM",            "gkg",    10,          "g/kg",
+  "g/100g",          "gkg",    10,          "g/kg",
+  "g/100g DM",       "gkg",    10,          "g/kg",
+  "g/kg",            "gkg",    1,           "g/kg",
+  "g/kg DM",         "gkg",    1,           "g/kg",
+  "mg/kg",           "mgkg",   1,           "mg/kg",
+  "mg/kg DM",        "mgkg",   1,           "mg/kg",
+  "MJ/kg",           "MJkg",   1,           "MJ/kg",
+  "MJ/kg DM",        "MJkg",   1,           "MJ/kg",
+  "kJ/kg",           "MJkg",   0.001,       "MJ/kg",
+  "kcal/kg",         "MJkg",   0.004184,    "MJ/kg",
+  "Mcal/kg",         "MJkg",   4.184,       "MJ/kg",
+  "kcal/g",          "MJkg",   4.184,       "MJ/kg",
+  "MJ/100g",         "MJkg",   10,          "MJ/kg",
+  "kJ/g",            "MJkg",   1,           "MJ/kg"
+)
+
+# --- 3. Map each variable to its class --------------------------------------
+animals <- animals %>%
+  mutate(var_class = case_when(
+    DC.Variable %in% var_classes$gkg  ~ "gkg",
+    DC.Variable %in% var_classes$MJkg ~ "MJkg",
+    DC.Variable %in% var_classes$mgkg ~ "mgkg",
+    DC.Variable %in% var_classes$pct  ~ "pct",
+    TRUE ~ NA_character_
+  ))
+
+# --- 4. Join conversion factors ---------------------------------------------
+animals <- animals %>%
+  left_join(conv_table, by = c("DC.Unit" = "DC.Unit", "var_class" = "class")) %>%
+  mutate(
+    value_std = if_else(!is.na(factor), value_num * factor, value_num),
+    unit_std  = coalesce(std_unit, DC.Unit)
+  )
+
+# --- 5. Overwrite values & clean --------------------------------------------
+animals <- animals %>%
+  mutate(
+    DC.Value = format(value_std, scientific = FALSE),
+    DC.Unit  = unit_std
+  ) %>%
+  select(-value_num, -value_std, -var_class, -factor, -std_unit)
+
+# --- 6. Save back -----------------------------------------------------------
+merged_metadata$Animals.Diet.Comp <- animals
+
+```
+
+
+### 6.3) Coverage of nutritent 
+
+```{r}
+
+coverage_raw <- merged_metadata$Animals.Diet.Comp %>%
+  filter(!is.na(DC.Variable)) %>%
+  mutate(
+    # Clean and detect actual missing values
+    DC.Value_clean = str_trim(as.character(DC.Value)),
+    DC.Value_clean = na_if(DC.Value_clean, ""),
+    DC.Value_clean = na_if(DC.Value_clean, "NA"),
+    DC.Value_clean = na_if(DC.Value_clean, "na")
+  ) %>%
+  group_by(DC.Variable) %>%
+  summarise(
+    n_total = n(),
+    n_non_missing = sum(!is.na(DC.Value_clean)),
+    coverage_percent = round(100 * n_non_missing / n_total, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(coverage_percent))
+
+
+```
+
+
+##fill is entire diet column 
+```{r}
+library(dplyr)
+library(stringr)
+
+# Build lookups from Animals.Diet (ingredients and diets)
+ingredient_lookup <- merged_metadata$Animals.Diet %>%
+  transmute(B.Code,
+            token = str_squish(str_to_lower(as.character(D.Item)))) %>%
+  filter(token != "") %>%
+  distinct() %>%
+  mutate(is_ingredient_token = TRUE)
+
+diet_lookup <- merged_metadata$Animals.Diet %>%
+  transmute(B.Code,
+            token = str_squish(str_to_lower(as.character(A.Level.Name)))) %>%
+  filter(token != "") %>%
+  distinct() %>%
+  mutate(is_diet_token = TRUE)
+
+# Helper to fill is_entire_diet in a given table (Comp or Digest)
+fill_is_entire <- function(df) {
+  df %>%
+    mutate(
+      D.Item_norm = str_squish(str_to_lower(as.character(D.Item))),
+      is_entire_literal = str_detect(D.Item_norm, "^(entire|whole)\\s*diet$")
+    ) %>%
+    left_join(ingredient_lookup, by = c("B.Code", "D.Item_norm" = "token")) %>%
+    left_join(diet_lookup,       by = c("B.Code", "D.Item_norm" = "token")) %>%
+    mutate(
+      is_entire_diet = case_when(
+        is_entire_literal           ~ TRUE,   # literal Entire/Whole Diet
+        !is.na(is_ingredient_token) ~ FALSE,  # matches ingredient
+        !is.na(is_diet_token)       ~ TRUE,   # matches diet name
+        TRUE                        ~ FALSE
+      ),
+      # Optional: if you keep is_group in these tables and want groups never entire:
+      is_entire_diet = if ("is_group" %in% names(.)) if_else(is_group, FALSE, is_entire_diet) else is_entire_diet
+    ) %>%
+    select(-D.Item_norm, -is_entire_literal, -is_ingredient_token, -is_diet_token)
+}
+
+# Apply to both tables AFTER your completion/bind steps
+merged_metadata$Animals.Diet.Comp   <- fill_is_entire(merged_metadata$Animals.Diet.Comp)
+merged_metadata$Animals.Diet.Digest <- fill_is_entire(merged_metadata$Animals.Diet.Digest)
+
+#filter for ingredients only 
+
+merged_metadata$Animals.Diet.Comp<-merged_metadata$Animals.Diet.Comp%>%
+  filter(is_entire_diet=="FALSE")%>%
+  filter(is_group=="FALSE")%>%
+  filter(kind=="Item")
+
+merged_metadata$Animals.Diet.Digest<-merged_metadata$Animals.Diet.Digest%>%
+  filter(is_entire_diet=="FALSE")%>%
+  filter(is_group=="FALSE")%>%
+  filter(kind=="Item")
+
+```
+
+
+
+## 7) Link ingredients to feedipedia 
+
+Feedipedia is an online database that provides comprehensive information on feed ingredients used in livestock nutrition. It aggregates data on the nutritional composition, digestibility, and other relevant properties of various feeds.We will use it to infer data when info is missing from our data extraction. Links each ingredient to its corresponding entry in Feedipedia, enabling supplementation of missing nutritional and digestibility data such as GE, CP, EE, and Ash.
+
+```{r,message=FALSE,warning=FALSE}
+
+## download data from feedapedia (generated with the "feedapedia scrapping script available on github)
+
+# Use the raw URL of the file on GitHub
+url <- "https://github.com/ERAgriculture/ERL/raw/main/downloaded_data/feedipedia.parquet"
+
+# Create a temporary file location with a .parquet extension
+temp_file <- tempfile(fileext = ".parquet")
+
+# Download the file in binary mode
+download.file(url, destfile = temp_file, mode = "wb")
+
+# Read the Parquet file
+feedipedia <- read_parquet(temp_file)
+
+## download AOM with the correspondance between feedipedia codes and diet items 
+
+# Define the raw URL for the Excel file
+url <- "https://github.com/Mlolita26/ERA_Docs/raw/main/era_master_sheet(14).xlsx"
+
+temp_file <- tempfile(fileext = ".xlsx")
+download.file(url, destfile = temp_file, mode = "wb")
+
+
+mastersheet <- read_excel(temp_file, sheet = "AOM") %>%
+  filter(L5 == "Feed Ingredient")
+
+mastersheet$Feedipedia <- as.numeric(sub(".*node/", "", mastersheet$Feedipedia))
+
+
+```
+
+## 7.1) add nutrition and digestibility from feedipedia 
+
+```{r}
+
+feedipedia_unit_audit <- feedipedia %>%
+  mutate(
+    Variable = as.character(Variable),
+    Unit     = trimws(Unit)
+  ) %>% 
+  group_by(Variable, Unit) %>% 
+  summarise(n_rows = n(), .groups = "drop") %>% 
+  arrange(Variable, desc(n_rows)) %>% 
+  group_by(Variable) %>% 
+  mutate(
+    n_units = n(),
+    flag    = if_else(n_units > 1, "⚠︎ multiple units", "")
+  ) %>% 
+  ungroup()
+
+# ── wide human-friendly table  ---------------------------------------------
+unit_summary <- feedipedia_unit_audit %>% 
+  unite(unit_n, Unit, n_rows, sep = " (n = ") %>% 
+  mutate(unit_n = paste0(unit_n, ")")) %>% 
+  group_by(Variable, flag) %>% 
+  summarise(units = paste(unit_n, collapse = "; "), .groups = "drop") %>% 
+  arrange(Variable)
+```
+
+###7.1) Harmonize feedipedia units 
+
+```{r}
+
+# ── Harmonize Feedipedia units (all variables) ──────────────────────────────
+
+# Helper function for unit conversion ----------------------------------------
+to_canonical <- function(val, unit, vclass){
+  u  <- str_trim(tolower(unit))
+  nu <- unit              # keep the original unit by default
+  v  <- val               # keep the original value by default
+
+  if (is.na(val) | is.na(u)) return(list(val = val, unit = unit))
+
+  # ---------- ENERGY (canonical = MJ/kg DM) ----------
+  if (vclass == "energy") {
+    if (u %in% c("mcal/kg dm","mcal/kg","mcal/kg d.m.")) {
+      v  <- val * 4.184 ; nu <- "MJ/kg"
+    } else if (u %in% c("kcal/kg dm","kcal/kg")) {
+      v  <- val * 0.004184 ; nu <- "MJ/kg"
+    } else if (u %in% c("kj/kg","kj/kg dm")) {
+      v  <- val * 0.001 ; nu <- "MJ/kg"
+    } else if (u %in% c("mj/kg","mj/kg dm")) {
+      nu <- "MJ/kg"
+    }
+  }
+
+  # ---------- NUTRIENTS (canonical = g/kg DM) ----------
+  else if (vclass == "nutrient") {
+    if (u %in% c("% dm","%","% as fed")) {
+      v  <- val * 10 ;   nu <- "g/kg"
+    } else if (u %in% c("g/100g dm","g/100g")) {
+      v  <- val * 10 ;   nu <- "g/kg"
+    } else if (u %in% c("mg/kg dm","mg/kg")) {
+      v  <- val / 1000 ; nu <- "g/kg"
+    } else if (u %in% c("g/kg","g/kg dm")) {
+      nu <- "g/kg"
+    }
+  }
+
+  # ---------- MINERALS / TRACE (canonical = g/kg or mg/kg) ----------
+  else if (vclass == "mineral") {
+    if (u %in% c("g/kg dm","g/kg")) {
+      nu <- "g/kg"
+    } else if (u %in% c("mg/kg dm","mg/kg")) {
+      nu <- "mg/kg"
+    }
+  }
+
+  # ---------- AMINO ACIDS ----------
+  else if (vclass == "aa") {
+    # Leave as-is (% protein vs g/16g N not directly comparable)
+    nu <- unit
+  }
+
+  list(val = v, unit = nu)
+}
+
+# Variable classes ------------------------------------------------------------
+energy_vars <- c("GE","Gross energy","ME","Metabolizable energy",
+                 "NE","AME","AMEn","TME","TMEn",
+                 "ME ruminants","MEn growing pig","MEn rabbit","NE growing pig",
+                 "DE ruminants","DE rabbit","DE growing pig","Digestible energy")
+
+nutrient_vars <- c("CP","Crude protein","EE","Ether extract","Ash","ADF","NDF",
+                   "CF","CFibre","ADL","OM","NFE","Cell walls, water insoluble",
+                   "Crude fibre","Acid detergent fibre","Lignin")
+
+mineral_vars <- c("Ca","Calcium","P","Phosphorus","K","Potassium","Mg","Magnesium",
+                  "Na","Sodium","S","Sulfur","Cl","Chlorine")
+
+trace_vars <- c("Fe","Iron","Zn","Zinc","Cu","Copper","Mn","Manganese","Se","Selenium")
+
+aa_vars <- c("Lysine","Methionine","Cystine","Threonine","Valine",
+             "Leucine","Isoleucine","Phenylalanine","Tyrosine","Histidine",
+             "Tryptophan","Proline","Alanine","Glycine","Serine",
+             "Aspartic acid","Glutamic acid")
+
+# Apply conversion across Feedipedia ------------------------------------------
+feedipedia <- feedipedia %>%
+  rowwise() %>%
+  mutate(
+    vclass = case_when(
+      Variable %in% energy_vars   ~ "energy",
+      Variable %in% nutrient_vars ~ "nutrient",
+      Variable %in% mineral_vars  ~ "mineral",
+      Variable %in% trace_vars    ~ "mineral",
+      Variable %in% aa_vars       ~ "aa",
+      TRUE ~ NA_character_
+    ),
+    conv = list(
+      if (!is.na(vclass))
+        to_canonical(Avg, Unit, vclass)
+      else
+        list(val = Avg, unit = Unit)
+    )
+  ) %>%
+  tidyr::unnest_wider(conv) %>%
+  mutate(
+    Avg = val,
+    Unit = unit
+  ) %>%
+  select(-val, -unit, -vclass) %>%
+  ungroup()
+
+# ── END Harmonization chunk ────────────────────────────────────────────────
+
+```
+
+
+
+### 7.2) add nutrition and digestibility from feedipedia 
+
+```{r,message=FALSE,warning=FALSE}
+# --------------------------------------------------------------------------- #
+# A) Attach Feedipedia node to Comp & Digest ---------------------------------
+# --------------------------------------------------------------------------- #
+add_feedipedia_node <- function(df, mastersheet) {
+  df %>% 
+    left_join(mastersheet %>% select(Edge_Value, Feedipedia),
+              by = c("D.Item" = "Edge_Value")) %>% 
+    distinct()
+}
+
+merged_metadata$Animals.Diet.Comp   <- add_feedipedia_node(merged_metadata$Animals.Diet.Comp,   mastersheet)
+merged_metadata$Animals.Diet.Digest <- add_feedipedia_node(merged_metadata$Animals.Diet.Digest, mastersheet)
+
+# --------------------------------------------------------------------------- #
+# B) Clean Feedipedia dump & rename to match Comp/DC.Variable ----------------
+# --------------------------------------------------------------------------- #
+var_map <- c(
+  "Crude protein"                = "CP",
+  "Ether extract"                = "EE",
+  "Acid detergent fibre"         = "ADF",
+  "Neutral detergent fibre"      = "NDF",
+  "Ash"                          = "Ash",
+  "Calcium"                      = "Ca",
+  "Phosphorus"                   = "P",
+  "Magnesium"                    = "Mg",
+  "Potassium"                    = "K",
+  "Iron"                         = "Fe",
+  "Manganese"                    = "Mn",
+  "Zinc"                         = "Zn",
+  "Copper"                       = "Cu",
+  "Sulfur"                       = "S",
+  "Dry matter"                   = "DM",
+  "Moisture"                     = "Moisture",
+  "Gross energy"                 = "GE",
+  "Metabolizable energy"         = "ME",
+  "Digestible energy"            = "DE",
+  "Net energy"                   = "NE",
+  "Lignin"                       = "Lignin",
+  "Organic matter digestibility" = "OM"
+  # extend mapping as needed
+)
+
+feedipedia <- feedipedia %>% 
+  mutate(
+    Variable = recode(Variable, !!!var_map),
+    category = case_when(
+      Variable %in% unique(merged_metadata$Animals.Diet.Comp$DC.Variable) ~ "nutrition",
+      str_detect(Variable, regex("digestibility|degradability|DE|ME|NE", TRUE)) ~ "digestibility",
+      TRUE ~ "nutrition"
+    ),
+    feedipedia_node = as.numeric(feedipedia_node),
+    page_node       = as.numeric(page_node)
+  )
+
+# --------------------------------------------------------------------------- #
+# C) Node-level means for all variables --------------------------------------
+# --------------------------------------------------------------------------- #
+feedipedia_nutri_node <- feedipedia %>% 
+  filter(category == "nutrition") %>% 
+  group_by(feedipedia_node, Variable, Unit) %>% 
+  summarise(Value = mean(Avg, na.rm = TRUE), .groups = "drop") %>% 
+  rename(DC.Variable = Variable, DC.Value.feedipedia = Value)
+
+feedipedia_dig_node <- feedipedia %>% 
+  filter(category == "digestibility") %>% 
+  group_by(feedipedia_node, Variable, Unit) %>% 
+  summarise(DD.Value.feedipedia = mean(Avg, na.rm = TRUE), .groups = "drop") %>% 
+  rename(DD.Variable = Variable)
+
+# Cross-walk: allow lookup by node or page
+id_pairs <- feedipedia %>% distinct(feedipedia_node, page_node)
+id_xwalk <- bind_rows(
+  id_pairs %>% mutate(lookup_id = feedipedia_node),
+  id_pairs %>% mutate(lookup_id = page_node)
+) %>% 
+  filter(!is.na(lookup_id)) %>% 
+  distinct(feedipedia_node, lookup_id)
+
+feedipedia_nutri_ids <- id_xwalk %>% left_join(feedipedia_nutri_node, by = "feedipedia_node")
+feedipedia_dig_ids   <- id_xwalk %>% left_join(feedipedia_dig_node,  by = "feedipedia_node")
+
+# --------------------------------------------------------------------------- #
+# D) Ensure source-tracking columns exist ------------------------------------
+# --------------------------------------------------------------------------- #
+if (!"nutrition_source" %in% names(merged_metadata$Animals.Diet.Comp)) {
+  merged_metadata$Animals.Diet.Comp$nutrition_source <- NA_character_
+}
+if (!"digestibility_source" %in% names(merged_metadata$Animals.Diet.Digest)) {
+  merged_metadata$Animals.Diet.Digest$digestibility_source <- NA_character_
+}
+
+# --------------------------------------------------------------------------- #
+# E) Fill ALL missing Comp variables -----------------------------------------
+# --------------------------------------------------------------------------- #
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>% 
+  mutate(
+    DC.Value = suppressWarnings(as.numeric(DC.Value)),
+    nutrition_source = if_else(!is.na(DC.Value), "raw", nutrition_source)
+  ) %>% 
+  left_join(feedipedia_nutri_ids,
+            by = c("Feedipedia" = "lookup_id", "DC.Variable")) %>% 
+  mutate(
+    use_fp   = is.na(DC.Value) & !is.na(DC.Value.feedipedia),
+    DC.Unit  = if_else(use_fp, Unit, DC.Unit),
+    DC.Value = coalesce(DC.Value, DC.Value.feedipedia),
+    nutrition_source = if_else(use_fp, "feedipedia", nutrition_source)
+  ) %>% 
+  select(-DC.Value.feedipedia, -Unit, -use_fp)
+
+# --------------------------------------------------------------------------- #
+# F) Fill ALL digestibility gaps ---------------------------------------------
+# --------------------------------------------------------------------------- #
+merged_metadata$Animals.Diet.Digest <- merged_metadata$Animals.Diet.Digest %>% 
+  mutate(
+    DD.Value = suppressWarnings(as.numeric(DD.Value)),
+    digestibility_source = if_else(!is.na(DD.Value), "raw", digestibility_source),
+    Feedipedia = as.numeric(Feedipedia)
+  ) %>% 
+  left_join(feedipedia_dig_ids,
+            by = c("Feedipedia" = "lookup_id", "DD.Variable")) %>% 
+  mutate(
+    use_fp   = is.na(DD.Value) & !is.na(DD.Value.feedipedia),
+    DD.Unit  = if_else(use_fp, Unit, DD.Unit),
+    DD.Value = coalesce(DD.Value, DD.Value.feedipedia),
+    digestibility_source = if_else(use_fp, "feedipedia", digestibility_source)
+  ) %>% 
+  select(-DD.Value.feedipedia, -Unit, -use_fp)
+
+```
+
+
+###7.3 Coverage after Feedipedia 
+
+```{r}
+coverage_feedipedia <- merged_metadata$Animals.Diet.Comp %>%
+  filter(!is.na(DC.Variable)) %>%
+  mutate(
+    # Clean and detect actual missing values
+    DC.Value_clean = str_trim(as.character(DC.Value)),
+    DC.Value_clean = na_if(DC.Value_clean, ""),
+    DC.Value_clean = na_if(DC.Value_clean, "NA"),
+    DC.Value_clean = na_if(DC.Value_clean, "na")
+  ) %>%
+  group_by(DC.Variable) %>%
+  summarise(
+    n_total = n(),
+    n_non_missing = sum(!is.na(DC.Value_clean)),
+    coverage_percent = round(100 * n_non_missing / n_total, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(coverage_percent))
+
+
+```
+
+
+## Link data to ILRI database
+
+```{r}
+## Link data to ILRI database
+# ---- Load ILRI nutrition data ----
+ILRI <- read_excel(temp_file, sheet = "ssa_feedsdb", col_types = "text") %>%
+  janitor::clean_names()
+names(ILRI) <- gsub("\\.\\.\\.[0-9]+", "", names(ILRI))
+
+# ---- Reshape ILRI data to long format ----
+# Keep feedcode + all nutrient columns except metadata
+ilri_long <- ILRI %>%
+  rename(ilri_feedcode = ilri_feedcode_6) %>%
+  pivot_longer(
+    cols = -ilri_feedcode,
+    names_to = "DC.Variable",
+    values_to = "ILRI_Value"
+  ) %>%
+  mutate(
+    DC.Variable = toupper(DC.Variable),
+    ILRI_Value  = suppressWarnings(as.numeric(ILRI_Value)),
+    # Standardize units: % → g/kg DM, ME/NEL/NEM/NEG → MJ/kg DM
+    ILRI_Value = case_when(
+      DC.Variable %in% c("ME", "NEL", "NEM", "NEG") ~ ILRI_Value,
+      TRUE ~ ILRI_Value * 10
+    ),
+    ILRI_Unit = case_when(
+      DC.Variable %in% c("ME", "NEL", "NEM", "NEG") ~ "MJ/kg DM",
+      TRUE ~ "g/kg DM"
+    )
+  ) %>%
+  filter(!is.na(ILRI_Value))   # drop empties
+
+# ---- Load and clean AOM mapping sheet ----
+aom_map <- read_excel(temp_file, sheet = "AOM", col_types = "text") %>%
+  janitor::clean_names() %>%
+  filter(l5 == "Feed Ingredient") %>%
+  select(edge_value, ilri_code) %>%
+  mutate(ilri_code = as.character(ilri_code))
+
+# ---- Merge ILRI feed codes into diet composition ----
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  left_join(aom_map, by = c("D.Item" = "edge_value")) %>%
+  left_join(ilri_long, by = c("ilri_code" = "ilri_feedcode", "DC.Variable")) %>%
+  mutate(
+    to_fill = is.na(DC.Value) & !is.na(ILRI_Value),
+    DC.Value = if_else(to_fill, ILRI_Value, DC.Value),
+    DC.Unit  = if_else(to_fill, ILRI_Unit, DC.Unit),
+    nutrition_source = case_when(
+      to_fill ~ "ilri",
+      !is.na(DC.Value) & is.na(nutrition_source) ~ "raw",
+      TRUE ~ nutrition_source
+    )
+  ) %>%
+  select(-ILRI_Value, -ILRI_Unit, -to_fill) %>%
+  distinct()
+
+```
+
+
+join nutritional values
+```{r}
+
+# ---- Join nutritional values from ILRI ----
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  left_join(ilri_long, by = c("ilri_code" = "ilri_feedcode", "DC.Variable"))%>%
+  distinct()
+
+
+```
+fill missing values from ILRI database
+
+```{r}
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  mutate(
+    to_fill = is.na(DC.Value) & !is.na(ILRI_Value),
+    DC.Value = if_else(to_fill, ILRI_Value, DC.Value),
+    DC.Unit = if_else(to_fill, ILRI_Unit, DC.Unit),
+    nutrition_source = if_else(to_fill, "ilri", nutrition_source)
+  ) %>%
+  select(-ILRI_Value, -ILRI_Unit, -to_fill)
+
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  mutate(
+    DC.Unit = case_when(
+      DC.Unit == "g/kg DM" ~ "g/kg",
+      DC.Unit == "MJ/kg DM" ~ "MJ/kg",
+      TRUE ~ DC.Unit
+    )
+  )%>%
+  distinct()
+
+```
+
+
+
+### Coverage after ILRI
+
+```{r}
+coverage_ILRI <- merged_metadata$Animals.Diet.Comp %>%
+  filter(!is.na(DC.Variable)) %>%
+  mutate(
+    # Clean and detect actual missing values
+    DC.Value_clean = str_trim(as.character(DC.Value)),
+    DC.Value_clean = na_if(DC.Value_clean, ""),
+    DC.Value_clean = na_if(DC.Value_clean, "NA"),
+    DC.Value_clean = na_if(DC.Value_clean, "na")
+  ) %>%
+  group_by(DC.Variable) %>%
+  summarise(
+    n_total = n(),
+    n_non_missing = sum(!is.na(DC.Value_clean)),
+    coverage_percent = round(100 * n_non_missing / n_total, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(coverage_percent))
+
+```
+
+
+### summary coverage 
+
+```{r}
+coverage_summary <- bind_rows(
+  coverage_raw   %>% mutate(Source = "raw"),
+  coverage_feedipedia %>% mutate(Source = "feedipedia"),
+  coverage_ILRI  %>% mutate(Source = "ILRI")
+)
+
+# Pivot to wide format: one row per variable, columns for each source
+coverage_summary_wide <- coverage_summary %>%
+  select(DC.Variable, Source, coverage_percent) %>%
+  pivot_wider(names_from = Source, values_from = coverage_percent)
+
+# Optional: sort by raw coverage
+coverage_summary_wide <- coverage_summary_wide %>%
+  arrange(desc(raw))
+
+```
+
+
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(openxlsx)
+
+# --- Start from long format ---
+comp_long <- merged_metadata$Animals.Diet.Comp %>%
+  select(B.Code, D.Item, DC.Variable, DC.Value, DC.Unit, nutrition_source)
+
+
+# --- Replace NULLs with NA and flatten list-columns -------------------------
+comp_long <- comp_long %>%
+  mutate(across(
+    everything(),
+    ~ if (is.list(.)) {
+        sapply(., function(x) {
+          if (is.null(x)) "NA" else paste(x, collapse = "; ")
+        })
+      } else {
+        ifelse(is.na(.), "NA", as.character(.))
+      }
+  ))
+
+
+
+# --- Build country-code key ---
+country_key <- merged_metadata$Data.Out %>%
+  select(B.Code, Country) %>%
+  distinct()
+
+# --- Build comp_long and attach country via key ---
+comp_long <- comp_long %>%
+  left_join(country_key, by = "B.Code")
+
+
+```
+
+
+```{r}
+# --- 2) Feed code mapping ---------------------------------------------------
+# Assuming you already merged Feedipedia and ILRI codes into Animals.Diet.Comp
+feed_map <- merged_metadata$Animals.Diet.Comp %>%
+  filter(is_entire_diet == "FALSE") %>%
+  select(D.Item, Feedipedia, ilri_code) %>%
+  distinct() %>%
+  arrange(D.Item) %>%
+  mutate(across(
+    everything(),
+    ~ ifelse(is.na(.), "NA", as.character(.))
+  ))
+
+```
+
+
+```{r}
+# --- 1) Ensure harmonized values and units before summarising ---
+comp_std <- merged_metadata$Animals.Diet.Comp %>%
+  mutate(value_num = suppressWarnings(as.numeric(DC.Value))) %>%
+  filter(!is.na(value_num), !is.na(DC.Unit))
+
+# --- 2) Summarise by D.Item and DC.Variable ---
+means_tbl <- comp_std %>%
+  group_by(D.Item, DC.Variable, DC.Unit) %>%
+  summarise(
+    n    = n(),
+    mean = mean(value_num, na.rm = TRUE),
+    sd   = sd(value_num, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(D.Item, DC.Variable)
+
+
+
+```
+
+```{r}
+library(openxlsx)
+library(dplyr)
+
+# --- 1) Metadata: Data sources description -----------------------------------
+meta_block <- data.frame(
+  Section = "Data sources",
+  Text = c(
+    "The nutritional data of livestock feeds were compiled from multiple sources:",
+    "1) Raw values extracted from published literature and project reports.",
+    "2) Feedipedia database: missing values were supplemented using feedipedia averages.",
+    "3) ILRI laboratory database: values were harmonized from SSA Feeds lab data.",
+    "All values were harmonized to canonical units (g/kg, MJ/kg, mg/kg, or %).",
+    "Coverage statistics are reported before and after supplementation from Feedipedia and ILRI."
+  ),
+  stringsAsFactors = FALSE
+)
+
+# --- 2) Variable dictionary -------------------------------------------------
+var_dict <- data.frame(
+  Variable = c("DM","OM","ADF","NDF","ADL","CP","IVDMD","ME","NEm","NEg","NEl",
+               "Ca","Cu","P","Fe","K","Mg","Mn","Na","Zn"),
+  Variable_name = c("Dry matter","Organic matter","Acid detergent fibre",
+                    "Neutral detergent fibre","Acid detergent lignin",
+                    "Crude protein","In vitro dry matter digestibility",
+                    "Metabolizable energy","Net energy for maintenance",
+                    "Net energy for gain","Net energy for lactation",
+                    "Calcium","Copper","Phosphorus","Iron","Potassium",
+                    "Magnesium","Manganese","Sodium","Zinc"),
+  Unit = c("% dried basis","% of DM","% of DM","% of DM","% of DM","% of DM",
+           "% of DM","MJ/kg DM","MJ/kg DM","MJ/kg DM","MJ/kg DM",
+           "g/kg DM","ppm, DM","g/kg DM","ppm, DM","g/kg DM",
+           "g/kg DM","ppm, DM","ppm, DM","ppm, DM"),
+  stringsAsFactors = FALSE
+)
+
+# --- 3) Table descriptions --------------------------------------------------
+table_desc <- data.frame(
+  Table = c("Composition","Feed_mapping","Means"),
+  Description = c(
+    "Composition table contains one row per feed ingredient (D.Item). Each nutritional variable is expanded into 3 columns: Value, Unit, and Source. Sources can be raw (papers/reports), feedipedia, or ilri.",
+    "Feed_mapping table links diet ingredient names (D.Item) to external codes (Feedipedia node ID and ILRI feed code). Used for cross-referencing across databases.",
+    "Means table provides summary statistics by feed ingredient (D.Item). For each nutritional variable, it reports mean, standard deviation (sd), sample size (n), and the canonical unit."
+  ),
+  stringsAsFactors = FALSE
+)
+```
+
+
+```{r}
+# --- 4) Write everything to Excel -------------------------------------------
+wb <- createWorkbook()
+
+# Metadata sheet (with 3 sections stacked)
+addWorksheet(wb, "Metadata")
+
+writeData(wb, "Metadata", meta_block, startRow = 1, colNames = TRUE)
+writeData(wb, "Metadata", data.frame("", ""), startRow = nrow(meta_block) + 3, colNames = FALSE)
+
+writeData(wb, "Metadata", var_dict, startRow = nrow(meta_block) + 5, colNames = TRUE)
+writeData(wb, "Metadata", data.frame("", ""), startRow = nrow(meta_block) + nrow(var_dict) + 7, colNames = FALSE)
+
+writeData(wb, "Metadata", table_desc, startRow = nrow(meta_block) + nrow(var_dict) + 9, colNames = TRUE)
+
+# Data sheets (data only, no description rows)
+addWorksheet(wb, "Composition")
+writeData(wb, "Composition", comp_wide, na.string = "NA")
+
+addWorksheet(wb, "Feed_mapping")
+writeData(wb, "Feed_mapping", feed_map, na.string = "NA")
+
+addWorksheet(wb, "Means")
+writeData(wb, "Means", means_wide, na.string = "NA")
+
+# Save final Excel
+saveWorkbook(wb, "ERA_nutrition_library.xlsx", overwrite = TRUE)
+
+```
+
