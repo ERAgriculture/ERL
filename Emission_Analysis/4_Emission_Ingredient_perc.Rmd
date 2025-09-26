@@ -1,0 +1,144 @@
+---
+title: "4_Emission_ingredient_perc"
+output: html_document
+date: "2025-09-26"
+---
+
+```{r}
+ingredients <- readRDS("~/ERL/Emission_Analysis/data/ingredients_harmonized_subset.rds")
+feed_intake <- read.csv("~/ERL/Emission_Analysis/data/feed_intake_harmonized.csv")
+
+```
+
+
+## 10) Relative % of each ingredient in the diet
+
+This table presents the relative percentage of each ingredient within a diet. To ensure accurate proportion calculations, we first filtered the dataset to include only diets with consistent units. Diets with incompatible or non-harmonizable units were excluded, as their proportions could not be reliably determined.
+
+```{r,message=FALSE,warning=FALSE}
+# ────────────────────────────────────────────────────────────────────────────
+# (a) Ingredient-based totals  ----------------------------------------------
+consistent_diets <- ingredients %>%                       # ignore “Entire Diet” rows
+  filter(D.Type != "Entire Diet") %>%
+  group_by(B.Code, A.Level.Name) %>%
+  mutate(Unit_Count = n_distinct(D.Unit.Amount)) %>%      # always 1 after conversion
+  filter(Unit_Count == 1) %>%                             # keep only single-unit diets
+  ungroup()
+
+diet_completeness <- consistent_diets %>% 
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(
+    n_total      = n(),
+    n_nonmissing = sum(!is.na(D.Amount)),
+    .groups      = "drop"
+  ) %>%
+  filter(n_total == n_nonmissing)
+
+total_ingr <- consistent_diets %>%
+  semi_join(diet_completeness, by = c("B.Code", "A.Level.Name")) %>%
+  group_by(B.Code, A.Level.Name, D.Unit.Amount) %>%
+  summarise(Total_Amount_ingr = sum(D.Amount), .groups = "drop")
+
+# ────────────────────────────────────────────────────────────────────────────
+# (b) Whole-diet feed-intake rows  ------------------------------------------
+#     Use the ORIGINAL ‘feed_intake’ table, because that still carries
+#     ED.Mean.T and Out.Unit.Amount.
+feed_intake_diet_g <- feed_intake %>% 
+  filter(is_entire_diet) %>%                               # only full-diet rows
+  mutate(
+    Intake_Amount_g = case_when(                           # kg → g
+      Out.Unit.Amount == "kg" ~ ED.Mean.T * 1000,
+      Out.Unit.Amount == "g"  ~ ED.Mean.T,
+      TRUE                    ~ NA_real_
+    ),
+    D.Unit.Amount = "g"                                     # unify the unit
+  ) %>% 
+  select(B.Code, A.Level.Name, D.Unit.Amount, Intake_Amount_g)
+
+# ────────────────────────────────────────────────────────────────────────────
+# (c) Merge the two sources, prefer feed-intake -----------------------------
+total_amounts <-total_ingr%>%
+  rename(Total_Amount=Total_Amount_ingr)
+
+# ────────────────────────────────────────────────────────────────────────────
+# 2.  Check unit correspondence  ---------------------------------------------
+unit_check <- ingredients %>%
+  select(B.Code, A.Level.Name, Ingredient_Unit = D.Unit.Amount) %>%
+  distinct() %>%
+  left_join(
+    total_amounts %>%
+      select(B.Code, A.Level.Name, Total_Unit = D.Unit.Amount),
+    by = c("B.Code", "A.Level.Name")
+  ) %>%
+  mutate(Consistent_Units = Ingredient_Unit == Total_Unit)
+
+# Keep only diets whose units match
+consistent_unit_diets <- unit_check %>%
+  filter(Consistent_Units) %>%
+  select(B.Code, A.Level.Name)
+
+ingredients_clean <- ingredients %>%
+  semi_join(consistent_unit_diets, by = c("B.Code", "A.Level.Name"))
+
+totals_clean <- total_amounts %>%
+  semi_join(consistent_unit_diets, by = c("B.Code", "A.Level.Name"))
+
+# ────────────────────────────────────────────────────────────────────────────
+# 3.  Percentage contribution of each ingredient -----------------------------
+diet_percentages <- ingredients_clean %>% 
+  filter(D.Type != "Entire Diet") %>%
+  left_join(totals_clean,
+            by = c("B.Code", "A.Level.Name", "D.Unit.Amount")) %>% 
+  mutate(
+    Percentage_of_Diet = ifelse(Total_Amount > 0,
+                                (D.Amount / Total_Amount) * 100,
+                                NA_real_)
+  ) %>% 
+  select(
+    B.Code, A.Level.Name, D.Item, D.Type,
+    D.Amount, D.Unit.Amount, Percentage_of_Diet
+  )
+
+# (optional) remove helpers --------------------------------------------------
+rm(consistent_diets, diet_completeness, total_ingr,
+   feed_intake_diet_g, unit_check, consistent_unit_diets)
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+# Check if each diet sums close to 100%
+validation <- diet_percentages %>%
+  group_by(B.Code, A.Level.Name) %>%
+  summarise(Total_Percentage = sum(Percentage_of_Diet, na.rm=TRUE)) %>%
+  ungroup()
+
+# Display diets and their total percentages
+# datatable(
+#   validation, 
+#   options = list(
+#     pageLength = 10,         # Show 10 rows per page by default
+#     scrollX = TRUE,          # Enable horizontal scrolling
+#     autoWidth = TRUE,        # Adjust column width automatically
+#     searchHighlight = TRUE   # Highlight search terms
+#   ),
+#   caption = "Validation table"
+# )
+
+
+```
+
+The lines that have 0 as validation are the ones that were feeding ad libitum for which we do not have a precise amount so it's impossible to calculate the relative proportion of the ingredients.
+```{r}
+# Ensure folders exist
+dir.create(file.path("data"), showWarnings = FALSE, recursive = TRUE)
+
+# 1) merged metadata after all corrections
+write.csv(diet_percentages,
+        file.path("data","diet_percentages.csv"))
+write.csv(total_amounts,
+        file.path("data","total_amounts.csv"))
+
+
+```
+

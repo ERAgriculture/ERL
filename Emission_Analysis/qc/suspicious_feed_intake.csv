@@ -1,0 +1,609 @@
+B.Code,A.Level.Name,ED.Mean.T,Out.Unit.Amount,Out.Unit.Time,Out.Unit.Animals,flag
+AG0051,NG,0.0083,kg,day,individual,too_low_kg
+AG0051,NGD,0.008199999999999999,kg,day,individual,too_low_kg
+AG0051,PG,0.0091,kg,day,individual,too_low_kg
+AG0051,PGD,0.0092,kg,day,individual,too_low_kg
+AN0007,T1,0.0696,kg,day,individual,too_low_kg
+AN0007,T2,0.0735,kg,day,individual,too_low_kg
+AN0007,T3,0.0808,kg,day,individual,too_low_kg
+AN0007,T4,0.07690000000000001,kg,day,individual,too_low_kg
+AN0007,T5,0.08020000000000001,kg,day,individual,too_low_kg
+AN0020,Control T1,0.050336071428571404,kg,day,individual,too_low_kg
+AN0020,T2,0.0484342857142857,kg,day,individual,too_low_kg
+AN0020,T3,0.049029642857142904,kg,day,individual,too_low_kg
+B01063,Control Diet,0.00478928571428572,kg,day,individual,too_low_kg
+B01063,PEG0,0.00466071428571429,kg,day,individual,too_low_kg
+B01063,PEG100,0.00458464285714286,kg,day,individual,too_low_kg
+B01063,PEG25,0.004925,kg,day,individual,too_low_kg
+B01063,PEG50,0.00491071428571429,kg,day,individual,too_low_kg
+B01063,PEG75,0.00475357142857143,kg,day,individual,too_low_kg
+BO1012,DLL10,0.0338,kg,day,individual,too_low_kg
+BO1012,DLL15,0.0508,kg,day,individual,too_low_kg
+BO1012,DLL20,0.0677,kg,day,individual,too_low_kg
+BO1012,DLL5,0.0169,kg,day,individual,too_low_kg
+BO1015,42% CFM +52% CS +6% SS (G3),0.078,kg,day,individual,too_low_kg
+BO1015,42% CFM +52% CS +6% TSS (G5),0.077,kg,day,individual,too_low_kg
+BO1015,46% CFM +51% CS +3% SS (G2),0.039,kg,day,individual,too_low_kg
+BO1015,46% CFM +51% CS +3% TSS (G4),0.0385,kg,day,individual,too_low_kg
+BO1017,BRT2,0.0504,kg,day,individual,too_low_kg
+BO1017,BRT3,0.0352,kg,day,individual,too_low_kg
+BO1017,BRT4,0.0193,kg,day,individual,too_low_kg
+BO1017,BT2,0.07390000000000001,kg,day,individual,too_low_kg
+BO1017,BT3,0.06709999999999999,kg,day,individual,too_low_kg
+BO1017,BT4,0.0496,kg,day,individual,too_low_kg
+BO1017,RT2,0.067,kg,day,individual,too_low_kg
+BO1017,RT3,0.0583,kg,day,individual,too_low_kg
+BO1017,RT4,0.038200000000000005,kg,day,individual,too_low_kg
+BO1030,(R + UMB),0.017,kg,day,individual,too_low_kg
+BO1042,0% cashew nut shell,0.09154000000000001,kg,day,individual,too_low_kg
+BO1042,10% cashew nut shell,0.08565,kg,day,individual,too_low_kg
+BO1042,15% cashew nut shell,0.06737,kg,day,individual,too_low_kg
+BO1042,20% cashew nut shell,0.044649999999999995,kg,day,individual,too_low_kg
+BO1048,60:40 ratio,0.05719,kg,day,individual,too_low_kg
+BO1048,70;30 ratio,0.05421,kg,day,individual,too_low_kg
+BO1048,80:20 ratio,0.05018,kg,day,individual,too_low_kg
+BO1048,90;10 ratio,0.04011,kg,day,individual,too_low_kg
+BO1061,Mucuna meal 16% (RFM),0.07701000000000001,kg,day,individual,too_low_kg
+BO1061,protein isolate meal 5% (RIM),0.07698,kg,day,individual,too_low_kg
+BO1061,soybean meal 7% (RTS),0.07862999999999999,kg,day,individual,too_low_kg
+BO1062,Control Diet,0.026121428571428598,kg,day,individual,too_low_kg
+BO1062,ENZ0,0.0261321428571429,kg,day,individual,too_low_kg
+BO1062,ENZ100,0.0256821428571429,kg,day,individual,too_low_kg
+BO1062,ENZ25,0.0257321428571429,kg,day,individual,too_low_kg
+BO1062,ENZ50,0.026350000000000002,kg,day,individual,too_low_kg
+BO1062,ENZ75,0.0262392857142857,kg,day,individual,too_low_kg
+BO1064,Des Diet,0.0207,kg,day,individual,too_low_kg
+BO1064,Des Diet,0.0465,kg,day,individual,too_low_kg
+BO1064,Des Diet,0.055200000000000006,kg,day,individual,too_low_kg
+BO1064,Eup Diet,0.0613,kg,day,individual,too_low_kg
+BO1064,Eup Diet,0.019899999999999998,kg,day,individual,too_low_kg
+BO1064,Eup Diet,0.0272,kg,day,individual,too_low_kg
+BO1064,Mor Diet,0.0123,kg,day,individual,too_low_kg
+BO1064,Mor Diet,0.047,kg,day,individual,too_low_kg
+BO1064,Mor Diet,0.0578,kg,day,individual,too_low_kg
+BO1064,Pan Diet,0.034,kg,day,individual,too_low_kg
+BO1064,Pan Diet,0.088,kg,day,individual,too_low_kg
+BO1075,Diet 1,0.08879000000000001,kg,day,individual,too_low_kg
+BO1075,Diet 2,0.08943999999999999,kg,day,individual,too_low_kg
+BO1075,Diet 3,0.08122700000000001,kg,day,individual,too_low_kg
+BO1075,Diet 4,0.08891299999999999,kg,day,individual,too_low_kg
+BO1095,Control Post-partum,0.0869166666666667,kg,day,individual,too_low_kg
+BO1095,Control Post-partum,0.0378333333333333,kg,day,individual,too_low_kg
+BO1095,Control Post-partum,0.0233333333333333,kg,day,individual,too_low_kg
+BO1095,Treatment Post-partum,0.0894166666666667,kg,day,individual,too_low_kg
+BO1095,Treatment Post-partum,0.0413333333333333,kg,day,individual,too_low_kg
+BO1095,Treatment Post-partum,0.024,kg,day,individual,too_low_kg
+BO1099,0  Cashew Nut Shell,0.0897,kg,day,individual,too_low_kg
+BO1099,10  Cashew Nut Shell,0.0897,kg,day,individual,too_low_kg
+BO1099,15  Cashew Nut Shell,0.0814,kg,day,individual,too_low_kg
+BO1099,20  Cashew Nut Shell,0.0847,kg,day,individual,too_low_kg
+CJ1001,Zero Percent,0,kg,day,individual,too_low_kg
+CJ1006,R3,0,kg,day,individual,too_low_kg
+DK0037,MCC,0.00111,kg,day,individual,too_low_kg
+DK0037,MCM,8.3e-4,kg,day,individual,too_low_kg
+EM1000,Treatment1,0.09443,kg,day,individual,too_low_kg
+EM1000,Treatment2,0.09129999999999999,kg,day,individual,too_low_kg
+EM1000,Treatment3,0.07533,kg,day,individual,too_low_kg
+EM1000,Treatment4,0.0824,kg,day,individual,too_low_kg
+EM1049,Treatment T1,0,kg,day,individual,too_low_kg
+EM1060,Treatment T1,0.08288,kg,day,individual,too_low_kg
+EM1060,Treatment T2,0.07891,kg,day,individual,too_low_kg
+EM1060,Treatment T3,0.0683,kg,day,individual,too_low_kg
+EM1060,Treatment T4,0.06376,kg,day,individual,too_low_kg
+EM1062,Diet A M+V+C,0.07759999999999999,kg,day,individual,too_low_kg
+EM1062,Diet B M+C,0.07667714285714279,kg,day,individual,too_low_kg
+EM1062,Diet C V+C,0.0829814285714286,kg,day,individual,too_low_kg
+EM1065,Treatment T1,0.07065,kg,day,individual,too_low_kg
+EM1065,Treatment T2,0.08068,kg,day,individual,too_low_kg
+EM1065,Treatment T3,0.08952,kg,day,individual,too_low_kg
+EM1066,Con,0.0230178571428571,kg,day,individual,too_low_kg
+EM1066,PEG0,0.0242785714285714,kg,day,individual,too_low_kg
+EM1066,PEG100,0.0266107142857143,kg,day,individual,too_low_kg
+EM1066,PEG25,0.0238178571428571,kg,day,individual,too_low_kg
+EM1066,PEG50,0.025378571428571403,kg,day,individual,too_low_kg
+EM1066,PEG75,0.0254107142857143,kg,day,individual,too_low_kg
+EM1068,RFM,0.07701000000000001,kg,day,individual,too_low_kg
+EM1068,RIM,0.07698,kg,day,individual,too_low_kg
+EM1068,RTS,0.07862999999999999,kg,day,individual,too_low_kg
+EM1070,Treatment T1,0.06168,kg,day,individual,too_low_kg
+EM1070,Treatment T2,0.06788,kg,day,individual,too_low_kg
+EM1070,Treatment T3,0.063,kg,day,individual,too_low_kg
+EM1070,Treatment T4,0.06502,kg,day,individual,too_low_kg
+EM1077,Ration1,0,kg,day,individual,too_low_kg
+EM1081,Treatment T1,0,kg,day,individual,too_low_kg
+EM1081,Treatment T2,0.075,kg,day,individual,too_low_kg
+EM1081,Treatment T3,0.099,kg,day,individual,too_low_kg
+EM1092,MCFJM,0.04058,kg,day,individual,too_low_kg
+EM1092,PWFJM,0.037700000000000004,kg,day,individual,too_low_kg
+EM1092,RDFFJM,0.04088,kg,day,individual,too_low_kg
+EM1092,RJFM,0.038689999999999995,kg,day,individual,too_low_kg
+EM1092,Treatment C,0.04982,kg,day,individual,too_low_kg
+EM1097,Treatment T1,0.09412999999999999,kg,day,individual,too_low_kg
+EM1097,Treatment T2,0.0858,kg,day,individual,too_low_kg
+EM1097,Treatment T3,0.05897,kg,day,individual,too_low_kg
+EM1097,Treatment T4,0.0248,kg,day,individual,too_low_kg
+EM1100,Control PKC,0.09981999999999999,kg,day,individual,too_low_kg
+EO0032,100% concentrate,0.07430636245807846,kg,day,individual,too_low_kg
+EO0032,25%concentrate+75% leaf meal,0.0896284503962428,kg,day,individual,too_low_kg
+EO0032,50%concentrate+50% leaf meal,0.08215941286322256,kg,day,individual,too_low_kg
+EO0032,75% concentrate+25% leaf meal,0.06548726363246182,kg,day,individual,too_low_kg
+EO0047,PP30-30%,0.012,kg,day,individual,too_low_kg
+EO0086,0JKM2,0.018699999999999998,kg,day,individual,too_low_kg
+EO0086,4JKM1,0.055200000000000006,kg,day,individual,too_low_kg
+EO0086,8JKM1,0.023399999999999997,kg,day,individual,too_low_kg
+EO0086,8JKM2,0.0031,kg,day,individual,too_low_kg
+EO0102,TD12,0.00774,kg,day,individual,too_low_kg
+EO0102,TD6,0.00544,kg,day,individual,too_low_kg
+EO0102,TD9,0.00687,kg,day,individual,too_low_kg
+HK0005,FSS Con,0.038299999999999994,kg,day,individual,too_low_kg
+HK0005,FSS1,0.038299999999999994,kg,day,individual,too_low_kg
+HK0005,FSS2,0.0381,kg,day,individual,too_low_kg
+HK0005,FSS3,0.037899999999999996,kg,day,individual,too_low_kg
+HK0007,HWM1,0.09920999999999999,kg,day,individual,too_low_kg
+HK0007,HWM2,0.09523999999999999,kg,day,individual,too_low_kg
+HK0011,CW,0.02789,kg,day,individual,too_low_kg
+HK0011,CW:DSBG,0.027219999999999998,kg,day,individual,too_low_kg
+HK0011,DSBG,0.027649999999999997,kg,day,individual,too_low_kg
+HK0014,D1 No Macuna Bundle 1,0.048920000000000005,kg,day,individual,too_low_kg
+HK0014,D2 5% Treated Macuna Bundle 1,0.06573000000000001,kg,day,individual,too_low_kg
+HK0014,D2 5% Treated Macuna Bundle 2,0.06573000000000001,kg,day,individual,too_low_kg
+HK0014,D3 5% Raw Macuna Bundle 1,0.07897,kg,day,individual,too_low_kg
+HK0014,D3 5% Raw Macuna Bundle 2,0.07897,kg,day,individual,too_low_kg
+HK0014,D4 10% Treated Macuna Bundle 1,0.04292,kg,day,individual,too_low_kg
+HK0014,D5 15% Treated Macuna Bundle 1,0.03641,kg,day,individual,too_low_kg
+HK0017,0% Animal  Protein Mixture,1.60357142857143e-4,kg,day,individual,too_low_kg
+HK0017,100% Animal Protein Mixture,1.32678571428571e-4,kg,day,individual,too_low_kg
+HK0017,25% Animal Protein Mixture,1.525e-4,kg,day,individual,too_low_kg
+HK0017,50% Animal Protein Mixture,1.66428571428571e-4,kg,day,individual,too_low_kg
+HK0017,75% Animal Protein Mixture,1.52857142857143e-4,kg,day,individual,too_low_kg
+HK0037,Diet 1 Bundle 1,0.0218,kg,day,individual,too_low_kg
+HK0037,Diet 2 Bundle 1,0.0145,kg,day,individual,too_low_kg
+HK0037,Diet 3 Bundle 1,0.011869999999999999,kg,day,individual,too_low_kg
+HK0037,Diet 4 Bundle 1,0.01058,kg,day,individual,too_low_kg
+HK0037,Diet 4 Bundle 2,0.01058,kg,day,individual,too_low_kg
+HK0037,Diet 5 Bundle 1,0.02102,kg,day,individual,too_low_kg
+HK0037,Diet 5 Bundle 2,0.02102,kg,day,individual,too_low_kg
+HK0045,Con,0.00142678571428571,kg,day,individual,too_low_kg
+HK0045,OB2,0.00141934523809524,kg,day,individual,too_low_kg
+HK0045,OB3,0.00146309523809524,kg,day,individual,too_low_kg
+HK0045,OB4,0.00150583333333333,kg,day,individual,too_low_kg
+HK0045,OB5,0.0013744047619047598,kg,day,individual,too_low_kg
+HK0045,WL6,0.00135684523809524,kg,day,individual,too_low_kg
+HK0045,WL7,0.00132339285714286,kg,day,individual,too_low_kg
+HK0045,WL8,0.00138422619047619,kg,day,individual,too_low_kg
+HK0045,WL9,0.00130654761904762,kg,day,individual,too_low_kg
+HK0066.2,0 MSK,0.06620000000000001,kg,day,individual,too_low_kg
+HK0066.2,100 MSK,0.0688,kg,day,individual,too_low_kg
+HK0066.2,150 MSK,0.0654,kg,day,individual,too_low_kg
+HK0066.2,200 MSK,0.06509999999999999,kg,day,individual,too_low_kg
+HK0066.2,50 MSK,0.0678,kg,day,individual,too_low_kg
+HK0067,0% CBC,0.06597,kg,day,individual,too_low_kg
+HK0067,10% CBC,0.06175,kg,day,individual,too_low_kg
+HK0067,20% CBC,0.05779,kg,day,individual,too_low_kg
+HK0067,5% CBC,0.0628,kg,day,individual,too_low_kg
+HK0102.2,Diet Con,0.0715,kg,day,individual,too_low_kg
+HK0102.2,PKM1,0.0718,kg,day,individual,too_low_kg
+HK0102.2,PKM2,0.0722,kg,day,individual,too_low_kg
+HK0102.2,PKM3,0.0728,kg,day,individual,too_low_kg
+HK0102.2,PKM4,0.0728,kg,day,individual,too_low_kg
+HK0102.2,PKM5,0.073,kg,day,individual,too_low_kg
+HK0118,TM 1,5.8452380952381e-5,kg,day,individual,too_low_kg
+HK0118,TM 2,5.58333333333333e-5,kg,day,individual,too_low_kg
+HK0118,TM 3,5.79761904761905e-5,kg,day,individual,too_low_kg
+HK0118,TM 5,6.38095238095238e-5,kg,day,individual,too_low_kg
+HK0228,Chicken meal sunflower oil cake,3e-4,kg,day,individual,too_low_kg
+HK0228,Chicken viscera and groundnut oil cake,4.7e-4,kg,day,individual,too_low_kg
+HK0228,Chicken viscera and soybean oil cake,4.1999999999999996e-4,kg,day,individual,too_low_kg
+HK0228,Commercial diet 1,3.5999999999999997e-4,kg,day,individual,too_low_kg
+HK0228,No Crop byproducts diet,5e-4,kg,day,individual,too_low_kg
+HK0260,Centro,0.09290000000000001,kg,day,individual,too_low_kg
+HK0260,Sirastro,0.07590000000000001,kg,day,individual,too_low_kg
+HK0260,Stover Con,0.0485,kg,day,individual,too_low_kg
+HK0260,Stylo,0.07840000000000001,kg,day,individual,too_low_kg
+HK0319,L. jav 25 Diet,0.0204035714285714,kg,day,individual,too_low_kg
+HK0319,Negative Control Diet,0.0219357142857143,kg,day,individual,too_low_kg
+HK0331,Diet Con,7e-4,kg,day,individual,too_low_kg
+HK0331,KLM 1,6.3e-4,kg,day,individual,too_low_kg
+HK0331,KLM 2,5.8e-4,kg,day,individual,too_low_kg
+HK0331,KLM 3,5.5e-4,kg,day,individual,too_low_kg
+HK0331,KLM 4,5.200000000000001e-4,kg,day,individual,too_low_kg
+HK0331,MLM 1,7e-4,kg,day,individual,too_low_kg
+HK0331,MLM 2,5.5e-4,kg,day,individual,too_low_kg
+HK0331,MLM 3,5.200000000000001e-4,kg,day,individual,too_low_kg
+HK0331,MLM 4,4.5e-4,kg,day,individual,too_low_kg
+HK0333,Con,0.0888285714285714,kg,day,individual,too_low_kg
+HK0333,MOLM 1,0.0902857142857143,kg,day,individual,too_low_kg
+HK0333,MOLM 2,0.0919714285714286,kg,day,individual,too_low_kg
+HK0333,MOLM 3,0.0899142857142857,kg,day,individual,too_low_kg
+HK0337,T100 Concentrate,0.078,kg,day,individual,too_low_kg
+JO1001,UTS,0,kg,day,individual,too_low_kg
+JO1010,Control,0,kg,day,individual,too_low_kg
+JO1015,Feed 1,0,kg,day,individual,too_low_kg
+JO1020,Ration 1,0,kg,day,individual,too_low_kg
+JO1020,Ration 1,0,kg,day,individual,too_low_kg
+JO1020,Ration 2,0,kg,day,individual,too_low_kg
+JO1020,Ration 2,0,kg,day,individual,too_low_kg
+JO1020,Ration 3,0,kg,day,individual,too_low_kg
+JO1020,Ration 3,0,kg,day,individual,too_low_kg
+JO1020,Ration 4,0,kg,day,individual,too_low_kg
+JO1022,Feed 1,0,kg,day,individual,too_low_kg
+JO1022,Feed 2,0.098,kg,day,individual,too_low_kg
+JO1022,Feed 5,0,kg,day,individual,too_low_kg
+JO1023,Cowpea 400g NF,0,kg,day,individual,too_low_kg
+JO1023,Cowpea 400g NF,0,kg,day,individual,too_low_kg
+JO1023,Lablab 300g NF,0,kg,day,individual,too_low_kg
+JO1023,Lablab 300g NF,0,kg,day,individual,too_low_kg
+JO1025,SPV 0,0,kg,day,individual,too_low_kg
+JO1026,T1 PH100%,0,kg,day,individual,too_low_kg
+JO1027,100C,0,kg,day,individual,too_low_kg
+JO1027,100OV,0,kg,day,individual,too_low_kg
+JO1027,67C 33OV,0.092,kg,day,individual,too_low_kg
+JO1033,Feed 1,0,kg,day,individual,too_low_kg
+JO1033,Feed 1,0,kg,day,individual,too_low_kg
+JO1033,Feed 2,0,kg,day,individual,too_low_kg
+JO1033,Feed 3,0,kg,day,individual,too_low_kg
+JO1033,Feed 4,0,kg,day,individual,too_low_kg
+JO1034,Control Feed,0.09981999999999999,kg,day,individual,too_low_kg
+JO1036,Feed 1,0,kg,day,individual,too_low_kg
+JO1038,Feed 1,0.05,kg,day,individual,too_low_kg
+JO1040,UMTMS Feed,0,kg,day,individual,too_low_kg
+JO1041,Feed 1,0,kg,day,individual,too_low_kg
+JO1042,226CM T1,0,kg,day,individual,too_low_kg
+JO1042,308MBH 87CM T5,0.08684,kg,day,individual,too_low_kg
+JO1042,77MBH 192CM T2,0.077,kg,day,individual,too_low_kg
+JO1044,Feed 1,0.09665,kg,day,individual,too_low_kg
+JO1044,Feed 2,0.09751,kg,day,individual,too_low_kg
+JO1044,Feed 3,0.09533,kg,day,individual,too_low_kg
+JO1044,Feed 4,0.0624,kg,day,individual,too_low_kg
+JO1057,T1 NP,0,kg,day,individual,too_low_kg
+JO1064,CFM BH,0.07266,kg,day,individual,too_low_kg
+JO1064,CFM SBHtv BH,0.0717,kg,day,individual,too_low_kg
+JO1064,CFM SBP BH,0.06606000000000001,kg,day,individual,too_low_kg
+JO1064,CFM SBP BH,0.0991,kg,day,individual,too_low_kg
+JO1064,CFM SBPcc BH,0.07087,kg,day,individual,too_low_kg
+JO1064,CFM SBPsc BH,0.07299,kg,day,individual,too_low_kg
+JO1068,Control,0.044649999999999995,kg,day,individual,too_low_kg
+JO1068,Diet 2,0.0415,kg,day,individual,too_low_kg
+JO1068,Diet 3,0.038149999999999996,kg,day,individual,too_low_kg
+JO1068,Diet 4,0.0362,kg,day,individual,too_low_kg
+JO1069,0 Inclusion,0.09142,kg,day,individual,too_low_kg
+JO1069,5 inclusion,0.08871,kg,day,individual,too_low_kg
+JO1070,MOLM 0,0.0132,kg,day,individual,too_low_kg
+JO1070,MOLM 70,0.0136,kg,day,individual,too_low_kg
+JO1071,Treatment 1,0.01808,kg,day,individual,too_low_kg
+JO1071,Treatment 2,0.01795,kg,day,individual,too_low_kg
+JO1071,Treatment 3,0.018420000000000002,kg,day,individual,too_low_kg
+JO1071,Treatment 4,0.018690000000000002,kg,day,individual,too_low_kg
+JO1074,URS AL Lambs,0.07690000000000001,kg,day,individual,too_low_kg
+JO1074,URS FE Lambs,0.066,kg,day,individual,too_low_kg
+JO1074,URS MO Lambs,0.09040000000000001,kg,day,individual,too_low_kg
+JO1074,URS SM Lambs,0.09240000000000001,kg,day,individual,too_low_kg
+JO1075,100g Diet 1,0.031190000000000002,kg,day,individual,too_low_kg
+JO1075,25g Diet 1,0.03246,kg,day,individual,too_low_kg
+JO1075,30g Diet 1,0.032799999999999996,kg,day,individual,too_low_kg
+JO1075,75g Diet 1,0.03286,kg,day,individual,too_low_kg
+JO1075,Control 1,0.03459,kg,day,individual,too_low_kg
+JO1077,Diet 1,0.08351,kg,day,individual,too_low_kg
+JO1077,Diet 2,0.08892,kg,day,individual,too_low_kg
+JO1077,Diet 3,0.08399,kg,day,individual,too_low_kg
+JO1077,Diet 4,0.08891,kg,day,individual,too_low_kg
+JO1077,Diet 5,0.07662000000000001,kg,day,individual,too_low_kg
+JO1077,Diet 6,0.07372,kg,day,individual,too_low_kg
+JO1078,Control,0.06025,kg,day,individual,too_low_kg
+JO1078,Mistletoe,0.05925,kg,day,individual,too_low_kg
+JO1078,Moringa,0.060020000000000004,kg,day,individual,too_low_kg
+JO1078,Phyllanthus,0.0595,kg,day,individual,too_low_kg
+JS0047,SCB Bundle1,0.06670000000000001,kg,day,individual,too_low_kg
+JS0047,SCB Con Bundle2,0.06670000000000001,kg,day,individual,too_low_kg
+JS0047,SFM Bundle1,0.052899999999999996,kg,day,individual,too_low_kg
+JS0047,SFM Bundle2,0.052899999999999996,kg,day,individual,too_low_kg
+JS0048,P.L leaves,0.069,kg,day,individual,too_low_kg
+JS0048,P.L pods,0.09,kg,day,individual,too_low_kg
+JS0076,BFM1,0.072,kg,day,individual,too_low_kg
+JS0076,BFM2,0.0716363636363636,kg,day,individual,too_low_kg
+JS0076,BFM3,0.06909090909090909,kg,day,individual,too_low_kg
+JS0076,Diet Con,0.0734545454545455,kg,day,individual,too_low_kg
+JS0079.1,Con,0.09,kg,day,individual,too_low_kg
+JS0079.1,SDBM1,0.096,kg,day,individual,too_low_kg
+JS0079.1,SDBM2,0.088,kg,day,individual,too_low_kg
+JS0079.1,SDBM3,0.086,kg,day,individual,too_low_kg
+JS0093,Diet Con,0.0801818181818182,kg,day,individual,too_low_kg
+JS0093,PKC1,0.0870909090909091,kg,day,individual,too_low_kg
+JS0093,PKC2,0.0803636363636364,kg,day,individual,too_low_kg
+JS0093,PKC3,0.08454545454545451,kg,day,individual,too_low_kg
+JS0093,PKC4,0.0861818181818182,kg,day,individual,too_low_kg
+JS0093,PKC5,0.08654545454545451,kg,day,individual,too_low_kg
+JS0095,100% Straw,0.07959142857142859,kg,day,individual,too_low_kg
+JS0123,JCSM3,0.09301000000000001,kg,day,individual,too_low_kg
+JS0123,JCSM4,0.09,kg,day,individual,too_low_kg
+JS0124,Con,2.0833333333333302e-4,kg,day,individual,too_low_kg
+JS0124,Spirulina1,2.0833333333333302e-4,kg,day,individual,too_low_kg
+JS0124,Spirulina2,2.16666666666667e-4,kg,day,individual,too_low_kg
+JS0124,Spirulina3,2.1904761904761898e-4,kg,day,individual,too_low_kg
+JS0124,Spirulina4,2.01190476190476e-4,kg,day,individual,too_low_kg
+JS0124,Spirulina5,2e-4,kg,day,individual,too_low_kg
+JS0125,100% PBM,0.00302,kg,day,individual,too_low_kg
+JS0125,20% PBM,0.0039900000000000005,kg,day,individual,too_low_kg
+JS0125,40% PBM,0.00378,kg,day,individual,too_low_kg
+JS0125,60% PBM,0.00378,kg,day,individual,too_low_kg
+JS0125,80% PBM,0.00352,kg,day,individual,too_low_kg
+JS0125,Control,0.00393,kg,day,individual,too_low_kg
+JS0134,Con,2.25714285714286e-4,kg,day,individual,too_low_kg
+JS0134,Okara1,2.3178571428571402e-4,kg,day,individual,too_low_kg
+JS0134,Okara2,2.21309523809524e-4,kg,day,individual,too_low_kg
+JS0134,Okara3,2.3202380952381e-4,kg,day,individual,too_low_kg
+JS0134,Okara4,2.12738095238095e-4,kg,day,individual,too_low_kg
+JS0135,CSM0,8.744897959183669e-4,kg,day,individual,too_low_kg
+JS0135,CSM100,7.734693877551019e-4,kg,day,individual,too_low_kg
+JS0135,CSM25,8.214285714285709e-4,kg,day,individual,too_low_kg
+JS0135,CSM50,8.16326530612245e-4,kg,day,individual,too_low_kg
+JS0135,CSM75,8.60204081632653e-4,kg,day,individual,too_low_kg
+JS0139,Con Basal,0.0016585714285714298,kg,day,individual,too_low_kg
+JS0139,FM SB Substitution1,0.00174,kg,day,individual,too_low_kg
+JS0139,FM SB Substitution2,0.00181714285714286,kg,day,individual,too_low_kg
+JS0139,FM SB Substitution3,0.00178571428571429,kg,day,individual,too_low_kg
+JS0139,FM SB Substitution4,0.00164285714285714,kg,day,individual,too_low_kg
+JS0177,L3,0.0526,kg,day,individual,too_low_kg
+JS0177,PP2,0.0631,kg,day,individual,too_low_kg
+JS0177,S4,0.0497,kg,day,individual,too_low_kg
+JS0192,HL1,0.08940000000000001,kg,day,individual,too_low_kg
+JS0192,HL1,0.0691,kg,day,individual,too_low_kg
+JS0192,HL2,0.09509999999999999,kg,day,individual,too_low_kg
+JS0192,HL3,0.08220000000000001,kg,day,individual,too_low_kg
+JS0193,Trt 3,0.0627,kg,day,individual,too_low_kg
+JS0206,LLM,0.07529999999999999,kg,day,individual,too_low_kg
+JS0206,NLM,0.07529999999999999,kg,day,individual,too_low_kg
+JS0206,NPH,0.0752,kg,day,individual,too_low_kg
+JS0206,PLM,0.07529999999999999,kg,day,individual,too_low_kg
+JS0207,Bundle 2 Untreated Staw +Hay,0.077,kg,day,individual,too_low_kg
+JS0207,Bundle 4 Untreated Straw + Hay,0.077,kg,day,individual,too_low_kg
+JS0208,UTS+Hay UTSH Bundle1,0.0752,kg,day,individual,too_low_kg
+JS0209,Marejea 1,0.07540000000000001,kg,day,individual,too_low_kg
+JS0281,Diet1,0.08420979801688347,kg,day,individual,too_low_kg
+JS0281,Diet3,0.09653318309252494,kg,day,individual,too_low_kg
+JS0291,Leucocephala 1,0.0681396190923616,kg,day,individual,too_low_kg
+JS0291,Pallida 1,0.06893245932771669,kg,day,individual,too_low_kg
+JS0291,Palmensis 1,0.06655547600805312,kg,day,individual,too_low_kg
+JS0291,Sesban 1,0.06617123088458568,kg,day,individual,too_low_kg
+JS0295,Diet Con,4.31428571428571e-4,kg,day,individual,too_low_kg
+JS0295,RCP 1,4.32857142857143e-4,kg,day,individual,too_low_kg
+JS0295,RCP 2,4.24285714285714e-4,kg,day,individual,too_low_kg
+JS0295,RCP 3,4.12857142857143e-4,kg,day,individual,too_low_kg
+JS0295,RCP 4,3.9714285714285703e-4,kg,day,individual,too_low_kg
+JS0296,Con,0.00132,kg,day,individual,too_low_kg
+JS0296,Maize G 1,0.00117,kg,day,individual,too_low_kg
+JS0296,Maize G 2,9.8e-4,kg,day,individual,too_low_kg
+JS0296,Maize G 3,5.5e-4,kg,day,individual,too_low_kg
+JS0309,Base,0.0432857142857143,kg,day,individual,too_low_kg
+JS0342,100% BSC,0.0864,kg,day,individual,too_low_kg
+JS0370,FishMeal Con,1.0214285714285699e-4,kg,day,individual,too_low_kg
+JS0370,Spirulina One,1.11071428571429e-4,kg,day,individual,too_low_kg
+JS0370,Spirulina Three,1.14285714285714e-4,kg,day,individual,too_low_kg
+JS0370,Spirulina Two,1.3875e-4,kg,day,individual,too_low_kg
+JS0371,Control,0.0493,kg,day,individual,too_low_kg
+JS0371,Jatropha 12,0.0264,kg,day,individual,too_low_kg
+JS0371,Jatropha 4,0.04,kg,day,individual,too_low_kg
+JS0371,Jatropha 8,0.0318,kg,day,individual,too_low_kg
+JS0393,Protein Supp. Dorper...Protein Supp. Merino,0.0149333333333333,kg,day,individual,too_low_kg
+JS0393,Salt/Phosphate Supp. Dorper...Salt/Phosphate Supp. Merino,0.008675,kg,day,individual,too_low_kg
+LM0104,15% A. sieberiana,145,kg,day,individual,too_high_kg
+LM0104,30% A. sieberiana,306,kg,day,individual,too_high_kg
+LM0104,45% A. sieberiana,508,kg,day,individual,too_high_kg
+LM0104,60% A. sieberiana,602,kg,day,individual,too_high_kg
+LM0120,Cabbage Diet,0.007872,kg,day,individual,too_low_kg
+LM0120,Duckweed Diet,0.008400000000000001,kg,day,individual,too_low_kg
+LM0120,Fish Meal Pelletes Diet,0.0017919999999999998,kg,day,individual,too_low_kg
+LM0120,Kikuyu Grass Diet,0.004228,kg,day,individual,too_low_kg
+LM0120,Vallisneria Diet,0.006679999999999999,kg,day,individual,too_low_kg
+LM0266,brownii5,0.096,kg,day,individual,too_low_kg
+LM0277.1,0% Poultry Waste,0.0832244897959184,kg,day,individual,too_low_kg
+LM0277.1,05% ODPW,0.08442857142857141,kg,day,individual,too_low_kg
+LM0277.1,05% SDPW,0.0870612244897959,kg,day,individual,too_low_kg
+LM0277.1,10% ODPW,0.0838163265306122,kg,day,individual,too_low_kg
+LM0277.1,10% SDPW,0.08526530612244901,kg,day,individual,too_low_kg
+LM0277.1,15% ODPW,0.08773469387755099,kg,day,individual,too_low_kg
+LM0277.1,15% SDPW,0.0851224489795918,kg,day,individual,too_low_kg
+LM0277.1,20% ODPW,0.0875918367346939,kg,day,individual,too_low_kg
+LM0277.1,20% SDPW,0.0910408163265306,kg,day,individual,too_low_kg
+LM0289,MP + MSK,0.045,kg,day,individual,too_low_kg
+LM0289,MP + MSK + UB,0.062,kg,day,individual,too_low_kg
+LM0299,150g Concentrate Mix...350g Concentrate Mix,787,kg,day,individual,too_high_kg
+LM0310,FM Con,0.0356,kg,day,individual,too_low_kg
+LM0310,FS 100,0.032670000000000005,kg,day,individual,too_low_kg
+LM0310,FS 25,0.036270000000000004,kg,day,individual,too_low_kg
+LM0310,FS 50,0.036590000000000004,kg,day,individual,too_low_kg
+LM0310,FS 75,0.03603,kg,day,individual,too_low_kg
+LM0312,Con,1.525e-4,kg,day,individual,too_low_kg
+LM0312,MBM1,1.56964285714286e-4,kg,day,individual,too_low_kg
+LM0312,MBM2,1.76071428571429e-4,kg,day,individual,too_low_kg
+LM0312,MBM3,2.0160714285714302e-4,kg,day,individual,too_low_kg
+LM0334,Control,0.00158,kg,day,individual,too_low_kg
+LM0334,KM100,0.00123,kg,day,individual,too_low_kg
+LM0334,KM25,0.00148,kg,day,individual,too_low_kg
+LM0334,KM50,0.00134,kg,day,individual,too_low_kg
+LM0334,KM75,0.00128,kg,day,individual,too_low_kg
+LM0334,MM100,0.00114,kg,day,individual,too_low_kg
+LM0334,MM25,0.0013,kg,day,individual,too_low_kg
+LM0334,MM50,0.00124,kg,day,individual,too_low_kg
+LM0334,MM75,0.00125,kg,day,individual,too_low_kg
+LM0335,MOLM0,0.0764571428571429,kg,day,individual,too_low_kg
+LM0335,MOLM100,0.07667142857142861,kg,day,individual,too_low_kg
+LM0335,MOLM25,0.0808428571428571,kg,day,individual,too_low_kg
+LM0335,MOLM50,0.07795714285714289,kg,day,individual,too_low_kg
+LM0354,0% BYS,0.01266,kg,day,individual,too_low_kg
+LM0354,100% BYS,0.00675,kg,day,individual,too_low_kg
+LM0354,25% BYS,0.00992,kg,day,individual,too_low_kg
+LM0354,50% BYS,0.00926,kg,day,individual,too_low_kg
+LM0354,75% BYS,0.0077199999999999994,kg,day,individual,too_low_kg
+NJ0003,0 g/kg CBLE,6.55952380952381e-4,kg,day,individual,too_low_kg
+NJ0003,10 g/kg CBLE,8.583333333333329e-4,kg,day,individual,too_low_kg
+NJ0003,15 g/kg CBLE,8.48809523809524e-4,kg,day,individual,too_low_kg
+NJ0003,5 g/kg CBLE,7.36904761904762e-4,kg,day,individual,too_low_kg
+NJ0047,T3,0.09930232558139529,kg,day,individual,too_low_kg
+NJ0047,T4,0.0963720930232558,kg,day,individual,too_low_kg
+NN0021,GHMB,0.099,kg,day,individual,too_low_kg
+NN0021,GHWB,0.072,kg,day,individual,too_low_kg
+NN0083,Cactus Concentrate,0.067,kg,day,individual,too_low_kg
+NN0085,U0,0.00205433333333333,kg,day,individual,too_low_kg
+NN0085,U1,0.002005,kg,day,individual,too_low_kg
+NN0085,U2,0.001903,kg,day,individual,too_low_kg
+NN0085,U3,0.0020773333333333303,kg,day,individual,too_low_kg
+NN0098,A 0 CON,0.01998,kg,day,individual,too_low_kg
+NN0098,A 10,0.01924,kg,day,individual,too_low_kg
+NN0098,A 20,0.01844,kg,day,individual,too_low_kg
+NN0098,A 30,0.01834,kg,day,individual,too_low_kg
+NN0108,CON D NO PKM,0.051486,kg,day,individual,too_low_kg
+NN0108,Envoy PKM,0.054983,kg,day,individual,too_low_kg
+NN0108,Okomu PKM,0.059631,kg,day,individual,too_low_kg
+NN0108,Presco PKM,0.057651,kg,day,individual,too_low_kg
+NN0114,CTR,1.14590476190476e-4,kg,day,individual,too_low_kg
+NN0114,RSF15,1.33333333333333e-4,kg,day,individual,too_low_kg
+NN0114,RSF30,1.1507619047619e-4,kg,day,individual,too_low_kg
+NN0114,RSF45,7.63047619047619e-5,kg,day,individual,too_low_kg
+NN0114,RSM15,1.23895238095238e-4,kg,day,individual,too_low_kg
+NN0114,RSM30,1.1504761904761899e-4,kg,day,individual,too_low_kg
+NN0114,RSM45,9.56380952380952e-5,kg,day,individual,too_low_kg
+NN0115,FM,5.109e-4,kg,day,individual,too_low_kg
+NN0115,SF25,5.0042e-4,kg,day,individual,too_low_kg
+NN0115,SF50,5.0435e-4,kg,day,individual,too_low_kg
+NN0115,SF75,5.2662e-4,kg,day,individual,too_low_kg
+NN0115,SF75 + M,5.109e-4,kg,day,individual,too_low_kg
+NN0118,0% Duckweed,0.00114,kg,day,individual,too_low_kg
+NN0118,10% Duckweed,0.0012,kg,day,individual,too_low_kg
+NN0118,100% Duckweed,6e-4,kg,day,individual,too_low_kg
+NN0118,20% Duckweed,0.0011,kg,day,individual,too_low_kg
+NN0118,30% Duckweed,0.001,kg,day,individual,too_low_kg
+NN0118,5% Duckweed,0.0012,kg,day,individual,too_low_kg
+NN0119.2,Diet 1 without TOLM,0.037899999999999996,kg,day,individual,too_low_kg
+NN0119.2,Diet 2 with 10% TOLM,0.039,kg,day,individual,too_low_kg
+NN0119.2,Diet 3 with 15% TOLM,0.038571,kg,day,individual,too_low_kg
+NN0119.2,Diet 4 with 20% TOLM,0.0394,kg,day,individual,too_low_kg
+NN0119.2,Diet 5 with 25% TOLM,0.0424,kg,day,individual,too_low_kg
+NN0119.2,Diet 6 with 30% TOLM,0.0438,kg,day,individual,too_low_kg
+NN0189,No supplement,0,kg,day,individual,too_low_kg
+NN0198,CON T1,0.0475,kg,day,individual,too_low_kg
+NN0198,MLM T2,0.0544,kg,day,individual,too_low_kg
+NN0198,MLM T3,0.055299999999999995,kg,day,individual,too_low_kg
+NN0198,MLM T4,0.0595,kg,day,individual,too_low_kg
+NN0198,MLM T5,0.061700000000000005,kg,day,individual,too_low_kg
+NN0201,"Lablab, maize",0.091,kg,day,individual,too_low_kg
+NN0201,"Lablab, no maize",0,kg,day,individual,too_low_kg
+NN0201,"Sesbania, maize",0.091,kg,day,individual,too_low_kg
+NN0201,"Sesbania, no maize",0,kg,day,individual,too_low_kg
+NN0205,T2,0.067,kg,day,individual,too_low_kg
+NN0205,T4,0.06825,kg,day,individual,too_low_kg
+NN0211,CON T1,0.0588,kg,day,individual,too_low_kg
+NN0211,T2 LOW,0.023100000000000002,kg,day,individual,too_low_kg
+NN0211,T2 LOW,0.042,kg,day,individual,too_low_kg
+NN0211,T3 MEDIUM,0.030699999999999998,kg,day,individual,too_low_kg
+NN0211,T3 MEDIUM,0.0351,kg,day,individual,too_low_kg
+NN0211,T4 HIGH,0.037,kg,day,individual,too_low_kg
+NN0211,T4 HIGH,0.032799999999999996,kg,day,individual,too_low_kg
+NN0212,1LSC:2WB,0.0701,kg,day,individual,too_low_kg
+NN0212,1LSC:2WB,0.0391,kg,day,individual,too_low_kg
+NN0212,1LSC:2WB,0.0312,kg,day,individual,too_low_kg
+NN0212,2LSC:1WB,0.0701,kg,day,individual,too_low_kg
+NN0212,2LSC:1WB,0.0385,kg,day,individual,too_low_kg
+NN0212,2LSC:1WB,0.0316,kg,day,individual,too_low_kg
+NN0212,Control,0.055799999999999995,kg,day,individual,too_low_kg
+NN0212,Control,0.055799999999999995,kg,day,individual,too_low_kg
+NN0212,LSC,0.073,kg,day,individual,too_low_kg
+NN0212,LSC,0.0419,kg,day,individual,too_low_kg
+NN0212,LSC,0.031100000000000003,kg,day,individual,too_low_kg
+NN0212,WB,0.0726,kg,day,individual,too_low_kg
+NN0212,WB,0.0399,kg,day,individual,too_low_kg
+NN0212,WB,0.032799999999999996,kg,day,individual,too_low_kg
+NN0214,Noug Meal Treatment,0.08,kg,day,individual,too_low_kg
+NN0217,C0,685,kg,day,individual,too_high_kg
+NN0217,C0,685,kg,day,individual,too_high_kg
+NN0217,C20,242,kg,day,individual,too_high_kg
+NN0217,C20,815,kg,day,individual,too_high_kg
+NN0217,C20,573,kg,day,individual,too_high_kg
+NN0217,C40,422,kg,day,individual,too_high_kg
+NN0217,C40,879,kg,day,individual,too_high_kg
+NN0217,C40,457,kg,day,individual,too_high_kg
+NN0217,C60,503,kg,day,individual,too_high_kg
+NN0217,C60,907,kg,day,individual,too_high_kg
+NN0217,C60,404,kg,day,individual,too_high_kg
+NN0217,C80,508,kg,day,individual,too_high_kg
+NN0217,C80,726,kg,day,individual,too_high_kg
+NN0217,C80,218,kg,day,individual,too_high_kg
+NN0230,Carissa edulis  maizediet,0.044,kg,day,individual,too_low_kg
+NN0230,Carissa edulis diet,0.086,kg,day,individual,too_low_kg
+NN0230,Dichrostachys cinerea  maizediet,0.053,kg,day,individual,too_low_kg
+NN0230,Dichrostachys cinerea diet,0.043,kg,day,individual,too_low_kg
+NN0234,T 1 CON,452.7,kg,day,individual,too_high_kg
+NN0234,T 1 CON,842.7,kg,day,individual,too_high_kg
+NN0234,T 1 CON,390,kg,day,individual,too_high_kg
+NN0234,T 2 74 LUPIN,838.5,kg,day,individual,too_high_kg
+NN0234,T 2 74 LUPIN,422.1,kg,day,individual,too_high_kg
+NN0234,T 2 74 LUPIN,416.4,kg,day,individual,too_high_kg
+NN0234,T 3 147 LUPIN,784.4,kg,day,individual,too_high_kg
+NN0234,T 3 147 LUPIN,410.2,kg,day,individual,too_high_kg
+NN0234,T 3 147 LUPIN,374.2,kg,day,individual,too_high_kg
+NN0234,T 4 219 LUPIN,804.8,kg,day,individual,too_high_kg
+NN0234,T 4 219 LUPIN,470.1,kg,day,individual,too_high_kg
+NN0234,T 4 219 LUPIN,334.7,kg,day,individual,too_high_kg
+NN0234,T 5 LUPIN ONLY,746.7,kg,day,individual,too_high_kg
+NN0234,T 5 LUPIN ONLY,457,kg,day,individual,too_high_kg
+NN0234,T 5 LUPIN ONLY,269.7,kg,day,individual,too_high_kg
+NN0251,C0N,0.09,kg,day,individual,too_low_kg
+NN0251,T1 10,0.09,kg,day,individual,too_low_kg
+NN0251,T1 10,0.0453,kg,day,individual,too_low_kg
+NN0251,T2 20,0.09,kg,day,individual,too_low_kg
+NN0251,T2 20,0.0958,kg,day,individual,too_low_kg
+NN0251,T3 30,0.09,kg,day,individual,too_low_kg
+NN0251,T4 40,0.09,kg,day,individual,too_low_kg
+NN0272.1,Control,0.082,kg,day,individual,too_low_kg
+NN0272.1,SEP + SPV,0.093,kg,day,individual,too_low_kg
+NN0272.1,SEPD,0.087,kg,day,individual,too_low_kg
+NN0272.1.2,Control,0.082,kg,day,individual,too_low_kg
+NN0272.1.2,SEP + SPV,0.093,kg,day,individual,too_low_kg
+NN0272.1.2,SEPD,0.087,kg,day,individual,too_low_kg
+NN0272.2,CON,0.023,kg,day,individual,too_low_kg
+NN0272.2,T2 MIXED,0.037,kg,day,individual,too_low_kg
+NN0272.2,T2 MIXED,0.064,kg,day,individual,too_low_kg
+NN0272.2,T3 SPV,0.014,kg,day,individual,too_low_kg
+NN0272.2,T4 SOLANUM,0.028,kg,day,individual,too_low_kg
+NN0272.2,T4 SOLANUM,0.05,kg,day,individual,too_low_kg
+NN0321,0% BSOC,0.0159290476190476,kg,day,individual,too_low_kg
+NN0321,10% BSOC,0.018281428571428598,kg,day,individual,too_low_kg
+NN0321,15% BSOC,0.0169222222222222,kg,day,individual,too_low_kg
+NN0321,5% BSOC,0.0181844444444444,kg,day,individual,too_low_kg
+NN0325,0.5 Pumpkin Leaf,0.00265,kg,day,individual,too_low_kg
+NN0325,1 Pumpkin Leaf,0.00256,kg,day,individual,too_low_kg
+NN0325,1.5 Pumpkin Leaf,0.00257,kg,day,individual,too_low_kg
+NN0325,2 Pumpkin Leaf,0.0025800000000000003,kg,day,individual,too_low_kg
+NN0325,Control,0.00248,kg,day,individual,too_low_kg
+NN0326,D1,0.003266,kg,day,individual,too_low_kg
+NN0326,D2,0.00328733333333333,kg,day,individual,too_low_kg
+NN0326,D3,0.00335,kg,day,individual,too_low_kg
+NN0326,D4,0.003314,kg,day,individual,too_low_kg
+NN0326,D5,0.0033039999999999996,kg,day,individual,too_low_kg
+NN0358,JSM CON,5.30952380952381e-4,kg,day,individual,too_low_kg
+NN0358,LFJSM 25,5.02857142857143e-4,kg,day,individual,too_low_kg
+NN0358,LFJSM 50,4.94166666666667e-4,kg,day,individual,too_low_kg
+NN0358,LFJSM 75,5.10714285714286e-4,kg,day,individual,too_low_kg
+NN0358,PFJSM 25,5.25833333333333e-4,kg,day,individual,too_low_kg
+NN0358,PFJSM 50,5.31428571428571e-4,kg,day,individual,too_low_kg
+NN0358,PFJSM 75,5.130952380952381e-4,kg,day,individual,too_low_kg
+NN0359,CWC 10,0.00799,kg,day,individual,too_low_kg
+NN0359,CWC 20,0.008199999999999999,kg,day,individual,too_low_kg
+NN0359,CWC 30,0.008039999999999999,kg,day,individual,too_low_kg
+NN0359,CWC 40,0.00801,kg,day,individual,too_low_kg
+NN0359,Control,0.0081,kg,day,individual,too_low_kg
+NN0367,Diet1 Con,4.25e-4,kg,day,individual,too_low_kg
+NN0367,Diet2CUR50,4.86e-4,kg,day,individual,too_low_kg
+NN0367,Diet3CUR100,4.56e-4,kg,day,individual,too_low_kg
+NN0367,Diet4CUR150,4.48e-4,kg,day,individual,too_low_kg
+NN0367,Diet5CUR200,4.41e-4,kg,day,individual,too_low_kg
+NN0377,T1 H NC Bundle1,0.0965,kg,day,individual,too_low_kg
+NN0377,T2 H NC Bundle1,0.0965,kg,day,individual,too_low_kg
+NN0377,T3 H NC Bundle1,0.0965,kg,day,individual,too_low_kg
+NN0377,T4 H NC Con Bundle1,0,kg,day,individual,too_low_kg
+NN0377,T4 H NC Con Bundle1,0.0965,kg,day,individual,too_low_kg
+NN0396,0% Sorghum,0.04161,kg,day,individual,too_low_kg
+NN0396,100% Sorghum,0.04438,kg,day,individual,too_low_kg
+NN0396,25% Sorghum,0.045399999999999996,kg,day,individual,too_low_kg
+NN0396,50% Sorghum,0.04231,kg,day,individual,too_low_kg
+NN0396,75% Sorghum,0.04446,kg,day,individual,too_low_kg

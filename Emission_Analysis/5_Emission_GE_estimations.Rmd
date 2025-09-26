@@ -1,0 +1,672 @@
+---
+title: "5_Emission_GE_Estimations"
+output: html_document
+date: "2025-09-26"
+---
+
+
+```{r}
+merged_metadata <- readRDS("~/ERL/Emission_Analysis/data/merged_metadata_nutrition_inference.rds")
+ingredients <- readRDS("~/ERL/Emission_Analysis/data/ingredients_harmonized_subset.rds")
+
+```
+
+## 11) Emission calculations 
+
+### 11.1 Estimation of Enteric Methane Emissions Using IPCC Tier 2
+
+Enteric methane (CH₄) emissions were estimated using the **IPCC Tier 2** methodology, which incorporates animal-specific data such as **gross energy intake (GE)** and **methane conversion factors (Ym)**. This approach improves accuracy over Tier 1 by reflecting diet composition, feed intake, and species-specific differences.
+
+
+### 11.2 Estimation of Daily GE Intake per Animal
+
+For GE values reported at the **entire diet** level, daily gross energy intake per animal was calculated as:
+
+\[
+\text{GE}_{\text{daily}} = \text{GE}_{\text{diet}} \times \text{Diet Dry Amount}
+\]
+
+Where:
+
+- $\text{GE}_{\text{diet}}$ is the energy content of the complete diet (MJ/kg)
+- $\text{Diet Dry Amount}$ is the daily dry matter ingredient (kg/day/animal). We can also infer from feed intake if missing.Needs to be dry matter so we will use only data when DC.is.Dry=yes.
+
+**To do that we will have ton convert all feed intake data into kg/day/animal.**
+
+When GE values were reported at the **ingredient** level, and information on diet composition (ingredient proportions) was available, the diet-level GE was reconstructed as:
+
+\[
+\text{GE}_{\text{diet}} = \sum_{i=1}^{n} (\text{GE}_i \times p_i)
+\]
+
+Where:
+
+- $\text{GE}_i$ is the GE value of ingredient $i$
+- $p_i$ is the proportion of ingredient $i$ in the total diet
+
+Then, daily intake was computed using the same formula above.
+
+### 11.3. Methane Emissions Calculation (Tier 2)
+
+Annual methane emissions were calculated using the IPCC Tier 2 equation:
+
+\[
+\text{CH}_4 = \frac{\text{GE}_{\text{daily}} \times \text{Ym} \times 365}{55.65}
+\]
+
+Where:
+
+- $\text{CH}_4$ = annual enteric methane emissions (kg CH₄/animal/year)
+- $\text{GE}_{\text{daily}}$ = daily gross energy intake per animal (MJ/day)
+- $\text{Ym}$ = methane conversion factor:
+  - **Cattle**: 0.065 (6.5%)
+  - **Sheep and Goats**: 0.060 (6.0%)
+- 365 = days per year
+- 55.65 = energy content of methane (MJ/kg CH₄)
+
+
+\text{GE}_{\text{daily}} = \text{GE}_{\text{diet}} \times \text{Diet Dry Amount}
+\]
+
+
+
+```{r,message=FALSE,warning=FALSE}
+
+# 1. Total papers per species
+species_counts <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+GE_data <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+
+```
+
+
+## 12) Gross energy data 
+
+## 12.1) Gross energy harmonization
+
+```{r}
+# 1. Total papers per species
+species_counts <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+GE_data <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE") %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+# Inspect the units used for GE
+
+
+Gross_energy <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "GE")
+
+Gross_energy$DC.Value<-as.numeric(Gross_energy$DC.Value)
+
+unique(Gross_energy$DC.Unit)
+
+
+
+Gross_energy <- Gross_energy %>%
+  # STEP 1: Create GE_source from nutrition_source
+  mutate(
+    GE_source = case_when(
+      nutrition_source == "feedipedia" ~ "feedipedia",
+      nutrition_source == "inferred_from_same_ingredient" ~ "inferred_from_same_ingredient",
+      nutrition_source == "raw data" ~ "raw data",
+      TRUE ~ NA_character_
+    )
+  )%>%
+  select(-"nutrition_source")
+
+
+
+```
+g/kg	❌ Not an energy unit	Likely a mistake, investigate or exclude
+% / % DM / % as fed	❌ Not energy units	Same as above
+Unspecified	❌ Ambiguous	Investigate or exclude
+
+```{r,message=FALSE,warning=FALSE}
+# 1. Total papers per species
+species_counts <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+GE_data <- Gross_energy %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+```
+
+
+## 12.2 Gross energy data check 
+
+```{r}
+
+Gross_energy_check <- Gross_energy %>%
+  filter(!is.na(DC.Value))%>%
+  filter(GE_source=="raw data")
+
+
+```
+
+
+## 12.3) Gross energy for non nutritional items 
+
+```{r}
+library(dplyr)
+library(stringr)
+
+# ── A · Define patterns for name-based matching ───────────────────────────────
+salt_pat  <- "(?i)\\b(salt|sodium\\s*chloride|nacl|mineral\\s*(lick|block))\\b"
+water_pat <- "(?i)\\bwater\\b"
+
+# false positives to exclude (extend if you see more)
+exclude_pat <- "(?i)\\b(water\\s*hyacinth|saltbush)\\b"
+
+# ── B · Type-based lookup (as you had) ────────────────────────────────────────
+nonenergy_types <- c("Non-ERA Feed", "Supplement")   # add more types if you have them
+
+type_lookup <- merged_metadata$Animals.Diet %>%
+  filter(D.Type %in% nonenergy_types) %>%
+  distinct(B.Code, D.Item) %>%
+  mutate(flag_nonenergy = TRUE)
+
+# ── C · Name-based lookup for salt/water (avoids false positives) ─────────────
+name_lookup <- merged_metadata$Animals.Diet %>%
+  mutate(item_lc = str_squish(str_to_lower(D.Item))) %>%
+  filter(
+    (str_detect(item_lc, salt_pat) | str_detect(item_lc, water_pat)) &
+      !str_detect(item_lc, exclude_pat)
+  ) %>%
+  distinct(B.Code, D.Item) %>%
+  mutate(flag_nonenergy = TRUE)
+
+# ── D · Union both lookups (type + name) ──────────────────────────────────────
+nonenergy_lookup <- bind_rows(type_lookup, name_lookup) %>%
+  distinct(B.Code, D.Item, .keep_all = TRUE)
+
+# ── E · Ensure every (B.Code, D.Item) in lookup has a GE row (fill 0 if missing)
+missing_nonenergy_ge <- nonenergy_lookup %>%
+  anti_join(
+    Gross_energy %>% filter(DC.Variable == "GE") %>% select(B.Code, D.Item),
+    by = c("B.Code", "D.Item")
+  ) %>%
+  transmute(
+    B.Code, D.Item,
+    DC.Variable = "GE",
+    DC.Value    = 0,
+    DC.Unit     = "MJ/kg",
+    GE_source   = "assumed_zero"
+  )
+
+# ── F · Bind, tag, and overwrite all matching rows to zero GE ─────────────────
+Gross_energy <- Gross_energy %>%
+  bind_rows(missing_nonenergy_ge) %>%
+  left_join(nonenergy_lookup, by = c("B.Code", "D.Item")) %>%
+  mutate(
+    DC.Value  = if_else(DC.Variable == "GE" & flag_nonenergy, 0, DC.Value),
+    DC.Unit   = if_else(DC.Variable == "GE" & flag_nonenergy, "MJ/kg", DC.Unit),
+    GE_source = if_else(DC.Variable == "GE" & flag_nonenergy, "assumed_zero", GE_source)
+  ) %>%
+  select(-flag_nonenergy)
+                             # tidy up
+
+
+```
+
+
+## 13) Estimate gross energy for ingredients from proximate nutritional composition
+
+To estimate Gross Energy (GE) when direct measurements are not available, we use a predictive equation based on proximate nutritional components: **crude protein (CP)**, **ether extract (EE)**, and **ash**. This method provides an accurate approximation of the energy content of feed ingredients based on their macronutrient composition.
+
+The equation used is adapted from **Weiss et al. (2019)** and is expressed as:
+
+```
+GE (Mcal/kg) = (0.056 × CP) + (0.094 × EE) + [0.042 × (100 − CP − EE − Ash)]
+GE (MJ/kg) = GE (Mcal/kg) × 4.184
+
+```
+
+
+```{r}
+# --- STEP 1: Prepare predictors (CP, EE, Ash) as % of DM ---
+# Keep relevant metadata for later
+metadata_cols <- merged_metadata$Animals.Diet.Comp %>%
+  select(B.Code, D.Item, is_entire_diet, Feedipedia) %>%
+  distinct()
+
+ge_predictors <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable %in% c("CP", "EE", "Ash")) %>%
+  mutate(
+    DC.Unit = trimws(tolower(DC.Unit)),
+    DC.Value = as.numeric(DC.Value),
+
+    # Harmonize to % of DM
+    DC.Value = case_when(
+      DC.Unit %in% c("%", "% dm", "% as fed", "g/100g", "g/100g dm") ~ DC.Value,
+      DC.Unit %in% c("g", "g/kg", "g/kg dm")                         ~ DC.Value / 10,
+      DC.Unit %in% c("kg", "kg/day")                                ~ DC.Value * 100,
+      TRUE ~ NA_real_
+    ),
+    DC.Unit = "%"
+  ) %>%
+  group_by(B.Code, D.Item, DC.Variable) %>%
+  summarise(DC.Value = mean(DC.Value, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = DC.Variable, values_from = DC.Value) %>%
+  left_join(metadata_cols, by = c("B.Code", "D.Item"))
+
+# --- STEP 2: Apply Weiss GE equation only where CP, EE, Ash are all present ---
+ge_predicted <- ge_predictors %>%
+  mutate(
+    GE_Mcal_per_kg = ifelse(
+      !is.na(CP) & !is.na(EE) & !is.na(Ash),
+      (CP * 0.056) + (EE * 0.094) + ((100 - CP - EE - Ash) * 0.042),
+      NA_real_
+    ),
+    GE_MJ_per_kg = GE_Mcal_per_kg * 4.184
+  ) %>%
+  select(B.Code, D.Item, GE_MJ_per_kg, is_entire_diet, Feedipedia)
+
+
+# --- STEP 3: Merge and only impute where GE is missing ---
+Gross_energy <- Gross_energy %>%
+  
+  # STEP 2: Join GE predictions (e.g. from Weiss)
+  full_join(ge_predicted, by = c("B.Code", "D.Item","is_entire_diet","Feedipedia")) %>%
+  
+  # STEP 3: Only update GE_source if it is still missing
+  mutate(
+    GE_source = case_when(
+      is.na(GE_source) & !is.na(GE_MJ_per_kg) & is.na(DC.Value) ~ "predicted_from_Weiss_GE",
+      TRUE ~ GE_source
+    ),
+    DC.Value = if_else(is.na(DC.Value), GE_MJ_per_kg, DC.Value),
+    DC.Unit = "MJ/kg",
+    DC.Variable = "GE"
+  ) %>%
+  select(-GE_MJ_per_kg)
+
+
+```
+
+
+```{r}
+# 1. Total papers per species
+species_counts <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+GE_data <- Gross_energy %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+```
+
+
+## 14) Infer gross energy from data 
+As we did in 9) we are inferring again GE data after estimation by proximal nutritional composition. 
+
+```{r}
+library(dplyr)
+
+# 1) Per-ingredient mean GE (exclude entire diets; treat NA as FALSE just for this calc)
+ingredient_means <- Gross_energy %>%
+  mutate(`_is_entire_diet` = coalesce(is_entire_diet, FALSE)) %>%   # NA -> FALSE
+  filter(DC.Variable == "GE", `_is_entire_diet` == FALSE, !is.na(DC.Value)) %>%
+  group_by(D.Item) %>%
+  summarise(mean_value = mean(DC.Value, na.rm = TRUE), .groups = "drop")
+
+# 2) Join and fill missing GE for ingredient rows only
+Gross_energy <- Gross_energy %>%
+  left_join(ingredient_means, by = "D.Item") %>%
+  mutate(`_is_entire_diet` = coalesce(is_entire_diet, FALSE)) %>%   # NA -> FALSE (decision only)
+  mutate(
+    GE_source = case_when(
+      DC.Variable == "GE" & is.na(DC.Value) & `_is_entire_diet` == FALSE & !is.na(mean_value)
+        ~ "inferred_from_same_ingredient-Step2",
+      TRUE ~ GE_source
+    ),
+    DC.Value = if_else(
+      DC.Variable == "GE" & is.na(DC.Value) & `_is_entire_diet` == FALSE & !is.na(mean_value),
+      mean_value,
+      DC.Value
+    ),
+    # normalize unit whenever GE has a value (original or imputed)
+    DC.Unit = if_else(DC.Variable == "GE" & !is.na(DC.Value), "MJ/kg", DC.Unit)
+  ) %>%
+  select(-mean_value, -`_is_entire_diet`)
+
+```
+
+
+```{r}
+# 1. Total papers per species
+species_counts <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+GE_data <- Gross_energy %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+```
+
+
+## 15) Estimate Digestible energy from proximate nutritional composition
+
+```{r}
+# --- STEP 4: Prepare predictors for Weiss DE equation ---
+# --- STEP 1: Store relevant metadata before pivot ---
+de_metadata_cols <- merged_metadata$Animals.Diet.Comp %>%
+  select(B.Code, D.Item, is_entire_diet, Feedipedia) %>%
+  distinct()
+
+# --- STEP 2: Prepare DE predictors and harmonize units ---
+de_predictors <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable %in% c("CP", "EE", "Ash", "NDF")) %>%
+  mutate(
+    DC.Unit = trimws(tolower(DC.Unit)),
+    DC.Value = as.numeric(DC.Value),
+
+    # Harmonize to g/kg DM
+    DC.Value = case_when(
+      DC.Unit %in% c("%", "% dm", "% as fed", "g/100g", "g/100g dm") ~ DC.Value * 10,
+      DC.Unit %in% c("g", "g/kg", "g/kg dm")                         ~ DC.Value,
+      DC.Unit %in% c("kg", "kg/day")                                ~ DC.Value * 1000,
+      TRUE ~ NA_real_
+    ),
+    DC.Unit = "g/kg"
+  ) %>%
+  group_by(B.Code, D.Item, DC.Variable) %>%
+  summarise(DC.Value = mean(DC.Value, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = DC.Variable, values_from = DC.Value) %>%
+  left_join(de_metadata_cols, by = c("B.Code", "D.Item"))
+
+# --- STEP 3: Apply Weiss DE equation and convert to GE ---
+de_predicted <- de_predictors %>%
+  mutate(
+    DE_Mcal_per_kg = ifelse(
+      !is.na(CP) & !is.na(EE) & !is.na(Ash) & !is.na(NDF),
+      1.044 + 0.0101 * CP + 0.0161 * EE - 0.0037 * Ash - 0.0023 * NDF,
+      NA_real_
+    ),
+    DE_MJ_per_kg = DE_Mcal_per_kg * 4.184,
+    GE_MJ_per_kg = ifelse(!is.na(DE_MJ_per_kg), DE_MJ_per_kg / 0.54, NA_real_)
+  ) %>%
+  select(B.Code, D.Item, GE_MJ_per_kg, is_entire_diet, Feedipedia)
+
+
+# --- STEP 6: Fill remaining missing GE using DE-based predictions only if GE is still missing ---
+Gross_energy <- full_join(Gross_energy, de_predicted, by = c("B.Code", "D.Item", "is_entire_diet", "Feedipedia")) %>%
+  mutate(
+    DC.Value = if_else(is.na(DC.Value) & !is.na(GE_MJ_per_kg), GE_MJ_per_kg, DC.Value),
+    GE_source = case_when(
+      is.na(GE_source) & is.na(DC.Value) & !is.na(GE_MJ_per_kg) ~ "predicted_from_Weiss_DE",
+      TRUE ~ GE_source  # keep existing label (e.g., feedipedia, raw data, inferred, or missing)
+    ),
+    DC.Unit = "MJ/kg",
+    DC.Variable = "GE"
+  ) %>%
+  select(-GE_MJ_per_kg)
+
+
+```
+
+```{r,message=FALSE,warning=FALSE}
+GE_data <- Gross_energy %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+GE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(GE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_GE")
+
+summary_table <- species_counts %>%
+  full_join(GE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+```
+
+We dont get more papers seems logical because probably the same ingredient as the equation  for GE. 
+
+## 16) Convert digestible energy into gross energy 
+Converts digestible energy (DE) to gross energy (GE) using a default digestibility factor (54%) when DE is reported but GE is not.
+
+```{r,message=FALSE,warning=FALSE}
+# 1. Total papers per species
+species_counts <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Total_Studies")
+
+# 2. All papers with GE (non-NA)
+DE_data <- merged_metadata$Animals.Diet.Comp %>%
+  filter(DC.Variable == "DE", !is.na(DC.Value) & DC.Value != "") %>%
+  distinct(B.Code)
+
+# 3. Papers with GE and species (intersection)
+DE_species <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  semi_join(DE_data, by = "B.Code") %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "Studies_with_DE")
+
+# 4. Combine the two
+summary_table <- species_counts %>%
+  full_join(DE_species, by = "P.Product") %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Display table
+kable(summary_table, caption = "Summary of Data Availability for Enteric CH₄ Emissions (Tier 2)")
+```
+
+Most of the DE data is coming from feediepdia which is expressed as a % of DE so we can't convert that data back using the IPCC method. 
+
+```{r,message=FALSE,warning=FALSE}
+
+# # Define digestibility conversion factor (Song et al., 2025)
+# default_DE_fraction <- 0.54  # 54%
+# 
+# # 1. Extract DE rows from merged_metadata
+# de_data <- merged_metadata$Animals.Diet.Digest %>%
+#   filter(DD.Variable == "DE", !is.na(DD.Value) & DD.Value != "") %>%
+#   mutate(
+#     DD.Value = as.numeric(DD.Value),
+#     DD.Unit = trimws(tolower(DD.Unit)),
+#     DD.Value = case_when(
+#       DD.Unit %in% c("mj/kg", "mj/kg dm") ~ DD.Value,
+#       DD.Unit == "mcal/kg" ~ DD.Value * 4.184,
+#       DD.Unit == "kcal/kg" ~ DD.Value / 239,
+#       DD.Unit == "kcal/kg dm" ~ DD.Value / 239,
+#       DD.Unit == "kcal/100g" ~ (DD.Value * 10) / 239,
+#       DD.Unit == "kj/g" ~ DD.Value / 1000,
+#       DD.Unit == "kj/100g" ~ DD.Value / 100,
+#       TRUE ~ NA_real_
+#     ),
+#     DD.Unit = "MJ/kg"
+#   ) %>%
+#   mutate(
+#     GE_from_DE = DD.Value / default_DE_fraction
+#   ) %>%
+#   select(B.Code, D.Item, GE_from_DE)
+# 
+# # 2. Merge GE_from_DE into your existing Gross_energy dataset
+# Gross_energy <- Gross_energy %>%
+#   left_join(de_data, by = c("B.Code", "D.Item")) %>%
+#   mutate(
+#     # Flag only when GE was previously missing and DE is available
+#     GE_source = case_when(
+#       is.na(GE_source) & is.na(DC.Value) & !is.na(GE_from_DE) ~ "inferred_from_DE",
+#       TRUE ~ GE_source
+#     ),
+#     # Fill in missing GE values with GE_from_DE
+#     DC.Value = if_else(is.na(DC.Value), GE_from_DE, DC.Value),
+#     DC.Unit = "MJ/kg",
+#     DC.Variable = "GE"
+#   ) %>%
+#   select(-GE_from_DE)
+
+
+```
+
+```{r,message=FALSE,warning=FALSE}
+# 1. Total studies per species
+species_total <- merged_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat")) %>%
+  distinct(B.Code, P.Product)
+
+# 2. GE: Only B.Codes where DC.Variable == GE and DC.Value is NOT NA
+ge_bcodes <- Gross_energy %>%
+  filter(DC.Variable == "GE", !is.na(DC.Value)) %>%
+  distinct(B.Code) %>%
+  pull()
+
+# 3. Feed: Only B.Codes where D.Amount is NOT NA
+feed_amount_bcodes <- ingredients %>%
+  filter(!is.na(D.Amount)) %>%
+  distinct(B.Code) %>%
+  pull()
+
+# 4. B.Codes with BOTH GE value AND feed amount
+both_bcodes <- intersect(ge_bcodes, feed_amount_bcodes)
+
+# 5. Build final summary table by species
+final_summary <- species_total %>%
+  mutate(
+    Has_GE = B.Code %in% ge_bcodes,
+    Has_FEED_or_Amount = B.Code %in% feed_amount_bcodes,
+    Has_BOTH = B.Code %in% both_bcodes
+  ) %>%
+  group_by(P.Product) %>%
+  summarise(
+    Total_Studies = n_distinct(B.Code),
+    Studies_with_GE = sum(Has_GE),
+    Studies_with_FEED_or_Amount = sum(Has_FEED_or_Amount),
+    Studies_with_BOTH = sum(Has_BOTH)
+  ) %>%
+  arrange(P.Product)
+
+# Show summary
+knitr::kable(final_summary, caption = "Final Summary (with actual GE and Feed Amount values)")
+
+# Optional: List the actual B.Codes with both
+bcode_list_both <- species_total %>%
+  filter(B.Code %in% both_bcodes) %>%
+  arrange(P.Product, B.Code)
+
+# Show the B.Codes table
+knitr::kable(bcode_list_both, caption = "B.Codes with BOTH GE (DC.Value) and Feed Intake (D.Amount)")
+
+
+```
+
+```{r}
+Gross_energy <- Gross_energy %>%
+  filter(!str_starts(D.Item, "Base"))
+
+missing_GE_items <- Gross_energy %>%   # replace with your dataframe name
+  filter(DC.Variable == "GE", is.na(DC.Value)) %>%
+  count(D.Item, sort = TRUE, name = "n_missing")
+
+```
+
+
+```{r}
+write.csv(Gross_energy, "~/ERL/Emission_Analysis/data/Gross_energy.csv")
+```
+

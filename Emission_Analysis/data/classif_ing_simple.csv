@@ -1,0 +1,1779 @@
+"","D.Item","Ingredient_Category"
+"1","(r + spvs)",NA
+"2","(r + umb)",NA
+"3","0 cashew nut shell",NA
+"4","0 cplm",NA
+"5","0 groundnut haulms",NA
+"6","0 inclusion",NA
+"7","0% cabbage carrot waste",NA
+"8","0% cashew nut shell",NA
+"9","0% corn cobs",NA
+"10","0% nigella sativa",NA
+"11","0% sweet potato peels",NA
+"12","0% treated rice offal",NA
+"13","0% untreated wmv",NA
+"14","0amf",NA
+"15","0cpm",NA
+"16","10 cashew nut shell",NA
+"17","10 cplm",NA
+"18","10% cabbage waste",NA
+"19","10% carrot waste",NA
+"20","10% cashew nut shell",NA
+"21","10% flaxseed (t3)",NA
+"22","10% full fat soya (t1)",NA
+"23","10% sweet potato peels",NA
+"24","10% treated rice offal",NA
+"25","100 cpm",NA
+"26","100% (dvlm + dmlm)",NA
+"27","100% (mlm +vlm)",NA
+"28","100% concentrate mix",NA
+"29","100% nigella sativa",NA
+"30","100% treated wmv",NA
+"31","100%lh feed",NA
+"32","100%prq feed",NA
+"33","10mol",NA
+"34","15 cashew nut shell",NA
+"35","15% cashew nut shell",NA
+"36","15% treated rice ofall",NA
+"37","154mbh 156cm t3",NA
+"38","15amf",NA
+"39","20 cashew nut shell",NA
+"40","20 cplm",NA
+"41","20% cashew nut shell",NA
+"42","20% sweet potato peels",NA
+"43","20%alh",NA
+"44","20mol",NA
+"45","226cm t1",NA
+"46","231mbh 120cm t4",NA
+"47","25 groundnut haulms",NA
+"48","25% corn cobs",NA
+"49","25% nsc + 75% (dvlm + dmlm)",NA
+"50","25% nsc + 75% (mlm +vlm)",NA
+"51","25% treated wmv",NA
+"52","25%prq 75%lh feed",NA
+"53","25amf","V"
+"54","30 cplm",NA
+"55","30% sweet potato peels",NA
+"56","300g dual purpose","IV"
+"57","308mbh 87cm t5",NA
+"58","30mol",NA
+"59","40% straw + 40% molasses + 20% dpm",NA
+"60","40%alh",NA
+"61","5",NA
+"62","5 inclusion",NA
+"63","5% carrot 5% cabbage waste",NA
+"64","5% flaxseed + 5% full fat soya (t2)",NA
+"65","5% treated rice offal",NA
+"66","50 groundnut haulms",NA
+"67","50% corn cobs",NA
+"68","50% nigella sativa",NA
+"69","50% nsc + 50% (dvlm + dmlm)",NA
+"70","50% nsc+ 50% (mlm +vlm)",NA
+"71","50% treated wmv",NA
+"72","50%prq 50%lh feed",NA
+"73","5amf",NA
+"74","6","V"
+"75","60 cpm",NA
+"76","60%alh",NA
+"77","60:40 ratio",NA
+"78","70;30 ratio",NA
+"79","75 groundnut haulms",NA
+"80","75% nsc + 25% (dvlm + dmlm)",NA
+"81","75% nsc+25% (mlm +vlm)",NA
+"82","75% treated wmv",NA
+"83","75%prq 25%lh feed",NA
+"84","77mbh 192cm t2",NA
+"85","80 cpm",NA
+"86","80:20 ratio",NA
+"87","90;10 ratio",NA
+"88","a. africana",NA
+"89","a. occidentale diet",NA
+"90","a.barteri diet",NA
+"91","acacia albida leaves",NA
+"92","acacia angusitissima leaves dried ensiled","IV"
+"93","acacia angustissima",NA
+"94","acacia angustissima dried",NA
+"95","acacia auriculiformis leaves dried ground",NA
+"96","acacia brevispica leaves crushed dried",NA
+"97","acacia brevispica leaves dried","IV"
+"98","acacia brevispica pods dried","IV"
+"99","acacia etbaica fruits dried","IV"
+"100","acacia karroo leaves dried",NA
+"101","acacia karroo leaves dried ground","IV"
+"102","acacia mearnsii dried",NA
+"103","acacia mearnsii dried ground","V"
+"104","acacia mearnsii leaves",NA
+"105","acacia nilotica",NA
+"106","acacia nilotica leaves dried","IV"
+"107","acacia nilotica leaves dried ground","I"
+"108","acacia nilotica pods dried",NA
+"109","acacia polyacantha leaves dried ground","IV"
+"110","acacia saligna dried","IV"
+"111","acacia saligna leaves and soft twig",NA
+"112","acacia saligna leaves and soft twig dried","V"
+"113","acacia saligna||chopping||drying;prosopis juliflora||chopping||drying;leucaena leucocephala||chopping||drying",NA
+"114","acacia senegal leaves dried",NA
+"115","acacia senegal leaves wilted","I"
+"116","acacia senegal pods dried","IV"
+"117","acacia seyal wilted","I"
+"118","acacia sieberiana","IV"
+"119","acacia sieberiana dried ensiled ground","IV"
+"120","acacia sieberiana pods",NA
+"121","acacia sieberiana pods dried ground","IV"
+"122","acacia tortilis","II"
+"123","acacia tortilis fruits dried","IV"
+"124","acacia tortilis leaves dried ground","II"
+"125","acacia tortilis leaves wilted","I"
+"126","acacia tortilis pods dried",NA
+"127","acacia tortilis pods ground",NA
+"128","acalypha fimbriata","IV"
+"129","acioa barteri leaves and twigs",NA
+"130","actipal hp 1",NA
+"131","adansonia digitata seed cake",NA
+"132","adansonia digitata seed cake decorticated ground screw press",NA
+"133","adansonia digitata seed cake dried fermented ground",NA
+"134","adansonia digitata seed cake ground","II"
+"135","adansonia digitata seed dried fermented ground",NA
+"136","adansonia digitata seed ground",NA
+"137","aeschynomene histrix","II"
+"138","african palm larvae dried ground","III"
+"139","african yam bean dried ground","II"
+"140","afzelia africana dried","V"
+"141","afzelia africana leaves and twigs",NA
+"142","afzelia africana leaves wilted","V"
+"143","agrivate",NA
+"144","albizia gummifera dried","V"
+"145","albizia harveyi dried","V"
+"146","albizia lebbeck","IV"
+"147","albizia lebbeck leaves ground","IV"
+"148","alchornea cordifolia",NA
+"149","alfalfa","IV"
+"150","alfalfa dried","IV"
+"151","alfalfa dried ground","IV"
+"152","alfalfa ground","IV"
+"153","alfalfa pods dried","V"
+"154","alkali","VI"
+"155","alternanthera sessilis","V"
+"156","amaranthus cruentus leaves ground",NA
+"157","ammonium chloride",NA
+"158","ammonium sulphate",NA
+"159","anacardium occidentale leaves",NA
+"160","anacardium occidentale leaves and twigs",NA
+"161","andropogon","V"
+"162","andropogon dried","V"
+"163","andropogon gayanus","V"
+"164","andropogon gayanus dried","V"
+"165","andropogon gayanus ensiled","V"
+"166","andropogon gayanus ensiled wilted",NA
+"167","andropogon gayanus||fresh;cochlospermum planchonii rhizomes||hammer milling||drying",NA
+"168","andropogon tectorum",NA
+"169","annona senegalensis leaves and twigs wilted",NA
+"170","annual ryegrass/oats","IV"
+"171","anti fungi",NA
+"172","anti-coccidia",NA
+"173","anti-mycotoxin",NA
+"174","antitoxins",NA
+"175","aquanutro abalone grower",NA
+"176","argan pulp","I"
+"177","argan seed cake","II"
+"178","aristida",NA
+"179","arugula seed ground",NA
+"180","asperozym (fibrolytic enzymes)",NA
+"181","aspilia africana","IV"
+"182","aspilia africana leaves and twigs",NA
+"183","asteraceae",NA
+"184","atella","V"
+"185","atella dried","V"
+"186","atella fermented","IV"
+"187","atella||drying;tata||drying",NA
+"188","atriplex halimus","IV"
+"189","atriplex halimus ensiled","IV"
+"190","atriplex halimus leaves and twigs","IV"
+"191","atriplex nummularia","IV"
+"192","atriplex nummularia dried","IV"
+"193","atriplex nummularia dried ground","V"
+"194","atriplex nummularia leaves","IV"
+"195","atriplex nummularia leaves and twigs","IV"
+"196","avatec",NA
+"197","avocado","V"
+"198","axtra xap","VI"
+"199","azadirachta indica leaves dried",NA
+"200","azadirachta indica leaves wilted",NA
+"201","baby corn stalk dried wilted","V"
+"202","baby corn stalk ensiled",NA
+"203","balanites aegyptiaca",NA
+"204","balanites aegyptiaca dried",NA
+"205","balanites aegyptiaca leaves ground",NA
+"206","bambara groundnut offal",NA
+"207","bambara groundnut offal ground",NA
+"208","bambara nuts offal;cereal spent grains;rice offal;bone||milling;salt",NA
+"209","bamboo leaves","V"
+"210","bamboo leaves dried","V"
+"211","bamboo leaves dried ensiled molasse treated urea treated","V"
+"212","bamboo leaves wilted",NA
+"213","bambusa balcooa","V"
+"214","bambusa balcooa leaves dried","IV"
+"215","bambusa bambos","V"
+"216","bambusa tulda","V"
+"217","bambusa vulgaris","V"
+"218","banana leaves","V"
+"219","banana leaves dried","V"
+"220","banana peel","II"
+"221","banana pseudo-stem","IV"
+"222","baobab",NA
+"223","barley","I"
+"224","barley dried","I"
+"225","barley dried ground",NA
+"226","barley grain","I"
+"227","barley grain crushed",NA
+"228","barley grain sprouted","I"
+"229","barley ground","I"
+"230","barley offal","II"
+"231","barley straw","V"
+"232","barley straw dried","V"
+"233","barley straw fermented",NA
+"234","basal diet + cowpea residues (ama)",NA
+"235","basal diet + cowpea residues (ate)",NA
+"236","basal diet + groundnut residues (ama)",NA
+"237","basal diet + groundnut residues (ate)",NA
+"238","basal diet only (ama)",NA
+"239","basal diet only (ate)",NA
+"240","bcd",NA
+"241","beef survival meal",NA
+"242","beet fodder ensiled",NA
+"243","beet pulp dried","IV"
+"244","beetroot discards dried",NA
+"245","bentonite",NA
+"246","berchemia discolor leaves crushed dried",NA
+"247","berseem clover||drying;common bean straw;concentrate",NA
+"248","bg diet",NA
+"249","bicarbonate of soda","VI"
+"250","bidens diffusa","IV"
+"251","binder",NA
+"252","biscuit waste",NA
+"253","biscuit waste dried ground",NA
+"254","black cumin seed","V"
+"255","black cumin seed cake crushed dried","II"
+"256","black cumin seed ground","II"
+"257","black soldier fly larvae dried ground","III"
+"258","blood dried ground heated",NA
+"259","blood ground","III"
+"260","blue lupin","III"
+"261","blue lupin grain","III"
+"262","bone","VI"
+"263","bone ash","VI"
+"264","bone crushed","VI"
+"265","bone ground","VI"
+"266","bothriochloa","V"
+"267","bothriochloa insculpta","V"
+"268","bracharia","V"
+"269","bracharia & bothriocloa","V"
+"270","bracharia decumbens","V"
+"271","bracharia decumbens dried","V"
+"272","bracharia decumbens ensiled",NA
+"273","bracharia dried","V"
+"274","bracharia dried ground","V"
+"275","brachiaria brizantha","V"
+"276","brachiaria brizantha dried","V"
+"277","brachiaria hybrid dried",NA
+"278","brachiaria ruziziensis","V"
+"279","brachiaria ruziziensis dried","V"
+"280","brachiaria serrata",NA
+"281","brassica oleracea","I"
+"282","bread waste","I"
+"283","bread waste dried","I"
+"284","breadfruit dried ground","I"
+"285","brewers by-product","V"
+"286","brewers by-product dried ground","V"
+"287","brewers grain","V"
+"288","brewers grain dried","IV"
+"289","brewers grain||drying;surplus cafeteria food(scf)||grinding||drying",NA
+"290","bridelia ferruginea leaves","IV"
+"291","brown fish ground","III"
+"292","brt1",NA
+"293","brt2",NA
+"294","brt3",NA
+"295","brt4",NA
+"296","bt1",NA
+"297","bt2",NA
+"298","bt3",NA
+"299","bt4",NA
+"300","c25",NA
+"301","c50",NA
+"302","c75",NA
+"303","cabbage discards","IV"
+"304","cabbage discards dried","I"
+"305","calcium bicarbonate",NA
+"306","calcium carbonate","VI"
+"307","calcium carbonate ground",NA
+"308","calcium oxide",NA
+"309","calcium phosphate",NA
+"310","calibrin-z",NA
+"311","calliandra calothyrsus","V"
+"312","calliandra calothyrsus leaves",NA
+"313","calliandra calothyrsus leaves dried","I"
+"314","calliandra calothyrsus leaves dried ensiled","V"
+"315","calliandra calothyrsus leaves dried ground",NA
+"316","canavalia gladiata",NA
+"317","canola",NA
+"318","canola cake","III"
+"319","canola ground","II"
+"320","canola oil","II"
+"321","carboxymethyl cellulose","VI"
+"322","carboxymethyl cellulose dried ground heated","VI"
+"323","carissa edulis","IV"
+"324","carrot waste",NA
+"325","casein",NA
+"326","cashew shell",NA
+"327","cashew shell boiled crushed","II"
+"328","cashew shell crushed dried",NA
+"329","cashew shell ground","II"
+"330","cassava binder",NA
+"331","cassava ground","I"
+"332","cassava leaves","IV"
+"333","cassava leaves and twigs dried","IV"
+"334","cassava leaves dried","IV"
+"335","cassava leaves dried ground","IV"
+"336","cassava leaves ground","IV"
+"337","cassava meal d3",NA
+"338","cassava offal",NA
+"339","cassava peel","IV"
+"340","cassava peel crushed",NA
+"341","cassava peel crushed dried","IV"
+"342","cassava peel crushed urea treated",NA
+"343","cassava peel dried","IV"
+"344","cassava peel dried ensiled wilted","IV"
+"345","cassava peel dried ground","IV"
+"346","cassava peel dried wilted","IV"
+"347","cassava peel ensiled",NA
+"348","cassava peel enzyme treated ground",NA
+"349","cassava peel ground","IV"
+"350","cassava peel urea treated",NA
+"351","cassava shaft ground",NA
+"352","cassava sieviate dried fermented ground",NA
+"353","cassava sieviate dried ground",NA
+"354","cassava starch","I"
+"355","cassava starch residue dried fermented ground",NA
+"356","cassava tuber","I"
+"357","cassava tuber boiled dried ground",NA
+"358","cassava tuber dried grated fermented peeled",NA
+"359","cassava tuber dried ground","I"
+"360","cassava waste",NA
+"361","cassava waste dried fermented",NA
+"362","catha edulis residue","IV"
+"363","catha edulis residue dried","IV"
+"364","catha edulis residue ensiled",NA
+"365","cattle manure","V"
+"366","cdc",NA
+"367","cellulose","VI"
+"368","cellulose dried ground heated","VI"
+"369","cellulose ground","VI"
+"370","cement","VI"
+"371","cenchrus ciliaris","V"
+"372","cenchrus ciliaris dried","V"
+"373","centrosema molle leaves",NA
+"374","centrosema pubescens","V"
+"375","centrosema pubescens dried","IV"
+"376","centrosema pubescens dried ground",NA
+"377","centrosema pubescens ensiled","V"
+"378","centrosema pubescens leaves dried ground","V"
+"379","centrosema pubescens||drying;panicum maximum||drying",NA
+"380","ceratonia siliqua ground",NA
+"381","cereal spent grain","II"
+"382","cereal spent grain ground","V"
+"383","cfm",NA
+"384","cfm (10)",NA
+"385","cfm (20)",NA
+"386","cfm (5)",NA
+"387","cfm + bh",NA
+"388","cfm + cellulase & fibrolytic treated dpl + bh",NA
+"389","cfm + cellulase treated dpl +bh",NA
+"390","cfm + fibrolytic treated dpl + bh",NA
+"391","cfm + untreated dpl + bh",NA
+"392","cfm bh",NA
+"393","cfm sbhtv bh",NA
+"394","cfm sbp bh",NA
+"395","cfm sbpcc bh",NA
+"396","cfm sbpsc bh",NA
+"397","cfm without msk",NA
+"398","cg (grazing)",NA
+"399","cg as",NA
+"400","cg asg",NA
+"401","cg at",NA
+"402","cg diet",NA
+"403","cg hay","IV"
+"404","cg mf",NA
+"405","cg va",NA
+"406","cgs diet",NA
+"407","cgs silage ensiled",NA
+"408","chalk",NA
+"409","chamaecytisus palmensis dried",NA
+"410","chamaecytisus palmensis leaves dried","IV"
+"411","chamomile flower by product",NA
+"412","cheka residue","IV"
+"413","chembind",NA
+"414","chick mash",NA
+"415","chicken ground",NA
+"416","chicken manure","IV"
+"417","chicken manure dried","IV"
+"418","chicken manure dried ground","IV"
+"419","chicken offal dried ground","II"
+"420","chickpea haulm","V"
+"421","chlorella vulgaris","II"
+"422","chloris",NA
+"423","chloris gayana","V"
+"424","chloris gayana crushed dried","V"
+"425","chloris gayana dried","V"
+"426","chloris gayana dried ground","V"
+"427","chloris gayana dried wilted","V"
+"428","chloris gayana;sorghum seed",NA
+"429","chloris gayana||drying;cynadon dactylon||drying;hyparrhenia rufa||drying",NA
+"430","chloris spp.;cynadon dactylon",NA
+"431","choline cloride",NA
+"432","choline cloride ground","VI"
+"433","chromium oxide",NA
+"434","chromium oxide ground",NA
+"435","chromolaena odorata leaves dried ground",NA
+"436","citrus aurantifolia dried ground",NA
+"437","citrus pulp","I"
+"438","citrus pulp alkali treated dried fermented","I"
+"439","citrus pulp ensiled","I"
+"440","citrus pulp treated",NA
+"441","clove basil leaves extract dried ethanol treated ground",NA
+"442","clupeid fish ground","III"
+"443","cmzstover","V"
+"444","cochlospermum planchonii rhizomes dried ground",NA
+"445","cocoa bean cake","IV"
+"446","cocoa bean shell dried ground","IV"
+"447","cocoa pods husk","V"
+"448","cocoa pods husk boiled dried ground",NA
+"449","cocoa pods husk ensiled dried urea treated",NA
+"450","coconut cake ground","II"
+"451","coconut oil","II"
+"452","cod liver oil","II"
+"453","coffee ground roasted",NA
+"454","coffee leaves dried",NA
+"455","coffee pulp","IV"
+"456","colostrum",NA
+"457","combretum aculeatum","IV"
+"458","combretum apiculatum",NA
+"459","commelina benghalensis dried","IV"
+"460","commelina imberbis dried","IV"
+"461","commercial fed",NA
+"462","commercial feed",NA
+"463","commercial feed||pelleting;common bean straw",NA
+"464","common bean crushed","I"
+"465","common bean haulm dried","IV"
+"466","common bean straw","V"
+"467","common bean tops",NA
+"468","con","IV"
+"469","con hay","V"
+"470","concentrate","IV"
+"471","concentrate feed mixture","VI"
+"472","concentrate mixture","VI"
+"473","control","IV"
+"474","control (a)",NA
+"475","control ca",NA
+"476","control d1",NA
+"477","control diet",NA
+"478","control feed",NA
+"479","control group",NA
+"480","control pkc",NA
+"481","control ration1",NA
+"482","corn grain;wheat offal;cotton seed||undecorticated||grinding;molasses;salt;corn||ensilation;rice straw",NA
+"483","corn grain;wheat offal;cotton seed||undecorticated||grinding;molasses;salt;corn||ensilation;rice straw;corn gluten",NA
+"484","corn stover||chopping||ensilation||fresh;sugarcane molasses;urea",NA
+"485","cotton seed","II"
+"486","cotton seed cake","II"
+"487","cotton seed cake decorticated","IV"
+"488","cotton seed cake dried","II"
+"489","cotton seed cake dried ground","II"
+"490","cotton seed cake ground","II"
+"491","cotton seed cake;maize yellow;wheat offal;rice offal;molasses;protected fat;limestone;salt",NA
+"492","cotton seed cake;maize yellow;wheat offal;rice offal;molasses;urea;limestone;salt",NA
+"493","cotton seed cake;soybean||grinding;distillers grains||drying;maize yellow;wheat offal;rice offal;molasses;limestone;salt",NA
+"494","cotton seed cake||decorticated;corn grain;wheat offal;molasses;limestone;salt;minerals and vitamins mix",NA
+"495","cotton seed decorticated ground","II"
+"496","cotton seed ground","II"
+"497","cotton seed hull","V"
+"498","cotton seed||grinding||undecorticated;soybean||grinding;wheat offal;maize yellow;molasses;limestone;salt",NA
+"499","cotton seed||undecorticated||grinding;maize yellow;wheat offal;linseed||grinding;molasses;salt;limestone",NA
+"500","cowpea dried","IV"
+"501","cowpea haulm","IV"
+"502","cowpea haulm crushed","IV"
+"503","cowpea haulm dried","IV"
+"504","cowpea haulm dried ground","IV"
+"505","cowpea husk","V"
+"506","cowpea husk crushed","V"
+"507","cowpea husk ground","V"
+"508","cowpea leaves",NA
+"509","cowpea residue","IV"
+"510","cowpea vine","IV"
+"511","crotalaria ochroleuca dried",NA
+"512","cs",NA
+"513","csc33 wb66 salt1",NA
+"514","csl 0%",NA
+"515","csl 10%",NA
+"516","csl 20%",NA
+"517","csl 30%",NA
+"518","cynadon dactylon","V"
+"519","cynadon dactylon dried","V"
+"520","cynadon plectostachyus","V"
+"521","cynodon","V"
+"522","cynodon dried","V"
+"523","cynodon nlemfuensis","V"
+"524","cynodon nlemfuensis dried","V"
+"525","cyperus rotundus","V"
+"526","d1",NA
+"527","d1 katambora /vigna (1:4)",NA
+"528","d2 pellets",NA
+"529","d3 katambora/lablab (1:4)",NA
+"530","dactyloctenium aegyptium","V"
+"531","dairy meal","IV"
+"532","daniellia oliveri leaf meal 0",NA
+"533","daniellia oliveri leaf meal 20",NA
+"534","daniellia oliveri leaf meal 30",NA
+"535","daniellia oliveri leaf meal 40",NA
+"536","daniellia oliveri leaves",NA
+"537","daniellia oliveri leaves decorticated dried ground roasted",NA
+"538","daniellia oliveri leaves dried ground","II"
+"539","daniellia oliveri leaves wilted",NA
+"540","danish fish ground","III"
+"541","date",NA
+"542","date cull dried ground",NA
+"543","date ground",NA
+"544","date leaves","V"
+"545","date leaves dried","V"
+"546","date leaves ensiled sprouted wilted","V"
+"547","date leaves ensiled wilted","V"
+"548","date leaves wilted","V"
+"549","date palm fronds ground",NA
+"550","date seed ground","V"
+"551","dc20",NA
+"552","dc40",NA
+"553","dc60",NA
+"554","delonix elata dried",NA
+"555","delonix regia seed alkali treated dried fermented ground","IV"
+"556","delonix regia seed dried ground roasted",NA
+"557","delonix regia seed ground",NA
+"558","delonix regia seed ground roasted",NA
+"559","dendrocalamus asper","V"
+"560","dendrocalamus giganteus","V"
+"561","dendrocalamus strictus","V"
+"562","desmodium distortum","IV"
+"563","desmodium dried","V"
+"564","desmodium intortum dried","IV"
+"565","desmodium tortuosom dried","IV"
+"566","desmodium uncinatum","IV"
+"567","dextrin","I"
+"568","dicalcium phosphate","VI"
+"569","dicalcium phosphate dried ground",NA
+"570","dicalcium phosphate ground",NA
+"571","dichrostachys cinerea","IV"
+"572","dichrostachys cinerea dried ground",NA
+"573","dichrostachys cinerea fruits dried","IV"
+"574","diet 0%",NA
+"575","diet 1",NA
+"576","diet 1 (0 kenaf)",NA
+"577","diet 15%",NA
+"578","diet 2",NA
+"579","diet 2 (15 kenaf)",NA
+"580","diet 3",NA
+"581","diet 3 (20 kenaf)",NA
+"582","diet 30%",NA
+"583","diet 4",NA
+"584","diet 4 (25 kenaf)",NA
+"585","diet 45%",NA
+"586","diet 5","IV"
+"587","diet 6",NA
+"588","diet a",NA
+"589","diet b",NA
+"590","diet c",NA
+"591","diet d","V"
+"592","diet r1",NA
+"593","diet r2",NA
+"594","diet r3",NA
+"595","diet r4",NA
+"596","diet ws40",NA
+"597","diet ws60",NA
+"598","diet ws80",NA
+"599","digitaria dried","V"
+"600","digitaria nodosa",NA
+"601","digitaria smutsii","V"
+"602","digitaria smutsii dried","V"
+"603","digitaria spp||chopping||drying;cynadon dactylon||chopping||drying;trifolium spp||chopping||drying",NA
+"604","diheteropogon amplectens",NA
+"605","discolor6","IV"
+"606","distillers grain dried","III"
+"607","distillers grains||drying;maize yellow;wheat offal;rice offal;molasses;limestone;salt",NA
+"608","doc",NA
+"609","dodonaea angustifolia leaves dried",NA
+"610","dried","IV"
+"611","dry khat farm","IV"
+"612","dsbp 1",NA
+"613","dsbp 2",NA
+"614","dvlm + dmlm",NA
+"615","eclipta alba leaves dried",NA
+"616","ed",NA
+"617","effective microbes solution","VI"
+"618","egg boiled dried ground","II"
+"619","elancoban",NA
+"620","elephant grass ensiled alone",NA
+"621","elephant grass ensiled with 10% dolichos lablab",NA
+"622","elephant grass ensiled with 20% dolichos lablab",NA
+"623","elephant grass ensiled with 30% dolichos lablab",NA
+"624","elephant grass t5","V"
+"625","elionurus muticus","V"
+"626","em treated rh",NA
+"627","em treated scb",NA
+"628","em-1 (effective microorganisms)",NA
+"629","emws t4",NA
+"630","ensete ventricosum corm","IV"
+"631","ensete ventricosum leaves","V"
+"632","ensiled","II"
+"633","enterolobium cyclocarpum crushed wilted",NA
+"634","enz0",NA
+"635","enz100",NA
+"636","enz25",NA
+"637","enz50",NA
+"638","enz75",NA
+"639","enzyme","VI"
+"640","eragotris tremula dried","V"
+"641","eragotris tremula||chopping||drying;cynadon dactylon||chopping||drying;sporobolus natalensis||chopping||drying;pennisetum spp||chopping||drying",NA
+"642","eragrostis capensis",NA
+"643","eragrostis curvula","V"
+"644","eragrostis curvula dried","V"
+"645","eragrostis curvula dried ground",NA
+"646","eragrostis papposa","V"
+"647","eragrostis rigidior",NA
+"648","eragrostis teff hay",NA
+"649","erythrina abyssinica","V"
+"650","erythrina abyssinica wilted",NA
+"651","erythrina brucei leaves dried","IV"
+"652","esoc",NA
+"653","euclea crispa",NA
+"654","euclea schimperi","V"
+"655","euphorbia heterophylla","IV"
+"656","euphorbia heterophylla dried",NA
+"657","euphorbia hirta","IV"
+"658","exp 1",NA
+"659","exp 2",NA
+"660","exp 3",NA
+"661","faba bean",NA
+"662","fabaceae",NA
+"663","faidherbia albida","IV"
+"664","faidherbia albida dried","IV"
+"665","faidherbia albida pods dried ground soaked","IV"
+"666","faidherbia albida pods ground","IV"
+"667","fava bean","V"
+"668","fava bean haulm","IV"
+"669","feather boiled dried ground","III"
+"670","feather ground","III"
+"671","feed 1",NA
+"672","feed 1 bsc10",NA
+"673","feed 2",NA
+"674","feed 2 bsc15",NA
+"675","feed 3",NA
+"676","feed 3 moc10",NA
+"677","feed 4",NA
+"678","feed 4 moc15",NA
+"679","feed 5",NA
+"680","feed a",NA
+"681","feed b",NA
+"682","feed blocks",NA
+"683","feed c",NA
+"684","feed d",NA
+"685","ficus exasperata","IV"
+"686","ficus exasperata dried ground",NA
+"687","ficus gnaphalocarpa leaves and twigs",NA
+"688","ficus natalensis leaves","IV"
+"689","ficus polita",NA
+"690","ficus sur fruits crushed dried",NA
+"691","ficus sur fruits dried ground",NA
+"692","ficus thonningii leaves dried","IV"
+"693","ficus thonningii leaves ground","IV"
+"694","field pea",NA
+"695","finger millet straw","V"
+"696","finger millet straw effective microbe(em) treatment ensiled","V"
+"697","finger millet straw ensiled urea treated","V"
+"698","finisher d a;finisher d b",NA
+"699","finisher d c;finisher d d",NA
+"700","finisher diet",NA
+"701","finisher t1",NA
+"702","finisher t2",NA
+"703","finisher t3",NA
+"704","finisher t4",NA
+"705","fish boiled dried ground","III"
+"706","fish boiled ground","III"
+"707","fish dried ground","III"
+"708","fish dried ground heated","III"
+"709","fish ensiled","III"
+"710","fish ground","III"
+"711","fish ground roasted","III"
+"712","fish mix","III"
+"713","fish offal","III"
+"714","fish offal ground","III"
+"715","fish oil","II"
+"716","fish oil dried ground heated","II"
+"717","fish oil heated","II"
+"718","fish processing waste","III"
+"719","fish processing waste dried","III"
+"720","fish processing waste ground","III"
+"721","flaxseed","II"
+"722","flaxseed oil","II"
+"723","flaxseed oil cold pressed","II"
+"724","floating feed",NA
+"725","fluted pumpkin leaves dried ground","II"
+"726","fluted pumpkin leaves extract",NA
+"727","fluted pumpkin leaves ground",NA
+"728","food waste dried",NA
+"729","food waste||drying;olive cake",NA
+"730","forest pasture","V"
+"731","fossil shell ground",NA
+"732","fpd",NA
+"733","free gossypol",NA
+"734","fresh khat farm","IV"
+"735","fumaric acid",NA
+"736","g1",NA
+"737","g1 cfm50 bs25",NA
+"738","g2",NA
+"739","g2 cfm50 pms25",NA
+"740","g3",NA
+"741","g3 cfm50 pms50",NA
+"742","gamba grass",NA
+"743","garcinia kola seeds dried ground",NA
+"744","garlic oil","II"
+"745","gb",NA
+"746","gc",NA
+"747","gd",NA
+"748","ge",NA
+"749","gelatin",NA
+"750","gf",NA
+"751","gh0",NA
+"752","gh25",NA
+"753","gh50",NA
+"754","gh75",NA
+"755","giant snail boiled dried ground","III"
+"756","gigantochloa pseudoarundinacea","V"
+"757","gka",NA
+"758","gkb",NA
+"759","gkc",NA
+"760","gkd",NA
+"761","gliciridia sepium","IV"
+"762","gliciridia sepium ground","IV"
+"763","gliciridia sepium leaves","IV"
+"764","gliciridia sepium leaves dried","IV"
+"765","gliciridia sepium leaves dried ground","IV"
+"766","gliciridia sepium leaves ground","IV"
+"767","gliciridia sepium leaves wilted","IV"
+"768","gliciridia sepium wilted","IV"
+"769","gliricidia sepium leaves and soft twig","V"
+"770","glm0",NA
+"771","glm12",NA
+"772","glm24",NA
+"773","glm36",NA
+"774","glycerol",NA
+"775","gmelina arborea",NA
+"776","gmelina arborea dried",NA
+"777","gmelina arborea leaves",NA
+"778","gmelina arborea leaves dried ground",NA
+"779","gmelina arborea leaves ground",NA
+"780","gmelina arborea leaves wilted",NA
+"781","grape seeds","II"
+"782","grape seeds treated",NA
+"783","grass dried","V"
+"784","grass dried ensiled","V"
+"785","grass pea haulm","IV"
+"786","grasshopper ground","II"
+"787","green bean vine dried","IV"
+"788","grewia similis dried","IV"
+"789","grewia spp. dried","IV"
+"790","grewia spp.||drying;hermosa sidoides||drying",NA
+"791","groundnut cake","III"
+"792","groundnut cake ground","II"
+"793","groundnut haulm","V"
+"794","groundnut haulm crushed","II"
+"795","groundnut haulm dried","V"
+"796","groundnut haulm ensiled",NA
+"797","groundnut hull","V"
+"798","groundnut hull crushed dried",NA
+"799","groundnut oil","II"
+"800","groundnut residue","IV"
+"801","groundnut shell","V"
+"802","groundnut straw","IV"
+"803","groundnut veins dried",NA
+"804","group 4",NA
+"805","growers concentrate",NA
+"806","growers diet",NA
+"807","guar gum ground","III"
+"808","guizotia abyssinica cake;wheat offal",NA
+"809","h0d0",NA
+"810","hak10",NA
+"811","hak15",NA
+"812","hak20",NA
+"813","hak30",NA
+"814","haricot bean vine","V"
+"815","harissonia abyssinica leaves",NA
+"816","hermosa sidoides dried","IV"
+"817","herring ground",NA
+"818","heteropogon contortus","V"
+"819","hevea brasiliensis seed cake boiled dried ground","II"
+"820","hibiscus seed ground","IV"
+"821","hominy",NA
+"822","hominy ground",NA
+"823","hoodia gordonii",NA
+"824","hops","V"
+"825","housefly maggot dried ground","II"
+"826","hsb diet",NA
+"827","hsb silage ensiled",NA
+"828","hyparrhenia","V"
+"829","hyparrhenia dried","V"
+"830","hyparrhenia filipendula","V"
+"831","hyparrhenia rufa","V"
+"832","hyparrhenia rufa dried","V"
+"833","hyparrhenia rufa||drying;cynadon dactylon||drying;uizotia abyssinica||drying",NA
+"834","hyperthelia dissoluta","V"
+"835","imported concentrate",NA
+"836","indigofera atriceps dried","IV"
+"837","indigofera indica","IV"
+"838","inhay +cal",NA
+"839","inhay +cal +peg",NA
+"840","inoculated silage buffalo",NA
+"841","inoculated silage cattle",NA
+"842","intervention diet",NA
+"843","ipomoea triloba","IV"
+"844","iqr feed",NA
+"845","jackfruit",NA
+"846","jackfruit seed dried fermented ground","I"
+"847","jackfruit seed dried ground","I"
+"848","jatropha curcas cake defatted ground","IV"
+"849","jatropha curcas cake dried ground","II"
+"850","jatropha curcas cake ground",NA
+"851","jatropha curcas leaves dried ground",NA
+"852","jatropha curcas seed defatted fermented ground",NA
+"853","jatropha curcas seed ground",NA
+"854","jojoba enzyme treated ground","IV"
+"855","jojoba ground","IV"
+"856","jojoba meal treated",NA
+"857","kanwa-potassium salt",NA
+"858","khat leftover crushed dried",NA
+"859","khaya senegalensis leaves","IV"
+"860","khaya senegalensis leaves dried","IV"
+"861","kochia scoparia","V"
+"862","l-tryptophan",NA
+"863","lablab purpureus","IV"
+"864","lablab purpureus crushed dried",NA
+"865","lablab purpureus dried","IV"
+"866","lablab purpureus dried ground","IV"
+"867","lablab purpureus dried wilted","IV"
+"868","lablab purpureus ensiled",NA
+"869","lablab purpureus haulm dried","IV"
+"870","lablab purpureus leaves dried","IV"
+"871","lablab purpureus stover","IV"
+"872","lake shells","IV"
+"873","lamb and ewe pellet",NA
+"874","lantana camara leaves dried ground",NA
+"875","lard","II"
+"876","layer's meal",NA
+"877","lc 10%",NA
+"878","lc 15%",NA
+"879","lc 20%",NA
+"880","lc 25%",NA
+"881","lc 5%",NA
+"882","legume residue",NA
+"883","lemna dried",NA
+"884","lemna minor",NA
+"885","lemon peel essential oil","II"
+"886","lentil screening","I"
+"887","leucaena hay",NA
+"888","leucaena leaves dried",NA
+"889","leucaena leucocephala","IV"
+"890","leucaena leucocephala dried","IV"
+"891","leucaena leucocephala dried ground","IV"
+"892","leucaena leucocephala leaves","IV"
+"893","leucaena leucocephala leaves dried","IV"
+"894","leucaena leucocephala leaves dried ensiled","IV"
+"895","leucaena leucocephala leaves dried ground","IV"
+"896","leucaena leucocephala leaves ground","IV"
+"897","leucaena leucocephala leaves wilted","IV"
+"898","leucaena leucocephala wilted","IV"
+"899","leucaena leucocephala||chopping||wilting;samanea||chopping||wilting",NA
+"900","leucaena pallida",NA
+"901","leucaena pallida dried","IV"
+"902","leucaena pallida leaves dried","IV"
+"903","lignobond",NA
+"904","lima bean vein dried","IV"
+"905","lime","VI"
+"906","linseed cake","II"
+"907","linseed cake ground","II"
+"908","linseed ground","II"
+"909","lippia javanica leaves dried ground","IV"
+"910","llm 0","II"
+"911","llm 2.6","II"
+"912","lolium multiflorum","V"
+"913","lolium perenne & clover","IV"
+"914","loudetia simplex","V"
+"915","lpbb",NA
+"916","lsb diet",NA
+"917","lsb silage ensiled",NA
+"918","lucerne hay",NA
+"919","lysine","VI"
+"920","lysine - hcl",NA
+"921","m.indica diet",NA
+"922","m0",NA
+"923","m15",NA
+"924","m20",NA
+"925","ma20",NA
+"926","ma40",NA
+"927","macadamia cake","II"
+"928","macroptilium atropurpureum","V"
+"929","macroptilium atropurpureum dried",NA
+"930","macroptilium atropurpureum dried ground",NA
+"931","macroptilium atropurpureum leaves dried ensiled","IV"
+"932","macrotyloma axillare dried",NA
+"933","magnesium oxide","VI"
+"934","magnesium sulfate",NA
+"935","maize","I"
+"936","maize & wheat offal","IV"
+"937","maize cob","V"
+"938","maize cob ensiled","V"
+"939","maize cob ensiled urea treated",NA
+"940","maize cob enzyme treated ground",NA
+"941","maize cob ground","V"
+"942","maize cracked","I"
+"943","maize crushed","I"
+"944","maize dried ground","I"
+"945","maize dried ground heated","I"
+"946","maize ensiled","IV"
+"947","maize ensiled inoculated",NA
+"948","maize germ","II"
+"949","maize germ ground","II"
+"950","maize gluten","III"
+"951","maize gluten ground","III"
+"952","maize grain","I"
+"953","maize grain crushed","I"
+"954","maize grain ground","I"
+"955","maize grain yellow;cotton seed cake||undecorticated;wheat offal;rice offal;molasses;limestone;salt",NA
+"956","maize grain yellow||milling||grinding;cotton seed cake||undecorticated||milling;soybean cake||milling;wheat offal;rice offal;molasses;limestone;salt",NA
+"957","maize ground","I"
+"958","maize husk dried ground","V"
+"959","maize leaves dried","V"
+"960","maize off",NA
+"961","maize offal","IV"
+"962","maize offal alkali treated ground",NA
+"963","maize offal dried","IV"
+"964","maize offal dried ground","IV"
+"965","maize offal ground","IV"
+"966","maize offal;wheat offal;cotton seed cake;bone||grinding;salt",NA
+"967","maize offal||drying;groundnut haulm||drying",NA
+"968","maize oil","II"
+"969","maize s",NA
+"970","maize sheath ground",NA
+"971","maize starch","I"
+"972","maize stover","V"
+"973","maize stover ensiled","V"
+"974","maize stover sprouted",NA
+"975","maize stover urea treated",NA
+"976","maize straw","V"
+"977","maize straw dried","V"
+"978","maize straw dried ensiled ground urea treated","V"
+"979","maize straw dried ground","V"
+"980","maize straw ensiled urea treated","V"
+"981","maize straw ensiled urea treated wilted",NA
+"982","maize straw ground","V"
+"983","maize straw molasses treated urea treated",NA
+"984","maize straw urea treated","V"
+"985","maize whole","I"
+"986","maize whole ensiled",NA
+"987","malt sprout","IV"
+"988","manganese",NA
+"989","mangifera indica leaves","IV"
+"990","mangifera indica leaves and twigs","IV"
+"991","mango","IV"
+"992","mango peel dried","IV"
+"993","mango seed crushed dried",NA
+"994","mango seed dried ground",NA
+"995","mango seed kernel","II"
+"996","mango seed kernel crushed dried","II"
+"997","mango seed kernel dried ground","II"
+"998","marula kernel cake","I"
+"999","meat and bone ground","II"
+"1000","medicago arborea","IV"
+"1001","megalac",NA
+"1002","megathyrsus maximus","V"
+"1003","megathyrsus maximus dried","V"
+"1004","megathyrsus maximus leaves","V"
+"1005","megathyrsus maximus offal",NA
+"1006","megathyrsus maximus wilted","V"
+"1007","melinis repens","V"
+"1008","melon seed husk 10",NA
+"1009","melon seed husk 20",NA
+"1010","melon seed husk 5",NA
+"1011","melon seed husk ground",NA
+"1012","melon seek husk 0",NA
+"1013","menhaden ground","II"
+"1014","methionine","VI"
+"1015","microchloa caffra",NA
+"1016","milk",NA
+"1017","millet","I"
+"1018","millet offal","II"
+"1019","millet straw","V"
+"1020","millettia ferruginea wilted","IV"
+"1021","mineral","VI"
+"1022","mineral block",NA
+"1023","mineral lick","VI"
+"1024","mineral mix","VI"
+"1025","minerals and urea mix",NA
+"1026","minerals and vitamins mix","VI"
+"1027","minerals and vitamins premix;wheat offal;soybean cake;molasses;limestone;salt",NA
+"1028","mistletoe",NA
+"1029","mixed marine hydrolysate","III"
+"1030","mixture","VI"
+"1031","molasses","I"
+"1032","molasses & urea block","III"
+"1033","molm 0",NA
+"1034","molm 70",NA
+"1035","molm0",NA
+"1036","molm100",NA
+"1037","molm50",NA
+"1038","monocalcium phosphate","VI"
+"1039","moringa",NA
+"1040","moringa oleifera",NA
+"1041","moringa oleifera dried",NA
+"1042","moringa oleifera dried ground",NA
+"1043","moringa oleifera ensiled",NA
+"1044","moringa oleifera ground",NA
+"1045","moringa oleifera leaves",NA
+"1046","moringa oleifera leaves dried ground",NA
+"1047","moringa oleifera leaves extract",NA
+"1048","moringa oleifera leaves extract dried ground",NA
+"1049","moringa oleifera leaves ground",NA
+"1050","moringa oleifera root bark dried ground",NA
+"1051","moringa oleifera seed cake ground",NA
+"1052","moringa oleifera seed cold press","II"
+"1053","moringa oleifera seed dried ground",NA
+"1054","moringa oleifera seed oil","II"
+"1055","moringa oleifera stalks dried ground","V"
+"1056","moringa oleifera;spondias mombin",NA
+"1057","moringa stenopetala dried","I"
+"1058","moringa stenopetala leaf",NA
+"1059","moringa stenopetala leaves dried","I"
+"1060","moringa stenopetala leaves dried ground",NA
+"1061","morus alba",NA
+"1062","morus alba leaves crushed dried","IV"
+"1063","morus indica leaves crushed dried",NA
+"1064","mrg diet",NA
+"1065","msc0%",NA
+"1066","msc100%",NA
+"1067","msc25%",NA
+"1068","msc50%",NA
+"1069","mso",NA
+"1070","mucuna meal 16% (rfm)",NA
+"1071","mucuna pruriens",NA
+"1072","mucuna pruriens dried","IV"
+"1073","mucuna pruriens ground","I"
+"1074","mucuna pruriens protein acid treated alkali treated dried ground",NA
+"1075","mucuna pruriens protein isolate alkali treated boiled decorticated ground",NA
+"1076","mucuna pruriens seed alkali treated boiled decorticated dried ground","I"
+"1077","mucuna pruriens seed alkali treated boiled ground","I"
+"1078","mucuna pruriens seed boiled dried ground","I"
+"1079","mucuna pruriens seed crushed","I"
+"1080","mung bean haulm",NA
+"1081","myrtus communis leaves dried ground",NA
+"1082","napier con",NA
+"1083","natural pasture","V"
+"1084","natural pasture dried","V"
+"1085","natuzyme",NA
+"1086","nile perch fish oil","II"
+"1087","nitro-tox",NA
+"1088","non-inoculated silage buffalo",NA
+"1089","non-inoculated silage cattle",NA
+"1090","noug cake ground","IV"
+"1091","noug dried",NA
+"1092","noug ground","II"
+"1093","noug seed cake","II"
+"1094","noug seed cake ground","IV"
+"1095","noug seed cake;wheat offal",NA
+"1096","noug seed ground","II"
+"1097","np","V"
+"1098","nph",NA
+"1099","nsc33 wb66 salt1",NA
+"1100","nsm0",NA
+"1101","nsm100",NA
+"1102","nsm50",NA
+"1103","nsm75",NA
+"1104","oat",NA
+"1105","oat & vetch dried","V"
+"1106","oat dried","V"
+"1107","oat ensiled","IV"
+"1108","oat grain",NA
+"1109","oat grain dried wilted",NA
+"1110","oat ground",NA
+"1111","oat leaves dried ground","V"
+"1112","oat straw","V"
+"1113","oat straw dried","V"
+"1114","oat-vetch dried","V"
+"1115","occicum gatissimum dried ground",NA
+"1116","oil","II"
+"1117","olaquindox",NA
+"1118","olive cake","II"
+"1119","olive cake dried","II"
+"1120","olive cake ensiled","II"
+"1121","olive cake ensiled enzyme treated","II"
+"1122","olive cake treated",NA
+"1123","olive leaves dried",NA
+"1124","onion bulb dried ethanol treated blended",NA
+"1125","onion veins and lemon pulp mixture 1","VI"
+"1126","onion veins and lemon pulp mixture 2","VI"
+"1127","onion veins ensiled",NA
+"1128","onion veins||chopping||ensilation;lemon pulp||ensilation",NA
+"1129","opuntia ficus indica",NA
+"1130","opuntia ficus indica cladode",NA
+"1131","opuntia ficus indica cladode crushed",NA
+"1132","opuntia ficus indica cladode dried",NA
+"1133","opuntia ficus indica cladode dried ground",NA
+"1134","opuntia ficus indica cladode ensiled",NA
+"1135","opuntia ficus indica cladode ensiled singed",NA
+"1136","opuntia ficus indica cladode ground",NA
+"1137","opuntia ficus indica cladode||chopping||ensilation;urea;corn stover||chopping||ensilation||fresh;sugarcane molasses",NA
+"1138","opuntia ficus indica dried ground",NA
+"1139","opuntia ficus indica fruits dried ground","V"
+"1140","opuntia ficus indica juice","I"
+"1141","opuntia ficus indica peel","IV"
+"1142","orange dried","I"
+"1143","orange peels dried fermented ground","I"
+"1144","orange peels fermented",NA
+"1145","orange waste ensiled",NA
+"1146","oryctes rhinoceros ground",NA
+"1147","oscm",NA
+"1148","oxytenanthera abyssinica leaves","V"
+"1149","oxytenanthera abyssinica leaves dried","IV"
+"1150","oyster shells","VI"
+"1151","oyster shells ground","VI"
+"1152","palm kernel cake","II"
+"1153","palm kernel cake dried","II"
+"1154","palm kernel cake dried fermented ground",NA
+"1155","palm kernel cake dried ground",NA
+"1156","palm kernel cake ground","II"
+"1157","palm kernel dried ground","II"
+"1158","palm kernel ground","II"
+"1159","palm oil","II"
+"1160","palm oil crude ground","II"
+"1161","palm oil sludge","II"
+"1162","panicum dried","V"
+"1163","panicum maximum","V"
+"1164","panicum maximum dried","V"
+"1165","panicum maximum ensiled",NA
+"1166","panicum maximum ensiled wilted","V"
+"1167","panicum maximum straw","V"
+"1168","panicum maximum wilted","V"
+"1169","panicum maximum||chopping||ensilation;egyptian berseem clover||chopping||ensilation",NA
+"1170","papaya leaves",NA
+"1171","pasture","V"
+"1172","pbb 15 feed",NA
+"1173","pds0",NA
+"1174","pds25",NA
+"1175","pds50",NA
+"1176","pds75",NA
+"1177","pea","I"
+"1178","pea seed hull","V"
+"1179","pea straw","V"
+"1180","pearl millet","V"
+"1181","pennisetum","V"
+"1182","pennisetum clandestinum","V"
+"1183","pennisetum clandestinum & lolium","IV"
+"1184","pennisetum clandestinum dried ground","V"
+"1185","pennisetum clandestinum ensiled",NA
+"1186","pennisetum clandestinum leaves dried ground","V"
+"1187","pennisetum dried","V"
+"1188","pennisetum mezianum","V"
+"1189","pennisetum pedicellatum","V"
+"1190","pennisetum pedicellatum dried","V"
+"1191","pennisetum purpureum","V"
+"1192","pennisetum purpureum dried","V"
+"1193","pennisetum purpureum dried ground","V"
+"1194","pennisetum purpureum ensiled","V"
+"1195","pennisetum purpureum ground","V"
+"1196","pennisetum purpureum wilted","V"
+"1197","pericopis laxiflora leaves and twigs",NA
+"1198","pfbsm",NA
+"1199","phoenix dactylifera leaves cellulase treated dried",NA
+"1200","phoenix dactylifera leaves cellulase treated dried fibrolytic treated",NA
+"1201","phoenix dactylifera leaves dried fibrolytic treated",NA
+"1202","phoenix dactylifera leaves||chopping||cellulase treatment;fibrolytic treatment||drying",NA
+"1203","phosphate salt lick",NA
+"1204","phyllanthus",NA
+"1205","phyllanthus amarus","IV"
+"1206","phyllanthus amarus dried ground",NA
+"1207","phyllostachys aurea","V"
+"1208","phytase",NA
+"1209","phytase ground",NA
+"1210","pig manure",NA
+"1211","pigeon pea","IV"
+"1212","pigeon pea dried","V"
+"1213","pigeon pea leaves dried","IV"
+"1214","piliostigma reticulatum pods crushed dried",NA
+"1215","piliostigma thonningii leaves wilted",NA
+"1216","piliostigma thonningii pods crushed",NA
+"1217","pithecellobium dulce leaves dried","I"
+"1218","plantain peel dried ground",NA
+"1219","pleurotus ostreatus",NA
+"1220","poaceae","V"
+"1221","pogonarthria squarrosa",NA
+"1222","pollard",NA
+"1223","polyalthia longifolia leaves dried",NA
+"1224","polyethylene","VI"
+"1225","polyethylene glycol","VI"
+"1226","polyvitamins",NA
+"1227","popcorn waste","II"
+"1228","potassium carbonate",NA
+"1229","potassium humate","VI"
+"1230","potato hash ensiled","I"
+"1231","potato processing waste","IV"
+"1232","potato starch",NA
+"1233","poult manure",NA
+"1234","poultry feed",NA
+"1235","poultry litter","IV"
+"1236","poultry litter deep stacked","IV"
+"1237","poultry litter deep stacked dried","IV"
+"1238","poultry litter dried","V"
+"1239","poultry litter dried ground","IV"
+"1240","poultry litter ground","VI"
+"1241","prime gluten 60","III"
+"1242","prime gluten 60 ground",NA
+"1243","probiotic","VI"
+"1244","propionibacterium freudenreinchi",NA
+"1245","prosopis africana seed ground",NA
+"1246","prosopis juliflora dried","IV"
+"1247","prosopis juliflora dried ground",NA
+"1248","prosopis juliflora pods dried fermented ground",NA
+"1249","prosopis juliflora pods dried ground",NA
+"1250","prosopis juliflora pods ground","IV"
+"1251","protected fat",NA
+"1252","protein isolate meal 5% (rim)",NA
+"1253","protein-mineral concentrate",NA
+"1254","prq feed",NA
+"1255","prunus africana",NA
+"1256","psophocarpus scandens leaves",NA
+"1257","psophocarpus scandens leaves wilted",NA
+"1258","pterocarpus erinaceus","V"
+"1259","pterocarpus erinaceus leaves and twigs",NA
+"1260","pterocarpus erinaceus leaves dried","V"
+"1261","pterocarpus lucens leaves dried","IV"
+"1262","pterocarpus lucens pods dried","IV"
+"1263","pueraria phaseoloides leaves",NA
+"1264","pulse hulm",NA
+"1265","quercus ilex",NA
+"1266","r-saf",NA
+"1267","r-sun",NA
+"1268","r1",NA
+"1269","r2",NA
+"1270","r3",NA
+"1271","rabbit pellet","IV"
+"1272","rainbow trout oil ensiled","II"
+"1273","rainbow trout viscera de-oiled ensiled",NA
+"1274","rangeland hay dried",NA
+"1275","ration 1",NA
+"1276","ration 1 cfm1",NA
+"1277","ration 2",NA
+"1278","ration 3",NA
+"1279","ration 4",NA
+"1280","ration c2","II"
+"1281","ration1",NA
+"1282","ration2",NA
+"1283","ration2 cfm2",NA
+"1284","ration3",NA
+"1285","ration3 cfm3",NA
+"1286","rcns a",NA
+"1287","rcns b",NA
+"1288","rcns c",NA
+"1289","rcns d",NA
+"1290","rfm",NA
+"1291","rice d2",NA
+"1292","rice grain","I"
+"1293","rice grain ground","I"
+"1294","rice hull","V"
+"1295","rice husk","V"
+"1296","rice husk dried urea treated","V"
+"1297","rice husk ensiled",NA
+"1298","rice husk enzyme treated","V"
+"1299","rice husk fermented","V"
+"1300","rice milling waste",NA
+"1301","rice offal","II"
+"1302","rice offal dried inoculated",NA
+"1303","rice offal ground","II"
+"1304","rice offal solvent",NA
+"1305","rice polish","I"
+"1306","rice straw","V"
+"1307","rice straw dried","V"
+"1308","rice straw dried ensiled urea treated","V"
+"1309","rice straw dried fermented ground","V"
+"1310","rice straw dried fermented ground inoculated",NA
+"1311","rice straw dried ground","V"
+"1312","rice straw dried inoculated urea treated","V"
+"1313","rice straw dried urea treated","V"
+"1314","rice straw ensiled","V"
+"1315","rice straw ensiled urea treated","V"
+"1316","rice straw fermented ground","V"
+"1317","rice straw ground","V"
+"1318","rice straw molasses treated","V"
+"1319","rice straw urea treated","V"
+"1320","rice straw;cotton seed||milling||undecorticated",NA
+"1321","rim",NA
+"1322","rosemary leaves",NA
+"1323","rosemary oil","II"
+"1324","rosemary residues dried ground",NA
+"1325","rottboellia cochinchinensis","V"
+"1326","roughage group",NA
+"1327","roughage only","V"
+"1328","rsm1","V"
+"1329","rsm2",NA
+"1330","rsm3",NA
+"1331","rsphigh",NA
+"1332","rsplow",NA
+"1333","rspmed",NA
+"1334","rt1",NA
+"1335","rt2",NA
+"1336","rt3",NA
+"1337","rt4",NA
+"1338","rts",NA
+"1339","rumen contents dried ground","II"
+"1340","ruminant premix",NA
+"1341","rye grass;white clover",NA
+"1342","rye offal",NA
+"1343","saccharomyces cerevisiae",NA
+"1344","saccharomyces cerevisiae dried",NA
+"1345","safflower ground","II"
+"1346","safflower seed","II"
+"1347","samanea saman dried ground",NA
+"1348","samanea saman wilted","IV"
+"1349","sand","VI"
+"1350","sardine ground",NA
+"1351","sbls with 0.3% urea",NA
+"1352","sbls with 0.6% urea",NA
+"1353","scarlet eggplant market waste wilted","IV"
+"1354","scarlet eggplant wilted","V"
+"1355","scbb",NA
+"1356","schizachyrium exile","V"
+"1357","schizachyrium exile urea treated","V"
+"1358","schizachyrium jeffreysii",NA
+"1359","schoenefeldia gracilis dried","V"
+"1360","sclerocarya birrea seed cake ground",NA
+"1361","scm 0","II"
+"1362","scm 10",NA
+"1363","scm 15",NA
+"1364","scm 20","II"
+"1365","searsia lancea","IV"
+"1366","searsia pyroides","IV"
+"1367","selenium",NA
+"1368","sesame fermented","II"
+"1369","sesame ground","II"
+"1370","sesame residue","II"
+"1371","sesame seed cake","II"
+"1372","sesame seed cake autoclaved dried ground","II"
+"1373","sesame seed cake ground","II"
+"1374","sesame seed cake ground roasted","II"
+"1375","sesame seed dried ground soaked","II"
+"1376","sesame seed ground","II"
+"1377","sesbania dried",NA
+"1378","sesbania goetzei dried",NA
+"1379","sesbania sesban",NA
+"1380","sesbania sesban dried","I"
+"1381","sesbania sesban ensiled",NA
+"1382","sesbania sesban leaves and twigs",NA
+"1383","sesbania sesban leaves and twigs dried","I"
+"1384","sesbania sesban leaves dried","I"
+"1385","sesbania sesban leaves dried ground",NA
+"1386","sesbania sesban leaves wilted",NA
+"1387","sesbania sesban seed","II"
+"1388","sesbania sesban seed roasted","II"
+"1389","sesbania sesban stalks wilted",NA
+"1390","sesbania sesban||ensilation;fodder beet||ensilation",NA
+"1391","sheanut cake","II"
+"1392","sheanut cake boiled dried","II"
+"1393","sheanut cake ground","II"
+"1394","sheep meal",NA
+"1395","shell","IV"
+"1396","shell ground","IV"
+"1397","shrimp ground","III"
+"1398","shrimp heads","III"
+"1399","shrimp heads ground","III"
+"1400","shrimp hydrolysate","III"
+"1401","siam weed leaves ground",NA
+"1402","sida acuta","IV"
+"1403","sida cordifolia",NA
+"1404","silage khat farm","V"
+"1405","sinking feed",NA
+"1406","sirq feed",NA
+"1407","skimmed milk powder",NA
+"1408","soc",NA
+"1409","sodium sulfate",NA
+"1410","sole wb",NA
+"1411","sorghum","I"
+"1412","sorghum brewers grain dried","IV"
+"1413","sorghum brewers grain dried refermented",NA
+"1414","sorghum dried","IV"
+"1415","sorghum ensiled","V"
+"1416","sorghum grain","I"
+"1417","sorghum ground","I"
+"1418","sorghum husk urea treated",NA
+"1419","sorghum sprout",NA
+"1420","sorghum sprout dried ground","I"
+"1421","sorghum straw","V"
+"1422","sorghum straw alkali treated dried","V"
+"1423","sorghum straw crushed",NA
+"1424","sorghum straw crushed dried fermented",NA
+"1425","sorghum straw dried ground",NA
+"1426","sorghum sudanense","V"
+"1427","sorghum sudanense dried","V"
+"1428","sorghum threshed top","IV"
+"1429","soybean","II"
+"1430","soybean autoclaved ground",NA
+"1431","soybean cake","I"
+"1432","soybean cake ground","III"
+"1433","soybean cheese waste crushed ensiled",NA
+"1434","soybean dehulled ground","II"
+"1435","soybean dried fermented",NA
+"1436","soybean flakes defatted crushed dehulled dried extruded heated ground","III"
+"1437","soybean flakes defatted crushed dehulled heated","III"
+"1438","soybean flakes defatted extruded",NA
+"1439","soybean full fat","II"
+"1440","soybean full fat cake","III"
+"1441","soybean full fat ground","II"
+"1442","soybean full fat heated","II"
+"1443","soybean full fat roasted","II"
+"1444","soybean ground","III"
+"1445","soybean ground roasted","III"
+"1446","soybean haulm","V"
+"1447","soybean hull","V"
+"1448","soybean hull extruded ground",NA
+"1449","soybean hulls",NA
+"1450","soybean meal","III"
+"1451","soybean meal 7% (rts)",NA
+"1452","soybean oil","II"
+"1453","soybean pulp",NA
+"1454","soybean residue dried","V"
+"1455","soybean roasted","II"
+"1456","soybean shell","I"
+"1457","soybean straw","V"
+"1458","soybean straw baker's yeast treament dried molasses treated urea treated",NA
+"1459","soybean straw dried","V"
+"1460","soybean straw dried molasses treated urea treated","V"
+"1461","soybean straw||urea treatment||molasses treatment||baker's yeast treament||drying;soybean oil","II"
+"1462","soybean||grinding;maize yellow;wheat offal;rice offal;molasses;limestone;salt",NA
+"1463","spent rice straw","IV"
+"1464","spirulina","III"
+"1465","spirulina dried","III"
+"1466","spirulina ground","III"
+"1467","spondias mombin","IV"
+"1468","sporobolus natalensis","V"
+"1469","sporobolus natalensis dried","V"
+"1470","spvswb",NA
+"1471","starch",NA
+"1472","starter d a;starter d b",NA
+"1473","starter d c;starter d d",NA
+"1474","starter diet",NA
+"1475","stereochlaena cameronii",NA
+"1476","stipa tenacissima dried","V"
+"1477","stylosanthes guianensis","IV"
+"1478","stylosanthes guianensis dried","IV"
+"1479","stylosanthes guianensis dried ground","V"
+"1480","stylosanthes guianensis leaves","IV"
+"1481","stylosanthes hamata","IV"
+"1482","stylosanthes scabra dried","IV"
+"1483","sugar beet crushed","I"
+"1484","sugar beet leaves ensiled wilted",NA
+"1485","sugar beet molasses","I"
+"1486","sugar beet pulp","IV"
+"1487","sugar beet pulp dried","IV"
+"1488","sugar beet pulp treated",NA
+"1489","sugarcane bagasse","V"
+"1490","sugarcane bagasse ensiled","V"
+"1491","sugarcane bagasse enzyme treated","V"
+"1492","sugarcane bagasse fermented","V"
+"1493","sugarcane bagasse ground","V"
+"1494","sugarcane bagasse|| pelleting;alfalfa||drying;unspecified yeast;molasses;urea;mineral;salt",NA
+"1495","sugarcane bagasse||grinding;alfalfa||drying;unspecified yeast;molasses;urea;mineral;salt",NA
+"1496","sugarcane molasses","I"
+"1497","sugarcane peel dried ground",NA
+"1498","sulphur","VI"
+"1499","sun-dried fish meal","III"
+"1500","sunflower","II"
+"1501","sunflower ground","II"
+"1502","sunflower oil","II"
+"1503","sunflower seed","II"
+"1504","sunflower seed cake","II"
+"1505","sunflower seed cake ground","II"
+"1506","sunflower seed cake||milling||undecorticated; soybean cake||milling;wheat offal;molasses;limestone;salt;minerals and vitamins premix",NA
+"1507","sunflower seed ground","II"
+"1508","supplement","II"
+"1509","supplements",NA
+"1510","surplus cafeteria food(scf) dried ground","I"
+"1511","sweet basil by product",NA
+"1512","sweet potato peels dried","IV"
+"1513","sweet potato vine","IV"
+"1514","sweet potato vine dried","IV"
+"1515","sweet potato vine ensiled","IV"
+"1516","sweet potato vine ensiled wilted","IV"
+"1517","sweet potato vine wilted","IV"
+"1518","swine mix","VI"
+"1519","t0 (100 ch)",NA
+"1520","t1",NA
+"1521","t1 (100% nsc)",NA
+"1522","t1 (50ch:50dbv)",NA
+"1523","t1 (cassava peel untreated)",NA
+"1524","t1 (gg100%)",NA
+"1525","t1 cfm60 bh15 drs25",NA
+"1526","t1 cm",NA
+"1527","t1 control",NA
+"1528","t1 feed",NA
+"1529","t1 hay + conc daily",NA
+"1530","t1 np",NA
+"1531","t1 ph100%","V"
+"1532","t1a.b+peg",NA
+"1533","t1g (forage)",NA
+"1534","t2",NA
+"1535","t2 (25ch:75dbv)",NA
+"1536","t2 (75 nsc:25 csh %)",NA
+"1537","t2 (corn cob untreated)",NA
+"1538","t2 (gg80% + csp10% + sbcw10%)",NA
+"1539","t2 35fph",NA
+"1540","t2 cf",NA
+"1541","t2 cfm60 bh15 csl25",NA
+"1542","t2 cm+ml",NA
+"1543","t2 feed",NA
+"1544","t2 ph100% 300cm",NA
+"1545","t2 silage + conc daily",NA
+"1546","t2 wb+nc",NA
+"1547","t2a.b+bc",NA
+"1548","t2g (concentrate)",NA
+"1549","t3",NA
+"1550","t3 (100dbv)",NA
+"1551","t3 (50 nsc:50 csh %)",NA
+"1552","t3 (gg60% + csp30% + sbcw10%)",NA
+"1553","t3 (treated cassava peel)",NA
+"1554","t3 50fph",NA
+"1555","t3 cfm60 bh15 ur25",NA
+"1556","t3 cm+ml",NA
+"1557","t3 feed",NA
+"1558","t3 lf",NA
+"1559","t3 ph100% 1hb",NA
+"1560","t3 silage + conc skip-a-day",NA
+"1561","t3 wb+nc",NA
+"1562","t3a.b",NA
+"1563","t3g (urea molasses)",NA
+"1564","t4",NA
+"1565","t4 (25 nsc:75 csh %)",NA
+"1566","t4 (gg40% + csp50% + sbcw10%)",NA
+"1567","t4 (treated corn cob)",NA
+"1568","t4 cm+ml",NA
+"1569","t4 lf cf",NA
+"1570","t4 ph100% 948ho",NA
+"1571","t4 silage + conc skip-2-days",NA
+"1572","t4 wb+nc",NA
+"1573","t4b.d+peg",NA
+"1574","t5",NA
+"1575","t5 (100% csh)",NA
+"1576","t5 ml",NA
+"1577","t5 ph100% 250hb 237ho 150cm",NA
+"1578","t5b.d+bc",NA
+"1579","t6b.d",NA
+"1580","talinium triangulare leaves",NA
+"1581","talinum fruticosum",NA
+"1582","tamarind wilted",NA
+"1583","taro leaves boiled dried",NA
+"1584","taro root dried ground","I"
+"1585","tata dried","I"
+"1586","tectona grandis leaves wilted",NA
+"1587","tectona grandis wilted",NA
+"1588","teff","V"
+"1589","teff ground","V"
+"1590","teff straw","V"
+"1591","teff straw crushed","V"
+"1592","teff straw dried","V"
+"1593","teff straw ensiled fermented urea treated","V"
+"1594","tela",NA
+"1595","tephrosia polystachyum dried","IV"
+"1596","tephrosia purpurea","IV"
+"1597","terminalia brownii leaves dried","IV"
+"1598","terminalia sericea","IV"
+"1599","termite dried ground","III"
+"1600","themeda triandra dried ground","V"
+"1601","themeda triandra ground","V"
+"1602","threonine","VI"
+"1603","tithonia diversifolia","IV"
+"1604","tithonia diversifolia dried","IV"
+"1605","tithonia diversifolia ensiled wilted",NA
+"1606","tmrl",NA
+"1607","tomato pulp","II"
+"1608","tomato waste dried",NA
+"1609","toxynil ground","VI"
+"1610","trace-elements mix",NA
+"1611","traditional diet",NA
+"1612","treated barley straw",NA
+"1613","treatment 1",NA
+"1614","treatment 1(b)",NA
+"1615","treatment 2",NA
+"1616","treatment 2 (c)",NA
+"1617","treatment 3",NA
+"1618","treatment 3 (d)",NA
+"1619","treatment 4",NA
+"1620","treatment control",NA
+"1621","treatment t1",NA
+"1622","treatment t2",NA
+"1623","treatment t3",NA
+"1624","treatment t4",NA
+"1625","treatment t5",NA
+"1626","tribulus terrestris","IV"
+"1627","tricalcium phosphate",NA
+"1628","tridax procumbens","IV"
+"1629","trifolium alexandrinum","IV"
+"1630","trifolium alexandrinum dried","IV"
+"1631","trifolium alexandrinum ensiled","V"
+"1632","trifolium alexandrinum straw","V"
+"1633","trifolium alexandrinum straw dried","IV"
+"1634","trifolium alexandrinum straw urea treated","V"
+"1635","trifolium alexandrinum||drying;commercial feed||pelleting",NA
+"1636","trifolium alexandrinum||ensilation;fodder beet||ensilation",NA
+"1637","trifolium dried",NA
+"1638","trifolium quartinianum dried","IV"
+"1639","trifolium repens",NA
+"1640","trifolium repens dried",NA
+"1641","trimethyl cellulose","VI"
+"1642","tripsacum laxum","V"
+"1643","triticale","I"
+"1644","trout ensiled",NA
+"1645","trout oil ensiled","II"
+"1646","trs feed",NA
+"1647","tryptophan",NA
+"1648","tst","I"
+"1649","tth 16%fm cfm",NA
+"1650","tth 16%fm sfm",NA
+"1651","tth 20%fm cfm",NA
+"1652","tth 20%fm sfm",NA
+"1653","tth 24%fm cfm",NA
+"1654","tth 24%fm sfm",NA
+"1655","tth 28%fm cfm",NA
+"1656","tth 28%fm sfm",NA
+"1657","tuna ground",NA
+"1658","turmeric",NA
+"1659","tv treated rh",NA
+"1660","tv treated scb",NA
+"1661","typha domingensis ensiled wilted",NA
+"1662","ubb",NA
+"1663","ultws t3",NA
+"1664","ulva rigida dried ground",NA
+"1665","umtws t2",NA
+"1666","unspecified filler",NA
+"1667","unspecified forage",NA
+"1668","unspecified grass","V"
+"1669","unspecified grass dried","V"
+"1670","unspecified grass dried ground","V"
+"1671","unspecified grass urea treated",NA
+"1672","unspecified grass urea treated dried",NA
+"1673","unspecified molasses ground",NA
+"1674","unspecified offal dried ground",NA
+"1675","unspecified offal ground",NA
+"1676","unspecified straw","V"
+"1677","unspecified straw ground",NA
+"1678","unspecified yeast","III"
+"1679","untreated barley straw","V"
+"1680","untreated organic waste dried fermented ground",NA
+"1681","untreated organic waste ground",NA
+"1682","untreated rh",NA
+"1683","untreated scb",NA
+"1684","urea","VI"
+"1685","urea block salt lick",NA
+"1686","urochloa hybrid mulato ii dried","V"
+"1687","urochloa mosambicensis","V"
+"1688","urochloa mosambicensis dried","V"
+"1689","urs feed",NA
+"1690","urtica dioica dried ground",NA
+"1691","uws t1",NA
+"1692","vachellia",NA
+"1693","vachellia erioloba",NA
+"1694","vachellia polyacantha",NA
+"1695","vachellia polyacantha leaves ground",NA
+"1696","vallisneria aethiopica",NA
+"1697","ve20",NA
+"1698","ve40",NA
+"1699","ve60",NA
+"1700","vegetable oil","II"
+"1701","veld hay","V"
+"1702","velvet bean ground",NA
+"1703","velvet bean seeds boiled decorticated dried ground soaked",NA
+"1704","velvet bean seeds boiled meal decorticated dried soaked","II"
+"1705","vernonia amygdalina dried ground",NA
+"1706","vernonia amygdalina ground",NA
+"1707","vernonia amygdalina leaves crushed dried","IV"
+"1708","vernonia amygdalina leaves dried","IV"
+"1709","vernonia amygdalina wilted",NA
+"1710","vicia","IV"
+"1711","vicia dried","IV"
+"1712","vicia dried wilted","IV"
+"1713","viscum album dried ground",NA
+"1714","vitalyte",NA
+"1715","vitamin ad3e",NA
+"1716","vitamin c",NA
+"1717","vitamin mix","VI"
+"1718","vitex doniana ground wilted",NA
+"1719","vitex doniana leaves dried ground",NA
+"1720","vmc",NA
+"1721","walnut leaves dried ethanol treated ground",NA
+"1722","waste activated sludge",NA
+"1723","water hyacinth dried fermented ground",NA
+"1724","water hyacinth dried ground","V"
+"1725","watermelon seed ground","II"
+"1726","watermelon vine dried",NA
+"1727","watermelon vine dried fermented","IV"
+"1728","wb umfb",NA
+"1729","wbb 15 feed",NA
+"1730","wfbsm",NA
+"1731","wheat","I"
+"1732","wheat & clover crushed","V"
+"1733","wheat crushed","I"
+"1734","wheat grain","I"
+"1735","wheat grain ground","I"
+"1736","wheat ground","I"
+"1737","wheat offal","IV"
+"1738","wheat offal ground","IV"
+"1739","wheat offal;maize yellow;soybean||grinding;limestone;salt;minerals and vitamins mix",NA
+"1740","wheat offal;maize;noug cake",NA
+"1741","wheat offal;noug cake",NA
+"1742","wheat offal;noug seed||grinding;cotton seed||grinding",NA
+"1743","wheat shorts","IV"
+"1744","wheat straw","V"
+"1745","wheat straw dried urea treated",NA
+"1746","wheat straw effective microbes","V"
+"1747","wheat straw ensiled",NA
+"1748","wheat straw ensiled fermented",NA
+"1749","wheat straw ground","V"
+"1750","wheat straw lime treated urea treated","V"
+"1751","wheat straw urea treated","V"
+"1752","wheat straw||chopping;chloris gayana||chopping||drying",NA
+"1753","wheat whole ground","I"
+"1754","wheat||milling;sesame seed cake",NA
+"1755","white lupin grain","II"
+"1756","white lupin grain dehulled dried soaked","II"
+"1757","white lupin grain dried soaked","II"
+"1758","white lupin grain roasted","II"
+"1759","whole milk",NA
+"1760","winged bean autoclaved ground",NA
+"1761","winged bean ground",NA
+"1762","winged bean ground roasted",NA
+"1763","winged termite dried ground","III"
+"1764","wood ash",NA
+"1765","wood ash ground",NA
+"1766","wood charcoal",NA
+"1767","yam peels","V"
+"1768","yam peels dried","V"
+"1769","yam peels dried ground","V"
+"1770","ycg",NA
+"1771","yellow corn;sunflower||grinding;wheat offal;molasses;limestone;salt",NA
+"1772","yellow corn;sunflower||grinding;wheat offal;molasses;limestone;salt;olive cake;food waste||drying",NA
+"1773","zea mays grain; soybean cake||milling;olive cake;minerals and vitamins mix;salt;limestone;spent yeast;anti-fungi",NA
+"1774","zea mays grain;noug cake;salt",NA
+"1775","zinc",NA
+"1776","zinc oxide",NA
+"1777","ziziphus jujube leaves dried",NA
+"1778","ziziphus mauritiania",NA

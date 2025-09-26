@@ -1,0 +1,552 @@
+---
+title: "9_Emission_Identidy_Practices"
+output: html_document
+date: "2025-09-26"
+---
+
+```{r}
+diet_percentages <- read.csv("~/ERL/Emission_Analysis/data/diet_percentages.csv")
+total_amounts <- read.csv("~/ERL/Emission_Analysis/data/total_amounts.csv")
+classif_ing_simple <- read.csv("~/ERL/Emission_Analysis/data/classif_ing_simple.csv")
+merged_metadata <- readRDS("~/ERL/Emission_Analysis/data/merged_metadata_nutrition_inference.rds")
+GE_combined<-read.csv("~/ERL/Emission_Analysis/data/GE_combined.csv")
+
+ctrl_key <- merged_metadata$MT.Out[, .(
+  B.Code,
+  A.Level.Name,
+  T.Name,
+  T.Control
+)]
+```
+
+### 19 practice ingredient comparison 
+
+```{r}
+suppressPackageStartupMessages({
+  library(dplyr); library(tidyr); library(stringr); library(purrr)
+})
+
+classify_diet_practice <- function(
+  diet_percentages,
+  total_amounts,
+  ctrl_key,
+  classif_ing_simple,
+  TOTAL_TOL = 0.05,   # ±5% total DM offered
+  ING_TOL   = 1.0,    # %-point threshold to count a change
+  BAL_TOL   = 3.0     # %-point imbalance allowed for a "balanced swap"
+){
+
+  ensure_col <- function(df, col, fill = NA_character_) {
+    if (!col %in% names(df)) df[[col]] <- fill
+    df
+  }
+
+  norm_item <- function(x){
+    x %>%
+      stringr::str_to_lower() %>%
+      stringr::str_replace_all("[[:space:]]+", " ") %>%
+      stringr::str_trim()
+  }
+
+  # ---- Ingredient lookup (dedup + normalized) ----
+  ing_lu <- classif_ing_simple %>%
+    transmute(
+      D.Item_norm = norm_item(D.Item),
+      Ingredient_Category_lu = Ingredient_Category
+    ) %>%
+    filter(!is.na(D.Item_norm), D.Item_norm != "") %>%
+    group_by(D.Item_norm) %>%
+    summarise(Ingredient_Category_lu = dplyr::first(na.omit(Ingredient_Category_lu)),
+              .groups = "drop")
+
+  # ---- Control lookup (1 control per B.Code) ----
+  ctrl_lu <- ctrl_key %>%
+    filter(tolower(T.Control) == "yes") %>%
+    arrange(B.Code, A.Level.Name) %>%
+    group_by(B.Code) %>%
+    summarise(Control = first(A.Level.Name), .groups = "drop")
+
+  # ---- Totals to kg (aggregate duplicates) ----
+  totals_kg <- total_amounts %>%
+    mutate(Total_kg = case_when(
+      D.Unit.Amount == "g"  ~ Total_Amount/1000,
+      D.Unit.Amount == "kg" ~ Total_Amount,
+      TRUE ~ NA_real_
+    )) %>%
+    group_by(B.Code, A.Level.Name) %>%
+    summarise(Total_kg = sum(Total_kg, na.rm = TRUE), .groups = "drop")
+
+  # ---- Percentages + robust category join ----
+  dp <- ensure_col(diet_percentages, "Ingredient_Category")
+
+  pct_long <- dp %>%
+    select(B.Code, A.Level.Name, D.Item, Percentage_of_Diet, Ingredient_Category) %>%
+    group_by(B.Code, A.Level.Name, D.Item, Ingredient_Category) %>%
+    summarise(Percentage_of_Diet = sum(Percentage_of_Diet, na.rm = TRUE), .groups = "drop") %>%
+    mutate(D.Item_norm = norm_item(D.Item)) %>%
+    left_join(ing_lu, by = "D.Item_norm") %>%
+    mutate(
+      Ingredient_Category = coalesce(Ingredient_Category, Ingredient_Category_lu, "Unclassified")
+    ) %>%
+    select(-D.Item_norm, -Ingredient_Category_lu)
+
+  # ---- Pairs (treatment vs control) ----
+  pairs <- pct_long %>%
+    distinct(B.Code, A.Level.Name) %>%
+    inner_join(ctrl_lu, by = "B.Code") %>%
+    filter(A.Level.Name != Control) %>%
+    transmute(B.Code, Control, Trt = A.Level.Name) %>%
+    distinct()
+
+  trt_tbl <- pct_long %>%
+    rename(Trt = A.Level.Name, p_trt = Percentage_of_Diet) %>%
+    select(B.Code, Trt, D.Item, Ingredient_Category, p_trt)
+
+  ctrl_tbl <- pct_long %>%
+    rename(Control = A.Level.Name, p_ctrl = Percentage_of_Diet) %>%
+    select(B.Code, Control, D.Item, p_ctrl)
+
+  trt_vs_ctrl <- pairs %>%
+    left_join(trt_tbl,  by = c("B.Code","Trt")) %>%
+    left_join(ctrl_tbl, by = c("B.Code","Control","D.Item")) %>%
+    mutate(
+      p_trt  = coalesce(p_trt,  0),
+      p_ctrl = coalesce(p_ctrl, 0),
+      dP     = p_trt - p_ctrl,
+      dir    = case_when(
+        dP >=  ING_TOL ~ "increase",
+        dP <= -ING_TOL ~ "decrease",
+        TRUE           ~ "nochange"
+      )
+    )
+
+  delta_totals <- pairs %>%
+    left_join(totals_kg %>% rename(Total_trt_kg  = Total_kg),
+              by = c("B.Code","Trt" = "A.Level.Name")) %>%
+    left_join(totals_kg %>% rename(Total_ctrl_kg = Total_kg),
+              by = c("B.Code","Control" = "A.Level.Name")) %>%
+    mutate(ΔTOTAL = (Total_trt_kg - Total_ctrl_kg)/Total_ctrl_kg)
+
+  # Precompute top-3 item changes (avoids the earlier vctrs error)
+  top_changes <- trt_vs_ctrl %>%
+    group_by(B.Code, Control, Trt) %>%
+    arrange(desc(abs(dP)), .by_group = TRUE) %>%
+    summarise(
+      Top_changes = paste(
+        head(sprintf("%s %s%.1f%%", D.Item, if_else(dP>=0,"+",""), dP), 3),
+        collapse = "; "
+      ),
+      .groups = "drop"
+    )
+
+  summarize_types <- function(x) paste(sort(unique(na.omit(x))), collapse = ", ")
+
+  paired <- trt_vs_ctrl %>%
+    left_join(delta_totals %>% select(B.Code, Trt, ΔTOTAL), by = c("B.Code","Trt")) %>%
+    group_by(B.Code, Control, Trt, ΔTOTAL) %>%
+    summarise(
+      POS_sum   = sum(pmax(dP,0),  na.rm = TRUE),
+      NEG_sum   = sum(pmax(-dP,0), na.rm = TRUE),
+      n_pos     = sum(dir=="increase",  na.rm = TRUE),
+      n_neg     = sum(dir=="decrease",  na.rm = TRUE),
+      Types_added     = summarize_types(Ingredient_Category[dir=="increase"]),
+      Types_decreased = summarize_types(Ingredient_Category[dir=="decrease"]),
+      .groups = "drop"
+    ) %>%
+    left_join(top_changes, by = c("B.Code","Control","Trt")) %>%
+    mutate(
+      Practice = case_when(
+        is.finite(ΔTOTAL) & abs(ΔTOTAL) >  TOTAL_TOL & POS_sum >= ING_TOL ~ "Addition",
+        is.finite(ΔTOTAL) & abs(ΔTOTAL) <= TOTAL_TOL &
+          POS_sum >= ING_TOL & NEG_sum >= ING_TOL &
+          abs(POS_sum - NEG_sum) <= BAL_TOL                               ~ "Substitution",
+        is.finite(ΔTOTAL) & abs(ΔTOTAL) <= TOTAL_TOL &
+          POS_sum >= ING_TOL & NEG_sum <  ING_TOL                         ~ "Addition",
+        (POS_sum + NEG_sum) < ING_TOL                                     ~ "No change",
+        TRUE                                                               ~ "Substitution"
+      ),
+      Magnitude_pct = case_when(
+        Practice == "Addition"     ~ POS_sum,
+        Practice == "Substitution" ~ 0.5*(POS_sum + NEG_sum),
+        TRUE                       ~ 0
+      )
+    ) %>%
+    rowwise() %>%
+    mutate(
+      Substitution_pairs = {
+        if (Practice != "Substitution") {
+          ""
+        } else {
+          b <- B.Code; t <- Trt
+          pos_type <- trt_vs_ctrl %>%
+            filter(B.Code == b, Trt == t) %>%
+            group_by(Ingredient_Category) %>%
+            summarise(pos = sum(pmax(dP,0),  na.rm=TRUE), .groups="drop") %>%
+            filter(pos > 0) %>% arrange(desc(pos))
+          neg_type <- trt_vs_ctrl %>%
+            filter(B.Code == b, Trt == t) %>%
+            group_by(Ingredient_Category) %>%
+            summarise(neg = sum(pmax(-dP,0), na.rm=TRUE), .groups="drop") %>%
+            filter(neg > 0) %>% arrange(desc(neg))
+          np <- min(nrow(pos_type), nrow(neg_type))
+          if (np == 0) "" else
+            paste(paste0(neg_type$Ingredient_Category[seq_len(np)],
+                         " → ",
+                         pos_type$Ingredient_Category[seq_len(np)]),
+                  collapse="; ")
+        }
+      }
+    ) %>%
+    ungroup() %>%
+    arrange(B.Code, Control, Trt)
+
+  paired
+}
+
+# ── Run it ──
+practice_tbl <- classify_diet_practice(
+  diet_percentages   = diet_percentages,
+  total_amounts      = total_amounts,
+  ctrl_key           = ctrl_key,
+  classif_ing_simple = classif_ing_simple,
+  TOTAL_TOL = 0.05, ING_TOL = 1.0, BAL_TOL = 3.0
+)
+
+```
+
+
+```{r}
+suppressPackageStartupMessages({
+  library(dplyr); library(stringr); library(tidyr); library(purrr)
+})
+
+# --- Rebuild the same control lookup used in the function ---
+ctrl_lu <- ctrl_key %>%
+  filter(tolower(T.Control) == "yes") %>%
+  arrange(B.Code, A.Level.Name) %>%
+  group_by(B.Code) %>%
+  summarise(Control = first(A.Level.Name), .groups = "drop")
+
+# --- Diet coverage per paper (from the raw diet_percentages you feed the function) ---
+diets_per_code <- diet_percentages %>%
+  filter(!is.na(B.Code), !is.na(A.Level.Name)) %>%
+  group_by(B.Code) %>%
+  summarise(
+    n_diets = n_distinct(A.Level.Name),
+    n_rows  = n(),                     # total ingredient rows for those diets
+    .groups = "drop"
+  )
+
+# --- Candidates that *should* be classifiable: have a control & at least 2 diets ---
+candidates <- diets_per_code %>%
+  left_join(ctrl_lu %>% mutate(has_control = TRUE), by = "B.Code") %>%
+  mutate(has_control = coalesce(has_control, FALSE)) %>%
+  mutate(eligible = has_control & n_diets >= 2)
+
+# --- B.Codes that actually produced a practice row ---
+in_practice <- practice_tbl %>% distinct(B.Code)
+
+# --- 1) Papers that could not be classified at all (no rows in practice_tbl) ---
+unclassified_papers <- candidates %>%
+  mutate(in_practice = B.Code %in% in_practice$B.Code) %>%
+  filter(!in_practice | !eligible) %>%         # either not produced, or not eligible
+  transmute(
+    B.Code,
+    n_diets,
+    has_control,
+    reason = case_when(
+      !has_control                    ~ "No control diet flagged in ctrl_key",
+      n_diets < 2                     ~ "Only one diet available (need ≥ 2)",
+      has_control & n_diets >= 2 & !in_practice ~ "Pairing failed (no Trt vs Control built)",
+      TRUE                            ~ "Other/unknown"
+    )
+  ) %>%
+  arrange(desc(has_control), desc(n_diets), B.Code)
+
+# --- 2) Papers that *were* classified, but every comparison is "No change" ---
+no_change_papers <- practice_tbl %>%
+  group_by(B.Code) %>%
+  summarise(
+    n_pairs         = n(),                         # number of Trt vs Control pairs
+    n_no_change     = sum(Practice == "No change"),
+    all_no_change   = n_pairs > 0 & n_no_change == n_pairs,
+    .groups = "drop"
+  ) %>%
+  filter(all_no_change) %>%
+  arrange(desc(n_pairs))
+
+# (Optional) attach product/species to both tables
+prod_lu <- merged_metadata$`Prod.Out` %>%
+  distinct(B.Code, P.Product)
+
+unclassified_papers <- unclassified_papers %>%
+  left_join(prod_lu, by = "B.Code") %>%
+  relocate(P.Product, .after = B.Code)
+
+no_change_papers <- no_change_papers %>%
+  left_join(prod_lu, by = "B.Code") %>%
+  relocate(P.Product, .after = B.Code)
+
+# --- Quick summaries you can show in a slide ---
+summary_unclassified <- unclassified_papers %>%
+  count(reason, name = "n_papers") %>%
+  arrange(desc(n_papers))
+
+summary_no_change_by_prod <- no_change_papers %>%
+  count(P.Product, name = "n_papers_all_no_change")
+
+# Peek
+unclassified_papers %>% head(10)
+no_change_papers %>% head(10)
+summary_unclassified
+summary_no_change_by_prod
+
+```
+
+```{r}
+# B.Codes that appear in the practice table
+# practice_codes <- practice_tbl %>%
+#   distinct(B.Code)
+# 
+# # Intersect with your ≥2-diets papers
+# practice_in_2plus <- practice_codes %>%
+#   semi_join(papers_2plus %>% select(B.Code), by = "B.Code")
+# 
+# # Attach species and count by product
+# practice_in_2plus_by_product <- practice_in_2plus %>%
+#   left_join(
+#     merged_metadata$`Prod.Out` %>%
+#       filter(P.Product %in% c("Cattle","Sheep","Goat")) %>%
+#       distinct(B.Code, P.Product),
+#     by = "B.Code"
+#   ) %>%
+#   count(P.Product, name = "Papers_with_practice_and_≥2_classified_diets")
+# 
+# # Show the summary
+# knitr::kable(
+#   practice_in_2plus_by_product,
+#   caption = "Papers per product that are in practice_tbl AND have ≥2 fully classified diets"
+# )
+# 
+# # (Optional) list the actual codes
+# knitr::kable(
+#   practice_in_2plus %>%
+#     left_join(
+#       merged_metadata$`Prod.Out` %>%
+#         distinct(B.Code, P.Product),
+#       by = "B.Code"
+#     ) %>%
+#     arrange(P.Product, B.Code),
+#   caption = "B.Codes with ≥2 fully classified diets that also have a practice"
+# )
+
+```
+
+
+## diet clasffication practice 
+```{r}
+suppressPackageStartupMessages({
+  library(dplyr); library(tidyr); library(stringr)
+})
+
+# --- Roman → full name (keeps non-Roman as-is) -----------------------------
+roman_to_name <- function(x) dplyr::recode(
+  x,
+  "I"  = "High-starch",
+  "II" = "High-fat",
+  "III"= "Protein",
+  "IV" = "Good forage",
+  "V"  = "Poor forage",
+  "VI" = "Mineral/Vitamin",
+  .default = x, .missing = NA_character_
+)
+
+# --- Normalise item names to improve join hit-rate -------------------------
+norm_item <- function(x){
+  x %>%
+    stringr::str_to_lower() %>%
+    stringr::str_replace_all("[[:space:]]+", " ") %>%
+    stringr::str_trim() %>%
+    # a couple of handy harmonisations seen in your data:
+    stringr::str_replace("^unspecified\\s+molasses$", "molasses") %>%
+    stringr::str_replace_all("\\bbran\\b", "offal")
+}
+
+# --- 1) Ingredient lookup (D.Item -> Ingredient_Category) ------------------
+stopifnot(all(c("D.Item","Ingredient_Category") %in% names(classif_ing_simple)))
+
+ing_lu <- classif_ing_simple %>%
+  transmute(
+    D.Item_norm = norm_item(D.Item),
+    Cat_ing = roman_to_name(Ingredient_Category)
+  ) %>%
+  filter(!is.na(D.Item_norm), D.Item_norm != "") %>%
+  group_by(D.Item_norm) %>%
+  summarise(Cat_ing = first(na.omit(Cat_ing)), .groups = "drop")
+
+# --- 2) Per-arm diet category = top-contributing ingredient type ----------
+# expects: diet_percentages has B.Code, A.Level.Name, D.Item, Percentage_of_Diet
+stopifnot(all(c("B.Code","A.Level.Name","D.Item","Percentage_of_Diet") %in% names(diet_percentages)))
+
+arm_cat <- diet_percentages %>%
+  mutate(
+    D.Item_norm = norm_item(D.Item),
+    Percentage_of_Diet = coalesce(Percentage_of_Diet, 0)
+  ) %>%
+  left_join(ing_lu, by = "D.Item_norm") %>%
+  # sum % by ingredient *category* within each arm
+  group_by(B.Code, A.Level.Name, Cat_ing) %>%
+  summarise(pct_cat = sum(Percentage_of_Diet, na.rm = TRUE), .groups = "drop") %>%
+  # pick the max category per arm (ties broken deterministically)
+  group_by(B.Code, A.Level.Name) %>%
+  arrange(desc(pct_cat), Cat_ing, .by_group = TRUE) %>%
+  slice(1) %>%
+  ungroup() %>%
+  transmute(
+    B.Code, A.Level.Name,
+    Diet_Category = if_else(is.na(Cat_ing) | Cat_ing == "", "Unknown", Cat_ing)
+  )
+
+diet_cat_lu <- distinct(arm_cat)
+
+# (optional) quick diagnostic
+# table(diet_cat_lu$Diet_Category, useNA = "ifany")
+
+# --- 3) Control → Treatment switches (simple) ------------------------------
+# ctrl_key must have B.Code, A.Level.Name, T.Control (TRUE/"yes" marks control)
+stopifnot(all(c("B.Code","A.Level.Name","T.Control") %in% names(ctrl_key)))
+
+ctrl_lu <- ctrl_key %>%
+  filter(T.Control== "yes") %>%
+  arrange(B.Code, A.Level.Name) %>%
+  group_by(B.Code) %>%
+  summarise(Control = first(A.Level.Name), .groups = "drop")
+
+pairs <- diet_cat_lu %>%
+  distinct(B.Code, A.Level.Name) %>%
+  inner_join(ctrl_lu, by = "B.Code") %>%
+  filter(A.Level.Name != Control) %>%
+  transmute(B.Code, Control, Trt = A.Level.Name)
+
+ctl <- diet_cat_lu %>% transmute(B.Code, Control = A.Level.Name, Cat_ctrl = Diet_Category)
+trt <- diet_cat_lu %>% transmute(B.Code, Trt     = A.Level.Name, Cat_trt  = Diet_Category)
+
+diet_switches <- pairs %>%
+  left_join(ctl, by = c("B.Code","Control")) %>%
+  left_join(trt, by = c("B.Code","Trt")) %>%
+  mutate(
+    Cat_ctrl = ifelse(is.na(Cat_ctrl) | Cat_ctrl=="", "Unknown", Cat_ctrl),
+    Cat_trt  = ifelse(is.na(Cat_trt)  | Cat_trt=="",  "Unknown", Cat_trt),
+    Switch   = paste0(Cat_ctrl, " \u2192 ", Cat_trt),
+    Practice_simple = dplyr::case_when(
+      Cat_ctrl == "Unknown" | Cat_trt == "Unknown" ~ "Unknown",
+      Cat_ctrl == Cat_trt                          ~ "Same category",
+      TRUE                                         ~ "Category switch"
+    )
+  ) %>%
+  arrange(B.Code, Control, Trt)
+
+# counts + transition table
+switch_counts <- diet_switches %>%
+  count(Cat_ctrl, Cat_trt, name = "n") %>%
+  arrange(desc(n))
+
+transition_table <- switch_counts %>%
+  tidyr::pivot_wider(names_from = Cat_trt, values_from = n, values_fill = 0) %>%
+  arrange(Cat_ctrl)
+
+# --- Results ready to use ---------------------------------------------------
+# diet_switches    # one row per trt vs control with Switch text
+# switch_counts    # tall counts of Cat_ctrl -> Cat_trt
+# transition_table # wide matrix of transitions
+
+
+```
+
+## count diet paper and GE
+
+```{r}
+library(dplyr)
+library(stringr)
+
+# --- 1) CH4 availability per (B.Code, D.Item) --------------------------------
+ch4_avail <- GE_combined %>%
+  mutate(
+    has_ch4 = !is.na(CH4_kg_year) | tolower(CH4_flag) == "yes"
+  ) %>%
+  # If there are multiple rows per (B.Code, D.Item), keep the one showing CH4 if any
+  group_by(B.Code, D.Item) %>%
+  summarise(
+    P.Product = dplyr::first(na.omit(P.Product)),
+    has_ch4   = any(has_ch4, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# --- 2) Join CH4 to idet_switches for control and treatment -------------------
+sw <- diet_switches %>%
+  # define category switch robustly from your columns
+  mutate(category_switch = !is.na(Cat_ctrl) & !is.na(Cat_trt) & Cat_ctrl != Cat_trt) %>%
+  # control side
+  left_join(
+    ch4_avail %>% rename(P.Product_ctrl = P.Product,
+                         has_ch4_ctrl   = has_ch4),
+    by = c("B.Code", "Control" = "D.Item")
+  ) %>%
+  # treatment side
+  left_join(
+    ch4_avail %>% rename(P.Product_trt = P.Product,
+                         has_ch4_trt   = has_ch4),
+    by = c("B.Code", "Trt" = "D.Item")
+  ) %>%
+  # pick a single product label (prefer when both match; otherwise coalesce)
+  mutate(
+    same_product = !is.na(P.Product_ctrl) & !is.na(P.Product_trt) & P.Product_ctrl == P.Product_trt,
+    P.Product = case_when(
+      same_product ~ P.Product_ctrl,
+      TRUE ~ coalesce(P.Product_ctrl, P.Product_trt)
+    )
+  )
+
+# --- 3) Keep rows with category switch AND CH4 on both sides ------------------
+sw_ok <- sw %>%
+  filter(
+    category_switch |
+      (is.character(Practice_simple) & tolower(Practice_simple) == "category switch")
+  ) %>%
+  filter(has_ch4_ctrl %in% TRUE, has_ch4_trt %in% TRUE)
+
+# --- 4a) Count: For how many papers per product (animal)? ---------------------
+# "paper" == unique B.Code
+per_product_counts <- sw_ok %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "n_papers_with_switch_and_both_CH4") %>%
+  arrange(desc(n_papers_with_switch_and_both_CH4), P.Product)
+
+# --- 4b) Detailed rows to *show the data* ------------------------------------
+details <- sw_ok %>%
+  transmute(
+    B.Code,
+    P.Product,
+    Control, Trt,
+    Cat_ctrl, Cat_trt,
+    Switch = ifelse(!is.na(Switch), Switch,
+                    paste0(Cat_ctrl, " \u2192 ", Cat_trt)),
+    CH4_ctrl_available = has_ch4_ctrl,
+    CH4_trt_available  = has_ch4_trt
+  ) %>%
+  arrange(P.Product, B.Code, Control, Trt)
+
+# --- 4c) Overall total across all products (optional) -------------------------
+total_papers_any_product <- n_distinct(details$B.Code)
+
+# Quick looks
+print(per_product_counts)
+cat("Total unique papers with a category switch and CH4 for both arms:", total_papers_any_product, "\n")
+print(details, n = 50)
+
+```
+
+```{r}
+write.csv(practice_tbl,"data/practice_tbl.csv")
+```
+

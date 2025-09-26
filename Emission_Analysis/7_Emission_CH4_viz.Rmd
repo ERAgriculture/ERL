@@ -1,0 +1,332 @@
+---
+title: "7_Emission_CH4_Viz"
+output: html_document
+date: "2025-09-26"
+---
+
+```{r}
+GE_combined <- read.csv("~/ERL/Emission_Analysis/data/GE_Combined.csv")
+merged_metadata <- readRDS("~/ERL/Emission_Analysis/data/merged_metadata_nutrition_inference.rds")
+ingredients <- readRDS("~/ERL/Emission_Analysis/data/ingredients_harmonized_subset.rds")
+Gross_energy <- read.csv("~/ERL/Emission_Analysis/data/gross_energy.csv")
+
+```
+
+## variability of CH4 within codes with different diets 
+
+```{r}
+# 1. Keep only codes with CH4
+GE_with_CH4 <- GE_combined %>%
+  filter(!is.na(CH4_kg_year)) %>%
+  filter(CH4_kg_year<500)%>%
+  select(B.Code, D.Item, P.Product, CH4_kg_year)
+
+# 2. Variability of CH4 within each code
+ch4_variability <- GE_with_CH4 %>%
+  group_by(B.Code, P.Product) %>%
+  summarise(
+    n_diets      = n_distinct(D.Item),
+    min_CH4      = min(CH4_kg_year, na.rm = TRUE),
+    max_CH4      = max(CH4_kg_year, na.rm = TRUE),
+    mean_CH4     = mean(CH4_kg_year, na.rm = TRUE),
+    sd_CH4       = sd(CH4_kg_year, na.rm = TRUE),
+    range_CH4    = max_CH4 - min_CH4,
+    .groups = "drop"
+  ) %>%
+  filter(n_diets > 1)   # only studies with >1 diet
+
+# 3. Summary across products (Cattle, Sheep, Goat)
+ch4_variability_summary <- ch4_variability %>%
+  group_by(P.Product) %>%
+  summarise(
+    n_studies       = n(),
+    avg_range       = mean(range_CH4, na.rm = TRUE),
+    avg_sd          = mean(sd_CH4, na.rm = TRUE),
+    max_within_diff = max(range_CH4, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(ch4_variability, aes(x = reorder(B.Code, range_CH4), 
+                            ymin = min_CH4, ymax = max_CH4, 
+                            color = P.Product)) +
+  geom_linerange(size = 1) +
+  geom_point(aes(y = min_CH4), shape = 21, fill = "white", size = 2) +
+  geom_point(aes(y = max_CH4), shape = 21, fill = "black", size = 2) +
+  coord_flip() +
+  labs(
+    x = "Study (B.Code)", 
+    y = "CH₄ emissions (kg/year)",
+    title = "Within-study range of CH₄ emissions across diets"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+ch4_variability_stats <- GE_with_CH4 %>%
+  filter(CH4_kg_year <= 500) %>%               # remove outliers
+  group_by(B.Code, P.Product) %>%
+  summarise(
+    n_diets   = n(),
+    mean_CH4  = mean(CH4_kg_year, na.rm = TRUE),
+    sd_CH4    = sd(CH4_kg_year, na.rm = TRUE),       # standard deviation
+    iqr_CH4   = IQR(CH4_kg_year, na.rm = TRUE),      # interquartile range
+    cv_CH4    = sd(CH4_kg_year, na.rm = TRUE) / mean(CH4_kg_year, na.rm = TRUE), # coefficient of variation
+    .groups = "drop"
+  )
+
+ggplot(ch4_variability_stats, aes(x = P.Product, y = cv_CH4, fill = P.Product)) +
+  geom_boxplot(alpha = 0.6) +
+  geom_jitter(width = 0.2, alpha = 0.5) +
+  labs(
+    x = "Species",
+    y = "CH₄ coefficient of variation",
+    title = "Relative variability of CH₄ emissions within studies"
+  ) +
+  theme_minimal()
+
+
+```
+
+```{r}
+# 1. Keep only codes with CH4
+GE_with_CH4 <- GE_combined %>%
+  filter(!is.na(GE_daily)) %>%
+  filter(CH4_kg_year<500)%>%
+  select(B.Code, D.Item, P.Product, GE_daily)
+
+# 2. Variability of CH4 within each code
+ch4_variability <- GE_with_CH4 %>%
+  group_by(B.Code, P.Product) %>%
+  summarise(
+    n_diets      = n_distinct(D.Item),
+    min_CH4      = min(GE_daily, na.rm = TRUE),
+    max_CH4      = max(GE_daily, na.rm = TRUE),
+    mean_CH4     = mean(GE_daily, na.rm = TRUE),
+    sd_CH4       = sd(GE_daily, na.rm = TRUE),
+    range_CH4    = max_CH4 - min_CH4,
+    .groups = "drop"
+  ) %>%
+  filter(n_diets > 1)   # only studies with >1 diet
+
+# 3. Summary across products (Cattle, Sheep, Goat)
+ch4_variability_summary <- ch4_variability %>%
+  group_by(P.Product) %>%
+  summarise(
+    n_studies       = n(),
+    avg_range       = mean(range_CH4, na.rm = TRUE),
+    avg_sd          = mean(sd_CH4, na.rm = TRUE),
+    max_within_diff = max(range_CH4, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ch4_variability_stats <- GE_with_CH4 %>%
+  filter(GE_daily <= 500) %>%               # remove outliers
+  group_by(B.Code, P.Product) %>%
+  summarise(
+    n_diets   = n(),
+    mean_CH4  = mean(GE_daily, na.rm = TRUE),
+    sd_CH4    = sd(GE_daily, na.rm = TRUE),       # standard deviation
+    iqr_CH4   = IQR(GE_daily, na.rm = TRUE),      # interquartile range
+    cv_CH4    = sd(GE_daily, na.rm = TRUE) / mean(GE_daily, na.rm = TRUE), # coefficient of variation
+    .groups = "drop"
+  )
+
+ggplot(ch4_variability_stats, aes(x = P.Product, y = cv_CH4, fill = P.Product)) +
+  geom_boxplot(alpha = 0.6) +
+  geom_jitter(width = 0.2, alpha = 0.5) +
+  labs(
+    x = "Species",
+    y = "GE coefficient of variation",
+    title = "Relative variability of GE within studies"
+  ) +
+  theme_minimal()
+
+
+```
+
+```{r,message=FALSE,warning=FALSE}
+# Step 1: Get list of B.Codes from GE_combined
+relevant_BCodes <- GE_combined %>%
+  distinct(B.Code)
+
+# Step 2: Filter Animals.Diet.Comp for relevant B.Codes
+diet_data_filtered <- merged_metadata$Animals.Diet %>%
+  semi_join(relevant_BCodes, by = "B.Code")
+
+# Step 3: Count unique diets and ingredients
+total_diets <- diet_data_filtered %>%
+  filter(!is.na(A.Level.Name)) %>%
+  distinct(B.Code, A.Level.Name) %>%
+  nrow()
+
+total_ingredients <- diet_data_filtered %>%
+  filter(!is.na(D.Item)) %>%
+  distinct(B.Code, D.Item) %>%
+  nrow()
+
+# Step 4: Output
+cat("Total unique diets:", total_diets, "\n")
+cat("Total unique ingredients:", total_ingredients, "\n")
+
+```
+
+total number of codes that have ge and have both treatment and control 
+
+```{r}
+# Identify B.Codes that contain both control and treatment diets
+b_codes_with_both_ctrl_and_trt <- GE_combined %>%
+  filter(!is.na(CH4_kg_year)) %>%
+  filter(T.Control %in% c("yes", "no")) %>%   # Only if T.Control is properly labeled
+  group_by(B.Code) %>%
+  summarise(n_control_status = n_distinct(T.Control), .groups = "drop") %>%
+  filter(n_control_status > 1)   # Keep only those with both Yes and No
+
+# Count of such B.Codes
+n_both_ctrl_and_trt <- nrow(b_codes_with_both_ctrl_and_trt)
+cat("Number of B.Codes with both control and treatment diets:", n_both_ctrl_and_trt, "\n")
+
+```
+
+papers that have no tagg for t control 
+
+```{r}
+check_control<-ingredients%>%
+  filter(is.na(T.Control))%>%
+  select(B.Code,A.Level.Name,D.Item,T.Control)
+```
+
+filter ge combined with only papers with both control and treatments 
+
+```{r}
+
+
+# Count unique B.Code with non-missing CH4 emissions
+n_CH4_codes <- GE_combined %>%
+  filter(!is.na(CH4_kg_year)) %>%
+  distinct(B.Code) %>%
+  nrow()
+
+n_CH4_codes
+
+n_CH4_codes_by_product <- GE_combined %>%
+  filter(!is.na(CH4_kg_year)) %>%
+  distinct(B.Code, P.Product) %>%
+  count(P.Product, name = "n_CH4_codes")
+
+n_CH4_codes_by_product
+
+relevant_BCodes <- GE_combined %>%
+  distinct(B.Code)
+
+# Step 2: Filter Animals.Diet.Comp for relevant B.Codes
+diet_data_filtered <- merged_metadata$Animals.Diet %>%
+  semi_join(relevant_BCodes, by = "B.Code")
+
+# Step 3: Count unique diets and ingredients
+total_diets <- diet_data_filtered %>%
+  filter(!is.na(A.Level.Name)) %>%
+  distinct(B.Code, A.Level.Name) %>%
+  nrow()
+
+total_ingredients <- diet_data_filtered %>%
+  filter(!is.na(D.Item)) %>%
+  distinct(B.Code, D.Item) %>%
+  nrow()
+
+# Step 4: Output
+cat("Total unique diets:", total_diets, "\n")
+cat("Total unique ingredients:", total_ingredients, "\n")
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+library(tidyr)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 0) Keep only ingredient GE (not entire diet) and choose ONE value per item
+#    using a priority order of sources you already created upstream.
+#    Adjust the order if you prefer a different hierarchy.
+# ──────────────────────────────────────────────────────────────────────────────
+ge_priority <- c(
+  "raw data",
+  "feedipedia",
+  "predicted_from_Weiss_GE",
+  "predicted_from_Weiss_DE",
+  "inferred_from_same_ingredient-Step2",
+  "inferred_from_same_ingredient",
+  "assumed_zero"
+)
+
+GE_ingredients_best <- Gross_energy %>%
+  filter( DC.Variable == "GE") %>%
+  mutate(
+    # normalize source label text
+    GE_source = str_squish(tolower(GE_source)),
+    # ensure unit is MJ/kg
+    DC.Unit   = "MJ/kg",
+    # rank by source priority
+    src_rank  = match(GE_source, ge_priority)
+  ) %>%
+  arrange(B.Code, D.Item, src_rank, desc(!is.na(DC.Value))) %>%
+  group_by(B.Code, D.Item) %>%
+  # keep the single best row per (B.Code, D.Item)
+  slice_head(n = 1) %>%
+  ungroup() %>%
+  transmute(
+    B.Code,
+    D.Item,
+    GE_MJ_per_kg = as.numeric(DC.Value),
+    GE_source
+  )
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 1) Ingredients only + attach GE + compute per-ingredient GE intake (MJ/day)
+#    NOTE: we keep your existing columns intact and just append new ones.
+# ──────────────────────────────────────────────────────────────────────────────
+ingredients_enriched <- ingredients %>%
+  # enforce "ingredients only" (i.e., exclude entire-diet pseudo-rows if present)
+  filter(D.Type != "Entire Diet") %>%
+
+  # join GE per (B.Code, D.Item)
+  left_join(GE_ingredients_best, by = c("B.Code", "D.Item")) %>%
+
+  # convert amounts to kg/day (where possible)
+  mutate(
+    D.Unit.Amount = str_squish(tolower(D.Unit.Amount)),
+    Amount_kg_day = case_when(
+      D.Unit.Amount == "kg" ~ D.Amount,
+      D.Unit.Amount == "g"  ~ D.Amount / 1000,
+      TRUE ~ NA_real_  # unsupported units remain NA
+    ),
+
+    # GE intake contributed by this ingredient (MJ/day)
+    GE_MJ_day = if_else(!is.na(GE_MJ_per_kg) & !is.na(Amount_kg_day),
+                        GE_MJ_per_kg * Amount_kg_day,
+                        NA_real_)
+  )
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 2) (Optional) Quick diagnostics
+# ──────────────────────────────────────────────────────────────────────────────
+n_total_ing   <- nrow(ingredients_enriched)
+n_with_GE     <- sum(!is.na(ingredients_enriched$GE_MJ_per_kg))
+n_with_GEint  <- sum(!is.na(ingredients_enriched$GE_MJ_day))
+
+message("Ingredients total: ", n_total_ing,
+        " | with GE (MJ/kg): ", n_with_GE,
+        " | with GE intake (MJ/day): ", n_with_GEint)
+
+# If you want to keep only your original columns + added GE columns in a view:
+ingredients_view <- ingredients_enriched %>%
+  select(
+    B.Code, A.Level.Name, D.Item, D.Type, D.Amount, D.Unit.Amount, D.Unit.Time,
+    D.Unit.Animals, DC.Is.Dry, D.Ad.lib, D.Item.Group, Source, Units,
+    T.Animals, Out.WG.Start, Out.WG.Unit, basal_intake_status,
+    Prediction_Source, Prediction_Source.from_AName, from_feed_intake,
+    T.Name, T.Control,
+    # New appended columns:
+    GE_MJ_per_kg, GE_source, Amount_kg_day, GE_MJ_day
+  )
+
+```

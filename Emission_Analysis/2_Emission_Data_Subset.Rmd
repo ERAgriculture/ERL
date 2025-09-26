@@ -1,0 +1,151 @@
+---
+title: "2_Emission_Data_Subset"
+output: html_document
+date: "2025-09-26"
+---
+
+```{r}
+
+merged_metadata <- readRDS("~/ERL/Emission_Analysis/data/merged_metadata_harmonized.rds")
+
+ingredients <- readRDS("~/ERL/Emission_Analysis/data/ingredients_harmonized.rds")
+
+
+```
+
+## 1.4 Take out grazing experiments 
+
+```{r}
+
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+# papers_before <- merged_metadata$Animals.Diet %>%
+#   select(B.Code) %>%
+#   distinct() %>%
+#   left_join(species_by_bcode, by = "B.Code") %>%
+#   count(P.Product, name = "papers_before")
+
+# Step 1: Identify A.Level.Name (diet) that include Grazing
+grazing_diets <- merged_metadata$Animals.Diet %>%
+  filter(D.Type == "Grazing") %>%
+  distinct(B.Code, A.Level.Name)
+
+length(unique(grazing_diets$B.Code))
+
+# Step 2: Count how many non-grazing diets exist per B.Code
+nongrazing_counts <- merged_metadata$Animals.Diet %>%
+  filter(!(D.Type == "Grazing")) %>%
+  distinct(B.Code, A.Level.Name) %>%
+  group_by(B.Code) %>%
+  summarise(n_nongrazing = n(), .groups = "drop")
+
+length(unique(nongrazing_counts$B.Code))
+
+
+# Step 3: Keep only diets that are not marked as Grazing AND are in B.Codes with at least one non-grazing diet
+merged_metadata$Animals.Diet <- merged_metadata$Animals.Diet %>%
+  anti_join(grazing_diets, by = c("B.Code", "A.Level.Name")) %>%  # remove all diets that were grazing
+  semi_join(nongrazing_counts, by = "B.Code")  # keep only papers with at least one non-grazing diet
+
+
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+# papers_after <- merged_metadata$Animals.Diet %>%
+#   select(B.Code) %>%
+#   distinct() %>%
+#   left_join(species_by_bcode, by = "B.Code") %>%
+#   count(P.Product, name = "papers_after")
+
+rm(grazing_diets,nongrazing_counts)
+```
+
+Subset for Dry data 
+
+When feed intake data is missing and we rely on ingredient-level amounts, we need to ensure that the quantities used refer to the dry form of the ingredient. To do this, we subset the data to include only ingredients identified as dried—based on either the declared DC.Is.Dry value or our earlier flagging using ingredient names and moisture content predictions. This ensures consistency and accuracy in downstream calculations. 
+```{r,message=FALSE,warning=FALSE}
+#take out unspecified ingredients
+
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+# 2. Papers per species before filtering
+# papers_before <- ingredients %>%
+#   select(B.Code) %>%
+#   distinct() %>%
+#   left_join(species_by_bcode, by = "B.Code") %>%
+#   count(P.Product, name = "papers_before")
+# length(unique(ingredients$B.Code))
+
+
+# Step 1: Identify A.Level.Name groups with at least one ingredient NOT dry
+non_dry_diets <- ingredients %>%
+  filter(is.na(DC.Is.Dry) | str_to_lower(DC.Is.Dry) %in% c("no", "n", "unspecified")) %>%
+  distinct(B.Code, A.Level.Name)
+
+# Step 2: Filter out these diets entirely from ingredients
+ingredients <- ingredients %>%
+  anti_join(non_dry_diets, by = c("B.Code", "A.Level.Name"))
+
+length(unique(ingredients$A.Level.Name))
+
+rm(non_dry_diets)
+
+length(unique(ingredients$B.Code))
+species_by_bcode <- merged_metadata$Prod.Out %>%
+  select(B.Code, P.Product) %>%
+  distinct()
+
+#2. Papers per species before filtering
+papers_after <- ingredients %>%
+  select(B.Code) %>%
+  distinct() %>%
+  left_join(species_by_bcode, by = "B.Code") %>%
+  count(P.Product, name = "papers_after")
+
+```
+
+## 3) Subset data
+
+## 3.1) Take out basal diets 
+
+We excluded the basal diets because, in most of the livestock trials in our database, the basal ration is offered ad libitum and therefore lacks two pieces of information that are essential for a fair, productivity-based comparison: (i) actual feed-intake measurements and (ii) corresponding enteric-methane estimates. Without intake data we cannot convert emissions—or, in many cases, even estimate them—on a per-kilogram-of-product basis, and retaining these records would artificially inflate the number of “treatments” while contributing no usable information to the efficiency analyses. By focusing on the control diet (with measured intake) and the formulated treatment diets, we keep a coherent set of observations in which every data point can be expressed as both absolute emissions and emission intensity, allowing robust, like-for-like comparisons across studies.
+
+```{r,message=FALSE,warning=FALSE}
+
+
+ingredients <- ingredients %>%
+  filter(!str_starts(A.Level.Name, "Base"))
+
+ingredients <- ingredients %>%
+  filter(!str_starts(D.Item.Group, "Base"))
+
+merged_metadata$Animals.Diet.Comp <- merged_metadata$Animals.Diet.Comp %>%
+  filter(!str_starts(D.Item, "Base"))
+
+
+```
+
+
+```{r}
+
+# Ensure folders exist
+dir.create(file.path("data"), showWarnings = FALSE, recursive = TRUE)
+
+# 1) merged metadata after all corrections
+saveRDS(merged_metadata,
+        file.path("data","merged_metadata_harmonized_subset.rds"))
+
+# 2) harmonised ingredients (key input for later)
+if (exists("ingredients")) {
+  saveRDS(ingredients, file.path("data","ingredients_harmonized_subset.rds"))
+  
+}
+```
+

@@ -1,0 +1,41 @@
+B.Code,A.Level.Name,D.Item,D.Type,D.Amount,D.Unit.Amount,D.Unit.Time,D.Unit.Animals,DC.Is.Dry,D.Ad.lib,D.Item.Group,Source
+AN0029,T2 1.5%,NA,Other Feed,1.5,% Body Mass,day,individual,NA,NA,NA,livestock
+AN0029,T3 2.5%,NA,Other Feed,2.5,% Body Mass,day,individual,NA,NA,NA,livestock
+EO0032,100% concentrate,NA,Other Feed,100,%,NA,NA,NA,NA,Supplement1,livestock
+EO0032,25%concentrate+75% leaf meal,NA,Other Feed,25,%,NA,NA,NA,NA,Supplement4,livestock
+EO0032,50%concentrate+50% leaf meal,NA,Other Feed,50,%,NA,NA,NA,NA,Supplement3,livestock
+EO0032,75% concentrate+25% leaf meal,NA,Other Feed,75,%,NA,NA,NA,NA,Supplement2,livestock
+EO0057,T1,NA,Other Feed,200,g,day,individual,NA,NA,NA,livestock
+EO0057,T2,NA,Other Feed,400,g,day,individual,NA,NA,NA,livestock
+JS0115,Berseem,NA,Other Feed,0.6,kg,day,individual,NA,No,Base,livestock
+JS0172,Concentrate + CC,NA,Herbaceous Fodders,941,g,day,individual,Yes,NA,Base,livestock
+JS0193,Trt 1,NA,Other Feed,33,% of Trt 3's Intake of Concentrate,NA,NA,NA,NA,NA,livestock
+JS0193,Trt 2,NA,Other Feed,66,% of Trt 3's Intake of Concentrate,NA,NA,NA,NA,NA,livestock
+JS0193,Trt 3,NA,Other Feed,NA,NA,NA,NA,NA,Yes,NA,livestock
+JS0208,WS Treated+Hay TSH Bundle3,NA,Other Feed,220,g,day,individual,NA,NA,Base,livestock
+JS0230,Combretum apiculatum,NA,Agroforestry Fodders,NA,ad libitum,day,individual,NA,Yes,NA,livestock
+JS0230,Euclea schimperi,NA,Agroforestry Fodders,NA,ad libitum,day,individual,NA,Yes,NA,livestock
+JS0261,Hay with 400g Suppliment,NA,Non-ERA Feed,1,g/100g,NA,NA,NA,NA,Base,livestock
+JS0316,Con Hay Bundle1,NA,Herbaceous Fodders,NA,NA,day,individual,NA,Yes,NA,livestock
+JS0316,Sesban Bundle1,NA,Herbaceous Fodders,NA,NA,day,individual,NA,Yes,NA,livestock
+JS0316,Sesbania 3 Bundle2,NA,Herbaceous Fodders,NA,NA,day,individual,NA,Yes,NA,livestock
+JS0345,Pasture + Supplementation(PS),NA,Other Feed,4,kg,day,individual,NA,NA,NA,livestock
+LM0024.1,Supplementation,NA,Grazing,8,hours,day,all animals in replicate,No,No,Base,livestock
+LM0127,HC,NA,Other Feed,7.2,kg,day,individual,NA,NA,NA,livestock
+LM0127,LC,NA,Other Feed,2.4,kg,day,individual,NA,NA,NA,livestock
+LM0127,MC,NA,Other Feed,4.8,kg,day,individual,NA,NA,NA,livestock
+NJ0032,SB-0,NA,Other Feed,100,%,NA,NA,NA,NA,Concentrate Mixture,livestock
+NJ0032,SB-10,NA,Other Feed,90,%,NA,NA,NA,NA,Concentrate Mixture,livestock
+NJ0032,SB-15,NA,Other Feed,85,%,NA,NA,NA,NA,Concentrate Mixture,livestock
+NJ0032,SB-20,NA,Other Feed,80,%,NA,NA,NA,NA,Concentrate Mixture,livestock
+NJ0032,SB-5,NA,Other Feed,95,%,NA,NA,NA,NA,Concentrate Mixture,livestock
+NN0227,"T4 OV hay,  ML + CH, TS + CH",NA,Herbaceous Fodders,NA,NA,day,individual,Yes,Yes,maize-lablab and cowpea hay,livestock
+NN0280.1,ML 1,NA,Crop Byproduct,NA,NA,day,individual,NA,Yes,Maize-lablab (ML) stover,livestock
+NN0280.1,ML 2,NA,Crop Byproduct,NA,NA,day,individual,NA,Yes,Maize-lablab (ML) stover,livestock
+NN0280.1,ML 3,NA,Crop Byproduct,NA,NA,day,individual,NA,Yes,Maize-lablab (ML) stover,livestock
+NN0280.1,ML 4,NA,Crop Byproduct,NA,NA,day,individual,NA,Yes,Maize-lablab (ML) stover,livestock
+NN0322,FCP MIX 100,NA,Crop Product,46.5,% Diet,NA,NA,No,NA,Fermented Mixture,livestock
+NN0322,FCP MIX 25,NA,Crop Product,10.875,% Diet,NA,NA,No,NA,Fermented Mixture,livestock
+NN0322,FCP MIX 50,NA,Crop Product,22.5,% Diet,NA,NA,No,NA,Fermented Mixture,livestock
+NN0322,FCP MIX 75,NA,Crop Product,34.125,% Diet,NA,NA,No,NA,Fermented Mixture,livestock
+NN0345,T1 Pasture Hay,NA,Herbaceous Fodders,0.5,%,NA,NA,NA,NA,Base,livestock

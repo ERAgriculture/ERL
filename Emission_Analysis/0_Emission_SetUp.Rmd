@@ -1,0 +1,559 @@
+---
+title: "0_Emission_Set_Up"
+output: html_document
+date: "2025-09-26"
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "Emission_Analysis")
+})
+author:
+  - name: "Lolita Muller"
+    email: "m.lolita@cgiar.org"
+    orcid: "0009-0002-8345-7219"
+  - name: "Peter Steward"
+    email: "p.steward@cgiar.org"
+    orcid: "0000-0003-3985-4911"
+  - name: "Namita Joshi"
+    email: "n.joshi@cgiar.org"
+    orcid: "0000-0002-1623-6910"
+  - name: "Todd Rosenstock"
+    email: "t.rosenstock@cgiar.org"
+    orcid: "0000-0002-1958-9500"
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: show
+
+---
+## Introduction
+
+### Overview
+This notebook assembles and cleans heterogeneous livestock-nutrition trials into a single, analysis-ready dataset that can be used to quantify enteric-methane (CH₄) emissions and emission-intensity for cattle, sheep and goats.
+Using R, we use ERA metadata, harmonise units, fill nutritional gaps (five-step cascade: original paper → Feedipedia → ILRI feeds DB → proximate-composition equation of Weiss & Tebbe → ingredient means), and reconstruct diet-level gross energy (GE) where necessary.
+
+### Emission calculations
+Daily GE intake is converted to annual CH₄ with the IPCC Tier 2 equation. Methane-conversion factors (Ym) follow the 2019 IPCC defaults but are adjusted for diet forage level and dairy productivity where the data allow. Absolute emissions are then paired with weight-gain and milk-/meat-yield records to derive emission-intensity (kg CH₄ kg-product⁻¹). A change-detection routine classifies every treatment diet relative to its control (addition, substitution, dosage change) so diet strategies can be linked directly to shifts in EI.
+
+### Why this matters
+Ruminants in sub-Saharan Africa often operate far below potential productivity; improving feed quality can therefore lower both absolute and per-kilogram emissions. By turning hundred of individual studies into a coherent Tier-2 dataset, this pipeline provides a transparent basis for (i) benchmarking baseline emissions, (ii) identifying high-leverage nutritional interventions, and (iii) stress-testing alternative CH₄ equations or region-specific Ym values. 
+
+A detailed methodological rationale is given in
+[**Livestock Emission Method.docx**](https://cgiar-my.sharepoint.com/:w:/g/personal/m_lolita_cgiar_org/EXCiQIt1FC1NjRj06qc4jeIB6fXpo5RUZYuKHFUNdBDlbQ).
+
+
+## 1) Set up 
+This section installs and loads required packages, connects to the S3 bucket containing ERA data, and loads both the livestock and camel metadata into memory.
+
+```{r,message=FALSE,warning=FALSE}
+# Install and load 'pacman' package manager if not already installed
+
+library(ERAg)
+library(stringr)
+library(knitr)
+library(dplyr)
+library(DT)
+library(readxl)
+library(tidyr)
+library(arrow)
+library(ggplot2)
+library(data.table)
+library(purrr)
+library(janitor)
+library(ggalt)
+
+# Set up connection to S3 bucket
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+era_s3 <- "s3://digital-atlas/era"
+
+# -------------------------
+# Load LATEST skinny_cow
+# -------------------------
+# List the files in the s3 bucket
+files <- s3$dir_ls(file.path(era_s3, "data"))
+
+# Identify the latest skinny_cow_2022-YYYY-MM-DD.RData file
+files <- tail(grep(".RData$", grep("skinny_cow_2022", files, value = TRUE), value = TRUE), 1)
+
+# Download to local if not already present
+save_path <- file.path(getwd(), basename(files))
+if (!file.exists(save_path)) {
+  s3$file_download(files, save_path, overwrite = TRUE)
+}
+
+# Load the data (as a list of objects)
+livestock_metadata <- miceadds::load.Rdata2(file = basename(save_path), path = dirname(save_path))
+
+# -------------------------
+# Build D.Item -> D.Type lookup from 2025-04-11.1 (source-of-truth)
+# -------------------------
+src_file <- file.path(era_s3, "data/skinny_cow_2022-2025-04-11.1.RData")
+src_local <- file.path(getwd(), basename(src_file))
+if (!file.exists(src_local)) {
+  s3$file_download(src_file, src_local, overwrite = TRUE)
+}
+src_obj <- miceadds::load.Rdata2(file = basename(src_local), path = dirname(src_local))
+
+# Ensure data.table
+lookup_dt <- as.data.table(src_obj$Animals.Diet)[
+  , .(D.Item = str_squish(as.character(D.Item)),
+      D.Type = str_squish(as.character(D.Type)))
+][
+  !is.na(D.Item) & nzchar(D.Item) & !is.na(D.Type) & nzchar(D.Type)
+]
+
+# Resolve any (D.Item, D.Type) duplicates by taking the most frequent D.Type per D.Item
+lookup_dt <- lookup_dt[
+  , .N, by = .(D.Item, D.Type)
+][
+  order(D.Item, -N)
+][
+  , .SD[1], by = D.Item
+][
+  , .(D.Item, D.Type)
+]
+
+# -------------------------
+# Backfill D.Type into latest Animals.Diet
+# -------------------------
+diet_latest <- as.data.table(livestock_metadata$Animals.Diet)
+
+# Normalize join key to match lookup normalization
+diet_latest[, D.Item := str_squish(as.character(D.Item))]
+
+# Add D.Type column if missing
+if (!"D.Type" %in% names(diet_latest)) {
+  diet_latest[, D.Type := NA_character_]
+} else {
+  diet_latest[, D.Type := as.character(D.Type)]
+}
+
+# Join and fill only missing D.Type
+diet_latest <- merge(
+  diet_latest, lookup_dt,
+  by = "D.Item", all.x = TRUE, suffixes = c("", ".src")
+)
+diet_latest[is.na(D.Type) & !is.na(D.Type.src), D.Type := D.Type.src]
+diet_latest[, D.Type.src := NULL]
+
+# Write back into the loaded object
+livestock_metadata$Animals.Diet <- diet_latest
+
+
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+# Set up connection to S3 bucket for camel data
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+era_s3 <- "s3://digital-atlas/era"
+
+# List RData files related to courageous_camel_2024
+camel_files <- s3$dir_ls(file.path(era_s3, "data"))
+camel_files <- grep("courageous_camel_2024_draft_.*\\.RData$", camel_files, value = TRUE)
+
+# Helper function to extract date and version
+parse_versions <- function(fnames) {
+  base <- sub(".*_draft_", "", fnames)
+  base <- sub("\\.RData$", "", base)
+  
+  date_part <- sub("\\..*$", "", base)
+  version_part <- ifelse(grepl("\\.", base),
+                         as.integer(sub("^.*\\.", "", base)),
+                         0L)
+  
+  data.frame(
+    file = fnames,
+    date = as.Date(date_part),
+    version = version_part,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Parse file names and determine latest
+version_info <- parse_versions(basename(camel_files))
+latest <- version_info[order(version_info$date, version_info$version, decreasing = TRUE), ][1, ]
+latest_file <- camel_files[basename(camel_files) == latest$file]
+
+# Download the file if not already present
+save_path <- file.path(getwd(), basename(latest_file))
+if (!file.exists(save_path)) {
+  s3$file_download(latest_file, save_path, overwrite = TRUE)
+}
+
+# Load the data
+camel <- miceadds::load.Rdata2(file = basename(save_path), path = dirname(save_path))
+
+```
+
+### to DO
+```{r}
+missing_unit_feed_intake<- camel$Data.Out %>%
+  select(B.Code, T.Name, ED.Intake.Item,
+         ED.Mean.T, ED.Error, Out.Unit, Out.Subind,Out.Code.Joined) %>%
+  filter(Out.Subind == "Feed Intake") %>%
+  filter(is.na(Out.Unit))
+
+```
+
+fill in feed intakes 
+
+```{r}
+# #Add units where they are NA for Feed-Intake rows
+# camel$Data.Out[
+#   Out.Subind == "Feed Intake" & is.na(Out.Unit),                 # target rows
+#   Out.Unit := sub("^.*?\\.\\.(.*?)\\.\\..*$", "\\1", Out.Code.Joined)  # extract middle chunk
+# ]
+# 
+# feed_intake<-camel$Data.Out%>%
+#   filter(Out.Subind=="Feed Intake")
+# 
+# sort(unique(feed_intake$Out.Unit), na.last = TRUE)   # A-Z, NAs at the end
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+##############################################################################
+# Canonical column templates (ALL use a D.Item field) ------------------------
+##############################################################################
+diet_cols   <- c("B.Code","A.Level.Name","D.Item",
+                 "D.Type","D.Amount","D.Unit.Amount","D.Unit.Time",
+                 "D.Unit.Animals","DC.Is.Dry","D.Ad.lib","D.Item.Group")
+
+diet_cols_ext <- c(diet_cols, "D.Item.Root.Comp.Proc_Major")   # keep root too
+
+mt_cols   <- c("B.Code","A.Level.Name","V.Level.Name",
+               "T.Animals","T.Name","T.Control")
+
+comp_cols <- c("B.Code","D.Item","is_group","is_entire_diet",
+               "DC.Variable","DC.Value","DC.Unit")
+
+digest_cols <- c("B.Code","D.Item","is_group","is_entire_diet",
+                 "DD.Variable","DD.Value","DD.Unit")
+
+data_cols <- c("B.Code","A.Level.Name","Out.Code.Joined",
+               "ED.Intake.Item","ED.Intake.Item.Raw",
+               "ED.Mean.T","ED.Error","Out.Subind","Out.Unit",
+               "Out.WG.Start","Out.WG.Unit",
+               "is_entire_diet","is_group","T.Animals","T.Name")
+
+prod_cols <- c("B.Code","P.Product","P.Variety","P.Practice")
+
+##############################################################################
+# 1. LIVESTOCK tables --------------------------------------------------------
+##############################################################################
+## 1·1 Diet ------------------------------------------------------------------
+diet_livestock <- copy(livestock_metadata$Animals.Diet)[
+  , ..diet_cols_ext][, Source := "livestock"]
+
+## 1·2 Lookup table :  (B.Code , FeedName)  ➜  Canonical root ---------------
+lookup_ditem <- rbindlist(list(
+  diet_livestock[
+    !is.na(D.Item) &
+    !is.na(D.Item.Root.Comp.Proc_Major),
+    .(B.Code,
+      FeedName  = D.Item,
+      Canonical = D.Item.Root.Comp.Proc_Major)],
+  diet_livestock[
+    !is.na(D.Item.Root.Comp.Proc_Major),
+    .(B.Code,
+      FeedName  = D.Item.Root.Comp.Proc_Major,
+      Canonical = D.Item.Root.Comp.Proc_Major)]
+))[
+  , .SD[1], by = .(B.Code, FeedName)]
+
+setkey(lookup_ditem, B.Code, FeedName)
+
+## 1·3 MT --------------------------------------------------------------------
+mt_cols_ls  <- intersect(mt_cols, names(livestock_metadata$MT.Out))
+mt_livestock <- livestock_metadata$MT.Out[, ..mt_cols_ls][
+  , `:=`(Out.WG.Start = NA_real_,
+         Out.WG.Unit  = NA_character_,
+         Source       = "livestock")]
+
+## 1·4 Composition -----------------------------------------------------------
+comp_livestock <- merge(
+  livestock_metadata$Animals.Diet.Comp,
+  lookup_ditem,
+  by.x = c("B.Code","D.Item"),
+  by.y = c("B.Code","FeedName"),
+  all.x = TRUE, allow.cartesian = TRUE
+)[
+  , D.Item := fcoalesce(Canonical, D.Item)
+][
+  , Canonical := NULL
+][
+  , ..comp_cols
+][, Source := "livestock"]
+
+## 1·5 Digestibility ---------------------------------------------------------
+digest_livestock <- merge(
+  livestock_metadata$Animals.Diet.Digest,
+  lookup_ditem,
+  by.x = c("B.Code","D.Item"),
+  by.y = c("B.Code","FeedName"),
+  all.x = TRUE, allow.cartesian = TRUE
+)[
+  , D.Item := fcoalesce(Canonical, D.Item)
+][
+  , Canonical := NULL
+][
+  , ..digest_cols
+][, Source := "livestock"]
+
+## 1·6 Data.Out  (canonicalise Intake item) ----------------------------------
+# Canonicalise Intake item in Data.Out and keep legacy column names expected by data_cols
+dt <- merge(
+  livestock_metadata$Data.Out,
+  lookup_ditem,
+  by.x = c("B.Code","ED.Intake.Item"),
+  by.y = c("B.Code","FeedName"),
+  all.x = TRUE, allow.cartesian = TRUE
+)
+
+# Use Canonical when present, then drop it
+dt[, ED.Intake.Item := fcoalesce(Canonical, ED.Intake.Item)]
+dt[, Canonical := NULL]
+
+# Map new column names back to old ones (so downstream ..data_cols still works)
+if ("ED.Intake.Item.is_group" %in% names(dt) && !"is_group" %in% names(dt)) {
+  setnames(dt, "ED.Intake.Item.is_group", "is_group")
+}
+if ("ED.Intake.Item.is_entire_diet" %in% names(dt) && !"is_entire_diet" %in% names(dt)) {
+  setnames(dt, "ED.Intake.Item.is_entire_diet", "is_entire_diet")
+}
+
+# Now select the standard columns and tag the source
+data_livestock <- dt[, ..data_cols][, Source := "livestock"]
+
+
+## 1·7 Product ---------------------------------------------------------------
+var_ls <- livestock_metadata$Var.Out[
+  , .(P.Variety  = first(na.omit(V.Level.Name)),
+      P.Practice = first(na.omit(V.Animal.Practice))), by = B.Code]
+
+prod_livestock <- livestock_metadata$Prod.Out[
+  , .(B.Code, P.Product)][var_ls, on = "B.Code"][
+  , Source := "livestock"]
+
+##############################################################################
+# 2. CAMEL helper keys (unchanged) ------------------------------------------
+##############################################################################
+diet_key <- camel$MT.Out[
+  , .(B.Code, T.Name, A.Level.Name, T.Control,
+      Herd.Level.Name, Herd.Sublevel.Name)]
+
+herd_info <- camel$Herd.Out[
+  , .(B.Code, Herd.Level.Name, Herd.Sublevel.Name,
+      Herd.Sex, Herd.Stage,
+      V.Var, V.Animal.Practice,
+      T.Animals              = Herd.N,
+      Herd.Start.Weight      = Herd.Start.Weight,
+      Herd.Start.Weight.Unit = Herd.Start.Weight.Unit)]
+
+##############################################################################
+# 3. CAMEL tables  – use root when present, fallback to D.Item --------------
+##############################################################################
+## 3·1 Diet ------------------------------------------------------------------
+diet_camel <- copy(camel$Animal.Diet)[
+  , D.Item := fcoalesce(D.Item.Root.Comp.Proc_Major, D.Item)
+][
+  , ..diet_cols
+][, Source := "camel"]
+
+## 3·2 Composition -----------------------------------------------------------
+comp_camel <- copy(camel$Animal.Diet.Comp)[
+  , D.Item := fcoalesce(D.Item.Root.Comp.Proc_Major, D.Item)
+][
+  , `:=`(DC.Variable = DN.Variable,
+         DC.Value    = DN.Value,
+         DC.Unit     = DN.Unit)
+][
+  , ..comp_cols
+][, Source := "camel"]
+
+## 3·3 Digestibility ---------------------------------------------------------
+digest_camel <- copy(camel$Animal.Diet.Digest)[
+  , D.Item := fcoalesce(D.Item.Root.Comp.Proc_Major, D.Item)
+][
+  , ..digest_cols
+][, Source := "camel"]
+
+## 3·4 MT.Out (unchanged) ----------------------------------------------------
+mt_camel <- diet_key[
+  herd_info, on = .(B.Code,Herd.Level.Name,Herd.Sublevel.Name), nomatch = 0L][
+  camel$MT.Out[
+    , .(B.Code, A.Level.Name, T.Name,
+        T.Start.Weight,
+        T.Start.Weight.Unit = `T.Start.Weight. Unit`)],
+  on = .(B.Code,A.Level.Name,T.Name), nomatch = 0L][
+  , `:=`(T.Start.Weight      = as.numeric(T.Start.Weight),
+         Herd.Start.Weight   = as.numeric(Herd.Start.Weight),
+         T.Start.Weight.Unit = as.character(T.Start.Weight.Unit),
+         Herd.Start.Weight.Unit = as.character(Herd.Start.Weight.Unit))][
+  , `:=`(Out.WG.Start = fcoalesce(T.Start.Weight, Herd.Start.Weight),
+         Out.WG.Unit  = fifelse(!is.na(T.Start.Weight),
+                                T.Start.Weight.Unit,
+                                Herd.Start.Weight.Unit),
+         Source       = "camel")][
+  , !c("T.Start.Weight","T.Start.Weight.Unit",
+       "Herd.Start.Weight","Herd.Start.Weight.Unit")]
+
+## 3·5 Data.Out (unchanged) --------------------------------------------------
+## 3·5 Data.Out (left-join + boolean-only Entire Diet) ------------------------
+# Keep ALL rows from camel$Data.Out; attach A.Level.Name via (B.Code, T.Name),
+# then attach herd fields via (B.Code, Herd.Level.Name, Herd.Sublevel.Name).
+
+data_camel <- merge(
+  camel$Data.Out,
+  diet_key,
+  by = c("B.Code","T.Name"),
+  all.x = TRUE
+)
+
+data_camel <- merge(
+  data_camel,
+  herd_info,
+  by = c("B.Code","Herd.Level.Name","Herd.Sublevel.Name"),
+  all.x = TRUE
+)
+
+# Select/rename to your schema and enforce the boolean Entire Diet rule
+data_camel <- data_camel[
+  , .(B.Code,
+      A.Level.Name,
+      ED.Intake.Item,
+      T.Name,
+      D.Item.Root.Comp.Proc_Major,
+      ED.Intake.Item.is_entire_diet,
+      ED.Intake.Item.Raw = ED.Intake.Item,
+      ED.Mean.T, ED.Error, Out.Unit, Out.Subind,
+      Out.WG.Start = as.numeric(Herd.Start.Weight),
+      Out.WG.Unit  = as.character(Herd.Start.Weight.Unit),
+      T.Animals)
+][
+  # Boolean-only tagging: if camel says entire diet, force the token
+  , ED.Intake.Item := fifelse(ED.Intake.Item.is_entire_diet == TRUE,
+                              "Entire Diet", ED.Intake.Item)
+][
+  , Source := "camel"
+]
+
+
+
+prod_camel <- camel$Herd.Out[
+  , .(B.Code,
+      P.Product  = V.Product,
+      P.Variety  = V.Var,
+      P.Practice = V.Animal.Practice,
+      Herd.Stage)][, Source := "camel"]
+
+##############################################################################
+# 4. Combine camel + livestock ----------------------------------------------
+##############################################################################
+diet_livestock_final <- diet_livestock[
+  , `:=`(D.Item = D.Item.Root.Comp.Proc_Major,
+         D.Item.Root.Comp.Proc_Major = NULL)]
+
+diet_all   <- rbindlist(list(diet_livestock_final, diet_camel), fill = TRUE)
+mt_all     <- rbindlist(list(mt_livestock, mt_camel), fill = TRUE)
+comp_all   <- rbindlist(list(comp_livestock, comp_camel), fill = TRUE)
+digest_all <- rbindlist(list(digest_livestock, digest_camel), fill = TRUE)
+data_all   <- rbindlist(list(data_livestock, data_camel), fill = TRUE)
+prod_all   <- rbindlist(list(prod_livestock, prod_camel), fill = TRUE)
+
+##############################################################################
+# 5. Master list -------------------------------------------------------------
+##############################################################################
+merged_metadata <- list(
+  Animals.Diet        = diet_all,
+  MT.Out              = mt_all,
+  Animals.Diet.Comp   = comp_all,
+  Animals.Diet.Digest = digest_all,
+  Data.Out            = data_all,
+  Prod.Out            = prod_all
+)
+
+```
+
+```{r}
+
+merged_metadata$Data.Out <- merged_metadata$Data.Out %>% 
+  mutate(
+    ## 0 ────────────────────────────────────────────────────────────────
+    ## normalize any variant spelling to a single "Entire Diet" token
+    ED.Intake.Item = case_when(
+      grepl("^\\s*entire\\s*diet\\s*$", tolower(coalesce(ED.Intake.Item, ""))) ~ "Entire Diet",
+      TRUE ~ ED.Intake.Item
+    ),
+
+    ## 1 ────────────────────────────────────────────────────────────────
+    ## overwrite with root ONLY for ingredient rows (never for "Entire Diet")
+    ED.Intake.Item = if_else(
+      !is.na(D.Item.Root.Comp.Proc_Major) & D.Item.Root.Comp.Proc_Major != "" &
+        !grepl("^Entire Diet$", coalesce(ED.Intake.Item, "")),
+      D.Item.Root.Comp.Proc_Major,
+      ED.Intake.Item
+    ),
+
+    ## 2 ────────────────────────────────────────────────────────────────
+    ## if still NA/blank, use T.Name
+    ED.Intake.Item = if_else(
+      (is.na(ED.Intake.Item) | ED.Intake.Item == "") & 
+        !is.na(T.Name) & T.Name != "",
+      T.Name,
+      ED.Intake.Item
+    ),
+
+    ## 3 ────────────────────────────────────────────────────────────────
+    ## set entire-diet flag from helper OR from the token
+    is_entire_diet = case_when(
+      !is.na(ED.Intake.Item.is_entire_diet) & ED.Intake.Item.is_entire_diet != "" ~ ED.Intake.Item.is_entire_diet,
+      grepl("^Entire Diet$", coalesce(ED.Intake.Item, "")) ~ TRUE,
+      TRUE ~ is_entire_diet
+    )
+  )
+  
+
+
+# 1) Build a lookup from MT with squished whitespace
+mt_key <- as.data.table(camel$MT.Out)[
+  , .(B.Code,
+      T.Name_core = str_squish(as.character(T.Name)),
+      A.Level.Name = str_squish(as.character(A.Level.Name)))
+][
+  # keep one row per (B.Code, T.Name_core), preferring non-NA A.Level.Name
+  order(!is.na(A.Level.Name))
+][
+  , .SD[.N], by = .(B.Code, T.Name_core)
+]
+
+# 2) Prepare Data.Out: derive a "core" T.Name by stripping anything after "||"
+dt <- as.data.table(merged_metadata$Data.Out)
+dt[Source == "camel",
+   T.Name_core := str_squish(sub("\\|\\|.*$", "", as.character(T.Name)))]
+
+# 3) Left join to fill A.Level.Name where NA
+dt[Source == "camel" & (is.na(A.Level.Name) | A.Level.Name == ""),
+   A.Level.Name := mt_key[.SD, on = .(B.Code, T.Name_core), A.Level.Name]
+]
+
+# 4) Clean up helper
+dt[, T.Name_core := NULL]
+
+# 5) Write back
+merged_metadata$Data.Out <- dt
+
+
+
+
+```
+
+```{r,message=FALSE,warning=FALSE}
+## Keep only merged_metadata (add more names to the vector if needed)
+rm(list = setdiff(ls(), c("merged_metadata")))
+gc()   # optional: reclaim memory
+
+saveRDS(merged_metadata, "~/ERL/Emission_Analysis/data/merged_metadata.rds")   # single file
+
+```

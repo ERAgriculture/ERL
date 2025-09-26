@@ -1,0 +1,1844 @@
+"","scope","B.Code","D.Item","CP","NDF","Ash","EE","GE","D.Type","M2_Category","M3_Category","M4_Category","M5_Category","M6_Category","M7_Category"
+"1","diet","AG0018","bsm",110,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"2","diet","AG0018","llm",217,332,81,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"3","diet","AG0018","mfm",133,431,75,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"4","diet","AG0018","np",32,762,86,NA,NA,NA,NA,NA,"V","V","V","V"
+"5","diet","AG0018","uts",157,718,97,NA,NA,NA,NA,NA,NA,"V","V","V"
+"6","diet","AG0042","60% f sopm",142.1,NA,57.7,34.6,NA,NA,NA,NA,NA,NA,NA,NA
+"7","diet","AG0042","60% uf sopm",139.3,NA,54.6,34.2,NA,NA,NA,NA,NA,NA,NA,NA
+"8","diet","AG0042","con",136.2,NA,52.2,33.8,NA,NA,NA,NA,NA,NA,NA,NA
+"9","diet","AG0050","cpl",291.5,NA,94.9,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"10","diet","AG0050","csh",293.4,NA,103.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"11","diet","AG0050","cst",290.6,NA,94.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"12","diet","AG0050","ctb",294.2,NA,106.4,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"13","diet","AG0050","control",291.5,NA,88.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"14","diet","AG0051","ng",124.5,386.3,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"15","diet","AG0051","ngd",153.1,431,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"16","diet","AG0051","pg",157.9,329.3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"17","diet","AG0051","pgd",169.1,426.6,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"18","diet","AG0087","control",166.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"19","diet","AG0087","direct boiling df 1.5%",174,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"20","diet","AG0087","direct boiling df 3.5%",172.2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"21","diet","AG0087","direct boiling df 5%",168.9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"22","diet","AG0087","indirect boiling df 1.5%",174.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"23","diet","AG0087","indirect boiling df 3.5%",171.8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"24","diet","AG0087","indirect boiling df 5%",168.8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"25","diet","AG0087","roasted df 1.5%",175.6,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"26","diet","AG0087","roasted df 3.5%",172.8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"27","diet","AG0087","roasted df 5%",169.17,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"28","diet","AG0087","sun dried df 1.5%",174.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"29","diet","AG0087","sun dried df 3.5%",172,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"30","diet","AG0087","sun dried df 5%",168.8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"31","diet","AN0007","t1",128,NA,42,30,NA,NA,NA,NA,NA,NA,NA,NA
+"32","diet","AN0007","t2",132,NA,52,32,NA,NA,NA,NA,NA,NA,NA,NA
+"33","diet","AN0007","t3",136,NA,60,36,NA,NA,NA,NA,NA,NA,NA,NA
+"34","diet","AN0007","t4",142,NA,66,39,NA,NA,NA,NA,NA,NA,NA,NA
+"35","diet","AN0007","t5",150,NA,75,45,NA,NA,NA,NA,NA,NA,NA,NA
+"36","diet","AN0021","u0",88.7,661.9,100.4,48.3,NA,NA,NA,NA,NA,"V","V","V"
+"37","diet","AN0021","u10",117.6,625.1,119.9,37.6,NA,NA,NA,NA,NA,"V","V","V"
+"38","diet","AN0021","u15",130.7,618.2,120.8,41.1,NA,NA,NA,NA,NA,"V","V","V"
+"39","diet","AN0021","u20",138.4,627.9,104,38.5,NA,NA,NA,NA,NA,"V","V","V"
+"40","diet","AN0027","control pds",185.1,342.3,85.6,32.5,NA,NA,NA,NA,NA,NA,NA,NA
+"41","diet","AN0027","r1",179.9,376.6,87.5,34.9,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"42","diet","AN0027","r2",179.9,376.6,87.5,34.9,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"43","diet","AN0029","t2 1.5%",259.6,NA,38.4,NA,20.3852848,NA,NA,NA,NA,NA,NA,NA
+"44","diet","AN0029","t3 2.5%",259.6,NA,38.4,NA,20.3852848,NA,NA,NA,NA,NA,NA,NA
+"45","diet","AN0058","pjp 0",230.4,NA,78,86.1,NA,NA,NA,"II","II","II","II","II"
+"46","diet","AN0058","pjp 10",233.9,NA,81,81.3,NA,NA,NA,"II","II","II","II","II"
+"47","diet","AN0058","pjp 20",234.3,NA,82,78.1,NA,NA,NA,NA,"II",NA,"II","II"
+"48","diet","AN0058","pjp 30",229.7,NA,82.5,70.6,NA,NA,NA,NA,NA,NA,NA,NA
+"49","diet","EO0027","cbs",281,NA,154,NA,14.7,NA,NA,NA,NA,NA,NA,NA
+"50","diet","EO0027","coc",281,NA,129,NA,13.9,NA,NA,NA,NA,NA,NA,NA
+"51","diet","EO0027","reference diet",284,NA,99.9,NA,15.1,NA,NA,NA,NA,NA,NA,NA
+"52","diet","EO0046","0% cfl",107.3,406.6,132.5,105.1,NA,NA,NA,"II","II","II","II","II"
+"53","diet","EO0046","10% cfl",111.7,447.9,106.3,138.3,NA,NA,NA,"II","II","II","II","II"
+"54","diet","EO0046","20% cfl",135.8,508,107.3,105,NA,NA,NA,"II","II","II","II","II"
+"55","diet","EO0046","30% cfl",139.7,561.4,112.5,102.5,NA,NA,NA,"II","II","II","II","II"
+"56","diet","EO0047","pp0-0%",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"57","diet","EO0047","pp10-10%",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"58","diet","EO0047","pp20-20%",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"59","diet","EO0047","pp30-30%",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"60","diet","EO0057","t1",185,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"61","diet","EO0057","t2",185,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"62","diet","EO0078","0% pjp",169,NA,67,49.3,NA,NA,NA,NA,NA,NA,NA,NA
+"63","diet","EO0078","10%pjp",155.1,NA,NA,45.7,NA,NA,NA,NA,NA,NA,NA,NA
+"64","diet","EO0078","20%pjp",150.9,NA,57.6,42.8,NA,NA,NA,NA,NA,NA,NA,NA
+"65","diet","EO0078","30%pjp",160.1,NA,51.2,40.4,NA,NA,NA,NA,NA,NA,NA,NA
+"66","diet","EO0078","40%pjp",157.2,NA,49,39,NA,NA,NA,NA,NA,NA,NA,NA
+"67","diet","EO0086","0jkm1",220,NA,182,75,NA,NA,NA,NA,"II",NA,"II","II"
+"68","diet","EO0086","0jkm2",203,NA,112,123,NA,NA,NA,"II","II","II","II","II"
+"69","diet","EO0086","4jkm1",205,NA,154,86,NA,NA,NA,"II","II","II","II","II"
+"70","diet","EO0086","8jkm1",207,NA,154,74,NA,NA,NA,NA,"II",NA,"II","II"
+"71","diet","EO0086","8jkm2",207,NA,113,104,NA,NA,NA,"II","II","II","II","II"
+"72","diet","HK0006","d1 no f.polita",79,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"73","diet","HK0006","d2 30 f.polita",114.1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"74","diet","HK0006","d3 60 f.polita",149.2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"75","diet","HK0006","d4 90 f.polita",184.3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"76","diet","HK0007","con",169.2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"77","diet","HK0007","hwm1",168.2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"78","diet","HK0007","hwm2",166.2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"79","diet","HK0007","hwm3",162.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"80","diet","HK0008","0% leucaena goat",108,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"81","diet","HK0008","0% leucaena sheep",108,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"82","diet","HK0008","20% leucaena goat",139,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"83","diet","HK0008","20% leucaena sheep",139,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"84","diet","HK0008","40% leucaena goat",181,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"85","diet","HK0008","40% leucaena sheep",181,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"86","diet","HK0008","60% leucaena goat",227,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"87","diet","HK0008","60% leucaena sheep",227,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"88","diet","HK0008","80% leucaena goat",263,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"89","diet","HK0008","80% leucaena sheep",263,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"90","diet","HK0011","cw",54.1,NA,66.8,7.8,16.81968,NA,NA,NA,NA,NA,NA,NA
+"91","diet","HK0011","cw:dsbg",181.2,NA,61.8,39.4,18.28408,NA,NA,NA,NA,NA,NA,NA
+"92","diet","HK0011","dsbg",332,NA,53.9,62.2,19.874,NA,NA,NA,NA,NA,NA,NA
+"93","diet","HK0014","d1 no macuna bundle 1",371,NA,NA,NA,12.3168592,NA,NA,NA,NA,NA,NA,NA
+"94","diet","HK0014","d2 5% treated macuna bundle 1",369.1,NA,NA,NA,12.1285792,NA,NA,NA,NA,NA,NA,NA
+"95","diet","HK0014","d2 5% treated macuna bundle 2",369.1,NA,NA,NA,12.1285792,NA,NA,NA,NA,NA,NA,NA
+"96","diet","HK0014","d3 5% raw macuna bundle 1",365.3,NA,NA,NA,11.9235632,NA,NA,NA,NA,NA,NA,NA
+"97","diet","HK0014","d3 5% raw macuna bundle 2",365.3,NA,NA,NA,11.9235632,NA,NA,NA,NA,NA,NA,NA
+"98","diet","HK0014","d4 10% treated macuna bundle 1",366.8,NA,NA,NA,11.9114296,NA,NA,NA,NA,NA,NA,NA
+"99","diet","HK0014","d5 15% treated macuna bundle 1",369,NA,NA,NA,11.4972136,NA,NA,NA,NA,NA,NA,NA
+"100","diet","HK0017","0% animal protein mixture",383.6,NA,52,55.3,19.4543448,NA,NA,NA,NA,NA,NA,"VI"
+"101","diet","HK0017","100% animal protein mixture",360,NA,56,69,19.0436852,NA,NA,NA,NA,NA,NA,"VI"
+"102","diet","HK0017","25% animal protein mixture",378.4,NA,54,60.8,19.4940928,NA,NA,NA,NA,NA,NA,"VI"
+"103","diet","HK0017","50% animal protein mixture",373.1,NA,61,66.8,19.47225232,NA,NA,NA,NA,NA,NA,"VI"
+"104","diet","HK0017","75% animal protein mixture",367.9,NA,54,67.9,19.02887384,NA,NA,NA,NA,NA,NA,"VI"
+"105","diet","HK0026","diet 1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"106","diet","HK0026","diet 2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"107","diet","HK0026","diet 3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"108","diet","HK0026","diet 4",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"109","diet","HK0026","diet 5",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"110","diet","HK0028","msp con",176,NA,109,NA,17.37841136,NA,NA,NA,NA,NA,NA,NA
+"111","diet","HK0028","msp1",174,NA,102,NA,17.00327392,NA,NA,NA,NA,NA,NA,NA
+"112","diet","HK0028","msp2",165.8,NA,122,NA,16.4648768,NA,NA,NA,NA,NA,NA,NA
+"113","diet","HK0029","diet a (no cassava peals)",156,NA,103,36,0.014644,NA,NA,NA,NA,NA,NA,NA
+"114","diet","HK0029","diet b 50",159,NA,129,33,0.014644,NA,NA,NA,NA,NA,NA,NA
+"115","diet","HK0029","diet c 100",156,NA,142,28,0.0133888,NA,NA,NA,NA,NA,NA,NA
+"116","diet","HK0033","0% brewer's grain",108,NA,52.5,40.5,NA,NA,NA,NA,NA,NA,NA,NA
+"117","diet","HK0033","15% brewer's grain",172,NA,50.6,43.4,NA,NA,NA,NA,NA,NA,NA,NA
+"118","diet","HK0033","30% brewer's grain",151.5,NA,47.9,46.4,NA,NA,NA,NA,NA,NA,NA,NA
+"119","diet","HK0033","45% brewer's grain",173.3,NA,45.6,49.3,NA,NA,NA,NA,NA,NA,NA,NA
+"120","diet","HK0033","60% brewer's grain",195,NA,43.2,52.2,NA,NA,NA,NA,NA,NA,NA,NA
+"121","diet","HK0037","diet 1 bundle 1",237,NA,30.5,48,12.26,NA,NA,NA,NA,NA,NA,NA
+"122","diet","HK0037","diet 2 bundle 1",225,NA,39,69.2,12.2,NA,NA,NA,NA,NA,NA,NA
+"123","diet","HK0037","diet 3 bundle 1",238.5,NA,42,83.6,12.21,NA,NA,"II","II","II","II","II"
+"124","diet","HK0037","diet 4 bundle 1",236.5,NA,46.1,96.8,12.05,NA,NA,"II","II","II","II","II"
+"125","diet","HK0037","diet 4 bundle 2",236.5,NA,46.1,96.8,12.05,NA,NA,"II","II","II","II","II"
+"126","diet","HK0037","diet 5 bundle 1",239,NA,40.7,88.5,12.05,NA,NA,"II","II","II","II","II"
+"127","diet","HK0037","diet 5 bundle 2",239,NA,40.7,88.5,12.05,NA,NA,"II","II","II","II","II"
+"128","diet","HK0044.1","diet with 0% ucsm 1",210,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"129","diet","HK0044.1","diet with 10% ucsm 1",202,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"130","diet","HK0044.1","diet with 20% ucsm 1",206,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"131","diet","HK0044.1","diet with 30% ucsm 1",204,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"132","diet","HK0044.2","diet with 0% ucsm 2",170,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"133","diet","HK0044.2","diet with 20% ucsm 2",170,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"134","diet","HK0044.2","diet with 30% ucsm 2",170,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"135","diet","HK0044.2","diet with 41.1% ucsm 2",170,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"136","diet","HK0066.1","0 msk",178,NA,NA,42,NA,NA,NA,NA,NA,NA,NA,NA
+"137","diet","HK0066.1","100 msk",176,NA,NA,45,NA,NA,NA,NA,NA,NA,NA,NA
+"138","diet","HK0066.1","150 msk",174,NA,NA,46,NA,NA,NA,NA,NA,NA,NA,NA
+"139","diet","HK0066.1","200 msk",172,NA,NA,44,NA,NA,NA,NA,NA,NA,NA,NA
+"140","diet","HK0066.1","250 msk",171,NA,NA,53,NA,NA,NA,NA,NA,NA,NA,NA
+"141","diet","HK0066.1","50 msk",177,NA,NA,42,NA,NA,NA,NA,NA,NA,NA,NA
+"142","diet","HK0066.2","0 msk",237.5,NA,NA,38.2,NA,NA,NA,NA,NA,NA,NA,NA
+"143","diet","HK0066.2","100 msk",236,NA,NA,45.8,NA,NA,NA,NA,NA,NA,NA,NA
+"144","diet","HK0066.2","150 msk",232.1,NA,NA,52.4,NA,NA,NA,NA,NA,NA,NA,NA
+"145","diet","HK0066.2","200 msk",236.2,NA,NA,54.5,NA,NA,NA,NA,NA,NA,NA,NA
+"146","diet","HK0066.2","50 msk",235,NA,NA,43,NA,NA,NA,NA,NA,NA,NA,NA
+"147","diet","HK0067","0% cbc",148.6,NA,790,150,15,NA,"VI","II","II","II","II","II"
+"148","diet","HK0067","10% cbc",153.6,NA,785,210,15,NA,"VI","II","II","II","II","II"
+"149","diet","HK0067","20% cbc",149.1,NA,830,225,15.1,NA,"VI","II","II","II","II","II"
+"150","diet","HK0067","5% cbc",154.1,NA,800,190,14.8,NA,"VI","II","II","II","II","II"
+"151","diet","HK0086","diet b",130,508,35,28,17.2,NA,NA,NA,"IV",NA,"IV","IV"
+"152","diet","HK0086","diet c",155,566,39,46,17.8,NA,NA,NA,NA,NA,"V","V"
+"153","diet","HK0098","10% mango diet",406.1,NA,76.5,NA,38.59,NA,NA,NA,NA,NA,NA,NA
+"154","diet","HK0098","10% palm kernel diet",410.4,NA,75.4,NA,38.59,NA,NA,NA,NA,NA,NA,NA
+"155","diet","HK0098","20% mango diet",410.2,NA,77.8,NA,39.9,NA,NA,NA,NA,NA,NA,NA
+"156","diet","HK0098","20% palm kernel diet",413.9,NA,79.3,NA,39.03,NA,NA,NA,NA,NA,NA,NA
+"157","diet","HK0098","30% mango diet",411.4,NA,79,NA,39.61,NA,NA,NA,NA,NA,NA,NA
+"158","diet","HK0098","30% palm kernel diet",414.5,NA,80.1,NA,39.41,NA,NA,NA,NA,NA,NA,NA
+"159","diet","HK0098","control diet",405,NA,73.4,NA,38.15,NA,NA,NA,NA,NA,NA,NA
+"160","diet","HK0099","0% palm kernel meal",579,NA,64.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"161","diet","HK0099","10% palm kernel meal",283.4,NA,42.9,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"162","diet","HK0099","15% palm kernel meal",285.6,NA,60.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"163","diet","HK0099","20% palm kernel meal",290.8,NA,43.7,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"164","diet","HK0099","25% palm kernel meal",280.1,NA,40.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"165","diet","HK0099","30% palm kernel meal",278.6,NA,56.8,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"166","diet","HK0102.1","diet con",230.8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"167","diet","HK0102.1","pkm1",228,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"168","diet","HK0102.1","pkm2",226,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"169","diet","HK0102.1","pkm3",224.9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"170","diet","HK0102.1","pkm4",224.2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"171","diet","HK0102.1","pkm5",223.6,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"172","diet","HK0102.2","diet con",203.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"173","diet","HK0102.2","pkm1",201.1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"174","diet","HK0102.2","pkm2",197.8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"175","diet","HK0102.2","pkm3",196.9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"176","diet","HK0102.2","pkm4",197,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"177","diet","HK0102.2","pkm5",196.7,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"178","diet","HK0107","0% palm oil",161.9,397.7,66.3,117.5,16.05,NA,NA,"II","II","II","II","II"
+"179","diet","HK0107","12% palm oil",174.2,371,73.3,219.4,19.56,NA,NA,"II","II","II","II","II"
+"180","diet","HK0107","16% palm oil",175,358.7,70.3,246.6,20.09,NA,NA,"II","II","II","II","II"
+"181","diet","HK0107","4% palm oil",166.9,395.9,70.3,127.6,16.08,NA,NA,"II","II","II","II","II"
+"182","diet","HK0107","8% palm oil",166.5,379.8,68.2,169.7,17.97,NA,NA,"II","II","II","II","II"
+"183","diet","HK0108","0% leucaena diet",56.8,320,133.8,23.2,0.02694496,NA,NA,NA,NA,NA,NA,NA
+"184","diet","HK0108","15% leucaena diet",77.5,530.7,132.4,28.1,0.02209152,NA,NA,NA,NA,NA,"IV","IV"
+"185","diet","HK0108","30% leucaena diet",138.2,572.8,131.1,38,0.0217568,NA,NA,NA,NA,NA,"V","V"
+"186","diet","HK0108","45% leucaena diet",178.8,613.5,129.7,49.9,0.02075264,NA,NA,NA,NA,"V","V","V"
+"187","diet","HK0118","tm 1",435,NA,84,NA,17.76,NA,NA,NA,NA,NA,NA,NA
+"188","diet","HK0118","tm 2",435,NA,83,NA,17.98,NA,NA,NA,NA,NA,NA,NA
+"189","diet","HK0118","tm 3",434,NA,66,NA,18.19,NA,NA,NA,NA,NA,NA,NA
+"190","diet","HK0118","tm 4",433,NA,52,NA,18.41,NA,NA,NA,NA,NA,NA,NA
+"191","diet","HK0118","tm 5",432,NA,41,NA,18.82,NA,NA,NA,NA,NA,NA,NA
+"192","diet","HK0129","bdg1",161.3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"193","diet","HK0129","bdg2",172.2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"194","diet","HK0129","bdg3",186.5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"195","diet","HK0129","diet con",148.6,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"196","diet","HK0138","untreated straw + haulms bundle 1",68,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"197","diet","HK0138","untreated straw + haulms bundle 3",68,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"198","diet","HK0138","untreated straw bundle 1",48,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"199","diet","HK0138","urea straw + haulms bundle 1",94,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"200","diet","HK0138","urea straw + haulms bundle 2",94,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"201","diet","HK0138","urea straw + haulms bundle 3",94,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"202","diet","HK0138","urea straw bundle 1",84,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"203","diet","HK0138","urea straw bundle 2",84,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"204","diet","HK0160","cp",366.4,NA,19.7,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"205","diet","HK0160","mc",370.5,NA,12.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"206","diet","HK0160","pp",369.2,NA,11.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"207","diet","HK0160","ym con",371.7,NA,39.4,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"208","diet","HK0160","yp",372.8,NA,22.2,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"209","diet","HK0171","ration a1",171.9,400.1,138.5,140.8,NA,NA,NA,"II","II","II","II","II"
+"210","diet","HK0171","ration a2",171.9,400.1,138.5,140.8,NA,NA,NA,"II","II","II","II","II"
+"211","diet","HK0171","ration b1",95.4,684.2,105.5,104.3,NA,NA,NA,"II","II","II","II","II"
+"212","diet","HK0171","ration b2",95.4,684.2,105.5,104.3,NA,NA,NA,"II","II","II","II","II"
+"213","diet","HK0171","ration c1",103.8,547.4,119.7,124.5,NA,NA,NA,"II","II","II","II","II"
+"214","diet","HK0228","chicken meal sunflower oil cake",NA,NA,109,NA,19.1,NA,NA,NA,NA,NA,NA,"II"
+"215","diet","HK0228","chicken viscera and groundnut oil cake",NA,NA,101,NA,18.7,NA,NA,NA,NA,NA,NA,"II"
+"216","diet","HK0228","chicken viscera and soybean oil cake",NA,NA,98,NA,19.6,NA,NA,NA,NA,NA,NA,"II"
+"217","diet","HK0228","commercial diet 1",NA,NA,92,NA,21,NA,NA,NA,NA,NA,NA,NA
+"218","diet","HK0228","no crop byproducts diet",NA,NA,110,NA,18.8,NA,NA,NA,NA,NA,NA,NA
+"219","diet","HK0260","centro",97,714,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"220","diet","HK0260","sirastro",82.1,746,NA,NA,NA,NA,NA,NA,"V","V","V","V"
+"221","diet","HK0260","stover con",41,891,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"222","diet","HK0260","stylo",81,590,NA,NA,NA,NA,NA,NA,"V",NA,"V","V"
+"223","diet","HK0284","con",159.3,NA,51.9,61.6,15.9,NA,NA,NA,NA,NA,NA,NA
+"224","diet","HK0284","rsa1",159.7,NA,51.2,57.1,15.9,NA,NA,NA,NA,NA,NA,NA
+"225","diet","HK0284","rsa2",158.9,NA,46,39.5,15.8,NA,NA,NA,NA,NA,NA,NA
+"226","diet","HK0284","rsa3",159.1,NA,43.6,37.7,15.8,NA,NA,NA,NA,NA,NA,NA
+"227","diet","HK0288","ml1",125,612,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"228","diet","HK0288","ml2",144,595,NA,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"229","diet","HK0288","maize only",113,671,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"230","diet","HK0288","sl1",108,681,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"231","diet","HK0288","sl2",119,654,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"232","diet","HK0288","sorghum only",88,701,NA,NA,NA,NA,NA,NA,"V","V","V","V"
+"233","diet","HK0319","l. jav 25 diet",179.9,253.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"234","diet","HK0319","negative control diet",189.4,230.8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"235","diet","HK0324","acacia 1 lm",158,324,106,90,NA,NA,NA,"II","II","II","II","II"
+"236","diet","HK0324","acacia 2 lm",157,346,124,93,NA,NA,NA,"II","II","II","II","II"
+"237","diet","HK0324","acacia 3 lm",161,354,152,92,NA,NA,NA,"II","II","II","II","II"
+"238","diet","HK0324","acacia 4 lm",165,367,175,91,NA,NA,NA,"II","II","II","II","II"
+"239","diet","HK0324","acacia 5 lm",162,373,194,89,NA,NA,NA,"II","II","II","II","II"
+"240","diet","HK0324","con",162,307,67,109,NA,NA,NA,"II","II","II","II","II"
+"241","diet","HK0326","0 g/kg potato hash silage",162,343,47.8,74.2,NA,NA,NA,NA,"II",NA,"II","II"
+"242","diet","HK0326","160g/kg potato hash silage",154,373,60.3,64,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"243","diet","HK0326","240 g/kg potato hash silage",151,386,65.9,56,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"244","diet","HK0326","320 g/kg potato hash silage",148,396,70.9,49.7,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"245","diet","HK0326","400 g/kg potato hash silage",141,407,74.2,43,NA,NA,NA,"IV","IV","IV","IV","IV"
+"246","diet","HK0326","80 g/kg potato hash silage",156,344,55.7,72,NA,NA,NA,NA,"II",NA,"II","II"
+"247","diet","HK0327.1","lh wh1 b1",160,318,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"248","diet","HK0327.1","lh wh2 b1",172,317,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"249","diet","HK0327.1","lh wh3 b1",172,304,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"250","diet","HK0327.1","lh wh4 b1",175,315,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"251","diet","HK0327.1","lh wh5 b1",179,329,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"252","diet","HK0327.2","oh wh1 b2",198,354,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"253","diet","HK0327.2","oh wh2 b2",206,350,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"254","diet","HK0327.2","oh wh3 b2",201,368,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"255","diet","HK0327.2","oh wh4 b2",216,344,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"256","diet","HK0327.2","oh wh5 b2",210,333,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"257","diet","HK0327.3","lh:oh wh1 b3",178,380,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"258","diet","HK0327.3","lh:oh wh2 b3",178,377,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"259","diet","HK0327.3","lh:oh wh3 b3",173,387,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"260","diet","HK0327.3","lh:oh wh4 b3",169,414,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"261","diet","HK0327.3","lh:oh wh5 b3",168,405,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"262","diet","HK0328","acacia 1 lm",158,324,106,90.3,17.3,NA,NA,"II","II","II","II","II"
+"263","diet","HK0328","acacia 2 lm",157,346,124,92.8,17.3,NA,NA,"II","II","II","II","II"
+"264","diet","HK0328","acacia 3 lm",161,354,152,91.9,17.2,NA,NA,"II","II","II","II","II"
+"265","diet","HK0328","acacia 4 lm",165,367,175,98.2,17.3,NA,NA,"II","II","II","II","II"
+"266","diet","HK0328","acacia 5 lm",164,373,194,89.1,17.2,NA,NA,"II","II","II","II","II"
+"267","diet","HK0328","con",162,307,68.6,109,17.4,NA,NA,"II","II","II","II","II"
+"268","diet","HK0329","dc0",148,NA,NA,52.2,NA,NA,NA,NA,NA,NA,NA,NA
+"269","diet","HK0329","dc100",146,NA,NA,54.1,NA,NA,NA,NA,NA,NA,NA,NA
+"270","diet","HK0329","dc150",147,NA,NA,53.7,NA,NA,NA,NA,NA,NA,NA,NA
+"271","diet","HK0329","dc200",149,NA,NA,56.9,NA,NA,NA,NA,NA,NA,NA,NA
+"272","diet","HK0330","0 g/kg a. tortilis",180,161,NA,NA,16.7,NA,NA,"I","I","I","I","I"
+"273","diet","HK0330","120 g/kg a. tortilis",186,237,NA,NA,17.8,NA,NA,NA,NA,NA,NA,NA
+"274","diet","HK0330","150 g/kg a. tortilis",190,241,NA,NA,18.1,NA,NA,NA,NA,NA,NA,NA
+"275","diet","HK0330","30 g/kg a. tortilis",182,176,NA,NA,17,NA,NA,"I","I","I","I","I"
+"276","diet","HK0330","60 g/kg a. tortilis",186,181,NA,NA,17.1,NA,NA,"I","I","I","I","I"
+"277","diet","HK0330","90 g/kg a. tortilis",186,208,NA,NA,17.5,NA,NA,NA,"I",NA,"I","I"
+"278","diet","HK0331","diet con",300.3,NA,NA,NA,20.21,NA,NA,NA,NA,NA,NA,NA
+"279","diet","HK0331","klm 1",298.7,NA,NA,NA,20.34,NA,NA,NA,NA,NA,NA,NA
+"280","diet","HK0331","klm 2",299.6,NA,NA,NA,20.48,NA,NA,NA,NA,NA,NA,NA
+"281","diet","HK0331","klm 3",297.1,NA,NA,NA,20.53,NA,NA,NA,NA,NA,NA,NA
+"282","diet","HK0331","klm 4",300.7,NA,NA,NA,20.47,NA,NA,NA,NA,NA,NA,NA
+"283","diet","HK0331","mlm 1",298.4,NA,NA,NA,20.58,NA,NA,NA,NA,NA,NA,NA
+"284","diet","HK0331","mlm 2",299.8,NA,NA,NA,20.42,NA,NA,NA,NA,NA,NA,NA
+"285","diet","HK0331","mlm 3",304.8,NA,NA,NA,20.26,NA,NA,NA,NA,NA,NA,NA
+"286","diet","HK0331","mlm 4",303.8,NA,NA,NA,20.36,NA,NA,NA,NA,NA,NA,NA
+"287","diet","HK0350","con csm",182,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"288","diet","HK0350","velvet bm 1",184,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"289","diet","HK0350","velvet bm 2",183,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"290","diet","HK0350","velvet bm 3",183,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"291","diet","JS0076","bfm1",202.5,NA,NA,35,NA,NA,NA,NA,NA,NA,NA,NA
+"292","diet","JS0076","bfm2",201.8,NA,NA,34.4,NA,NA,NA,NA,NA,NA,NA,NA
+"293","diet","JS0076","bfm3",201.2,NA,NA,33.8,NA,NA,NA,NA,NA,NA,NA,NA
+"294","diet","JS0076","diet con",204.1,NA,NA,35.7,NA,NA,NA,NA,NA,NA,NA,NA
+"295","diet","JS0079.1","con",210,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"296","diet","JS0079.1","sdbm1",214.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"297","diet","JS0079.1","sdbm2",216.2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"298","diet","JS0079.1","sdbm3",218.9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"299","diet","JS0079.2","con",17.12,NA,13.64,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"300","diet","JS0079.2","sdbm1",17,NA,13.73,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"301","diet","JS0079.2","sdbm2",17.31,NA,13.86,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"302","diet","JS0079.2","sdbm3",17.65,NA,13.91,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"303","diet","JS0080","25 sdbm",219.8,NA,NA,38.9,NA,NA,NA,NA,NA,NA,NA,NA
+"304","diet","JS0080","50 sdbm",219.3,NA,NA,37.3,NA,NA,NA,NA,NA,NA,NA,NA
+"305","diet","JS0080","75 sdbm",219.3,NA,NA,35.9,NA,NA,NA,NA,NA,NA,NA,NA
+"306","diet","JS0080","no sdbm",217.54,NA,NA,40.1,NA,NA,NA,NA,NA,NA,NA,NA
+"307","diet","JS0081","t1 55% maize",167,NA,46,28.8,NA,NA,NA,NA,NA,NA,NA,NA
+"308","diet","JS0081","t2 45% maize",166,NA,47,35.7,NA,NA,NA,NA,NA,NA,NA,NA
+"309","diet","JS0081","t3 35% maize",162,NA,50,41.2,NA,NA,NA,NA,NA,NA,NA,NA
+"310","diet","JS0093","diet con",210,NA,NA,56,NA,NA,NA,NA,NA,NA,NA,NA
+"311","diet","JS0093","pkc1",212,NA,NA,57,NA,NA,NA,NA,NA,NA,NA,NA
+"312","diet","JS0093","pkc2",212,NA,NA,58,NA,NA,NA,NA,NA,NA,NA,NA
+"313","diet","JS0093","pkc3",212,NA,NA,59,NA,NA,NA,NA,NA,NA,NA,NA
+"314","diet","JS0093","pkc4",212,NA,NA,59,NA,NA,NA,NA,NA,NA,NA,NA
+"315","diet","JS0093","pkc5",212,NA,NA,61,NA,NA,NA,NA,NA,NA,NA,NA
+"316","diet","JS0094.2","con experiment2",152.4,NA,NA,42.4,NA,NA,NA,NA,NA,NA,NA,NA
+"317","diet","JS0094.2","shc1 experiment2",164.3,NA,NA,72.2,NA,NA,NA,NA,"II",NA,"II","II"
+"318","diet","JS0094.2","shc3 experiment2",169.5,NA,NA,94,NA,NA,NA,"II","II","II","II","II"
+"319","diet","JS0095","100% straw",35.9,NA,73.9,4.3,15.98288,NA,NA,NA,NA,NA,NA,NA
+"320","diet","JS0095","50% straw + 40% molasses + 10% dpm",54.1,NA,88.5,3,14.35112,NA,NA,NA,NA,NA,NA,NA
+"321","diet","JS0095","60% straw + 40% molasses",40.2,NA,62.4,2.5,14.8532,NA,NA,NA,NA,NA,NA,NA
+"322","diet","JS0112","dy0",311.8,NA,87.2,57.9,17.4276152,NA,NA,NA,NA,NA,NA,NA
+"323","diet","JS0112","dy1",311.8,NA,87.8,57.4,17.4217576,NA,NA,NA,NA,NA,NA,NA
+"324","diet","JS0112","dy2",311.8,NA,88.1,57.1,17.4184104,NA,NA,NA,NA,NA,NA,NA
+"325","diet","JS0112","dy3",311.8,NA,88.6,56.8,17.4150632,NA,NA,NA,NA,NA,NA,NA
+"326","diet","JS0118","con cumin",153.2,NA,79.2,76,NA,NA,NA,NA,"II",NA,"II","II"
+"327","diet","JS0118","jatropha sm 1",156.7,NA,85.4,76.9,NA,NA,NA,NA,"II",NA,"II","II"
+"328","diet","JS0118","jatropha sm 2",155.9,NA,74.3,66.6,NA,NA,NA,NA,NA,NA,NA,NA
+"329","diet","JS0118","jatropha sm 3",156.2,NA,85.7,67.1,NA,NA,NA,NA,NA,NA,NA,NA
+"330","diet","JS0119","100% cull date",111,567.7,91.4,21.3,NA,NA,NA,NA,NA,NA,"V","V"
+"331","diet","JS0119","50% cull date",117.2,525.4,82.1,21,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"332","diet","JS0119","75% cull date",113.1,542.5,82.1,21.9,NA,NA,NA,NA,"IV",NA,"V","V"
+"333","diet","JS0119","no cull date",122.5,512.5,79.9,21.3,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"334","diet","JS0123","diet con",167.9,NA,46.3,33.2,NA,NA,NA,NA,NA,NA,NA,NA
+"335","diet","JS0123","jcsm1",165.4,NA,47.6,32.5,NA,NA,NA,NA,NA,NA,NA,NA
+"336","diet","JS0123","jcsm2",164.8,NA,46.2,33.4,NA,NA,NA,NA,NA,NA,NA,NA
+"337","diet","JS0123","jcsm3",162.3,NA,46.7,34.2,NA,NA,NA,NA,NA,NA,NA,NA
+"338","diet","JS0123","jcsm4",163.5,NA,48.5,38.2,NA,NA,NA,NA,NA,NA,NA,NA
+"339","diet","JS0124","con",306,NA,83,91,19.74848,NA,NA,"II","II","II","II","II"
+"340","diet","JS0124","spirulina1",306.2,NA,83.4,91.1,19.74848,NA,NA,"II","II","II","II","II"
+"341","diet","JS0124","spirulina2",306.5,NA,83.8,91.9,19.74848,NA,NA,"II","II","II","II","II"
+"342","diet","JS0124","spirulina3",306.9,NA,84,92,19.74848,NA,NA,"II","II","II","II","II"
+"343","diet","JS0124","spirulina4",307.4,NA,84.8,91.8,19.74848,NA,NA,"II","II","II","II","II"
+"344","diet","JS0124","spirulina5",307.8,NA,85,92.4,19.74848,NA,NA,"II","II","II","II","II"
+"345","diet","JS0125","100% pbm",359.4,NA,97.2,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"346","diet","JS0125","20% pbm",366.3,NA,80.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"347","diet","JS0125","40% pbm",356,NA,79.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"348","diet","JS0125","60% pbm",362.5,NA,86.9,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"349","diet","JS0125","80% pbm",359.2,NA,89.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"350","diet","JS0125","control",349.8,NA,73.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"351","diet","JS0134","con",318.4,NA,72,NA,187.4,NA,NA,NA,NA,NA,NA,NA
+"352","diet","JS0134","okara1",318.1,NA,66,NA,188.1,NA,NA,NA,NA,NA,NA,NA
+"353","diet","JS0134","okara2",317.9,NA,61,NA,184.9,NA,NA,NA,NA,NA,NA,NA
+"354","diet","JS0134","okara3",317.7,NA,56,NA,182.1,NA,NA,NA,NA,NA,NA,NA
+"355","diet","JS0134","okara4",317.5,NA,51,NA,180.9,NA,NA,NA,NA,NA,NA,NA
+"356","diet","JS0135","csm0",318.2,NA,61.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"357","diet","JS0135","csm100",317.3,NA,65.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"358","diet","JS0135","csm25",317.8,NA,60.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"359","diet","JS0135","csm50",317.6,NA,66.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"360","diet","JS0135","csm75",317.5,NA,63.7,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"361","diet","JS0137","diet con",363,NA,93,107,19.58112,NA,NA,"II","II","II","II","II"
+"362","diet","JS0137","fh10",370,NA,109,99,19.0372,NA,NA,"II","II","II","II","II"
+"363","diet","JS0137","fh20",360,NA,118,109,18.828,NA,NA,"II","II","II","II","II"
+"364","diet","JS0137","mf10",368,NA,132,114,19.16272,NA,NA,"II","II","II","II","II"
+"365","diet","JS0137","mf20",363,NA,147,119,18.86984,NA,NA,"II","II","II","II","II"
+"366","diet","JS0137","rf10",359,NA,112,112,19.2464,NA,NA,"II","II","II","II","II"
+"367","diet","JS0137","rf20",369,NA,138,108,18.828,NA,NA,"II","II","II","II","II"
+"368","diet","JS0137","yf10",368,NA,116,112,19.4556,NA,NA,"II","II","II","II","II"
+"369","diet","JS0137","yf20",361,NA,153,109,18.70248,NA,NA,"II","II","II","II","II"
+"370","diet","JS0139","con basal",159,NA,69.2,77.1,0.01851,NA,NA,NA,"II",NA,"II","II"
+"371","diet","JS0139","fm sb substitution1",204,NA,78.4,75.2,0.01858,NA,NA,NA,"II",NA,"II","II"
+"372","diet","JS0139","fm sb substitution2",253,NA,95.3,68.7,0.01844,NA,NA,NA,NA,NA,NA,NA
+"373","diet","JS0139","fm sb substitution3",308,NA,109.2,65.2,0.01845,NA,NA,NA,NA,NA,NA,NA
+"374","diet","JS0139","fm sb substitution4",352,NA,123,61.6,0.0184,NA,NA,NA,NA,NA,NA,NA
+"375","diet","JS0140","ppw 0%",142.2,443.7,68.6,28.4,17.689952,NA,"IV","IV","IV","IV","IV","IV"
+"376","diet","JS0140","ppw 25%",144.7,449.5,70.1,27,17.648112,NA,"IV","IV","IV","IV","IV","IV"
+"377","diet","JS0140","ppw 50%",147.3,455.4,71.7,25.5,17.602088,NA,"IV","IV","IV","IV","IV","IV"
+"378","diet","JS0147","diet con",147,NA,73,44,NA,NA,NA,NA,NA,NA,NA,NA
+"379","diet","JS0147","gm1 b",212,NA,62,35,NA,NA,NA,NA,NA,NA,NA,NA
+"380","diet","JS0147","gm2 c",206,NA,74,46,NA,NA,NA,NA,NA,NA,NA,NA
+"381","diet","JS0147","gm3 d",229,NA,69,40,NA,NA,NA,NA,NA,NA,NA,NA
+"382","diet","JS0147","gm4 e",162,NA,73,56,NA,NA,NA,NA,NA,NA,NA,NA
+"383","diet","JS0176","llm 1.2",155,527,NA,94,NA,NA,NA,"II","II","II","II","II"
+"384","diet","JS0176","llm 2",220,409,NA,94,NA,NA,NA,"II","II","II","II","II"
+"385","diet","JS0196","albizia bc",225.2,539,86,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"386","diet","JS0196","cotton csc con",223.4,452.7,68.8,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"387","diet","JS0196","gliricidia bc",223.3,381.8,118.4,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"388","diet","JS0196","leucaena bc",227.1,414,130.9,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"389","diet","JS0196","moringa bc",222.4,425.2,105.4,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"390","diet","JS0206","llm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"391","diet","JS0206","nlm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"392","diet","JS0206","plm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"393","diet","JS0211","t1 0% mool",161,428,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"394","diet","JS0211","t2 9% mool",161,530,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"395","diet","JS0211","t3 27% mool",161,695,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"396","diet","JS0211","t4 36% mool",161,367,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"397","diet","JS0262","t2 wheat offal",231,438,NA,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"398","diet","JS0262","t3 2wheat offal:1 nsm",238,377,NA,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"399","diet","JS0262","t4 1wheatbran:2nsm",254,379,NA,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"400","diet","JS0262","t5 noug seed meal",290,388,NA,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"401","diet","JS0289.1","teff + 150 g wheat offal",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"402","diet","JS0289.1","teff + 200 g l. pallida",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"403","diet","JS0289.1","teff + 200g s. sesban",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"404","diet","JS0289.1","teff + 400 g l. pallida",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"405","diet","JS0289.1","teff + 400 g s. sesban",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"406","diet","JS0289.2","teff + 150 g wheat offal",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"407","diet","JS0289.2","teff + 200 g l. pallida",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"408","diet","JS0289.2","teff + 200g s. sesban",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"409","diet","JS0289.2","teff + 400 g l. pallida",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"410","diet","JS0289.2","teff + 400 g s. sesban",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"411","diet","JS0292","diet 1",153,660,7.5,10.5,NA,NA,NA,NA,NA,"V","V","V"
+"412","diet","JS0292","diet 2",159,640,8,9,NA,NA,NA,NA,NA,"V","V","V"
+"413","diet","JS0292","diet 3",163,620,8,10,NA,NA,NA,NA,NA,"V","V","V"
+"414","diet","JS0292","diet 4",200,600,8,7.5,NA,NA,NA,NA,NA,"V","V","V"
+"415","diet","JS0292","standard diet",206,570,8.5,13.5,NA,NA,NA,NA,NA,NA,"V","V"
+"416","diet","JS0293","d1 100% fsf",182,NA,66.8,71.5,NA,NA,NA,NA,NA,NA,NA,NA
+"417","diet","JS0293","d2 67% fsf",183,NA,65.6,70.4,NA,NA,NA,NA,NA,NA,NA,NA
+"418","diet","JS0293","d3 33% fsf",184,NA,62.7,69.1,NA,NA,NA,NA,NA,NA,NA,NA
+"419","diet","JS0293","d4 0% fsf",185,NA,59.6,68.1,NA,NA,NA,NA,NA,NA,NA,NA
+"420","diet","JS0295","diet con",302,NA,60,88,20.06228,NA,NA,"II","II","II","II","II"
+"421","diet","JS0295","rcp 1",302,NA,60,86,20.016256,NA,NA,"II","II","II","II","II"
+"422","diet","JS0295","rcp 2",300,NA,59,87,20.04136,NA,NA,"II","II","II","II","II"
+"423","diet","JS0295","rcp 3",301,NA,62,89,20.04136,NA,NA,"II","II","II","II","II"
+"424","diet","JS0295","rcp 4",305,NA,61,91,20.129224,NA,NA,"II","II","II","II","II"
+"425","diet","JS0296","con",352.2,NA,73,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"426","diet","JS0296","maize g 1",357.2,NA,61.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"427","diet","JS0296","maize g 2",354.6,NA,49.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"428","diet","JS0296","maize g 3",349.6,NA,39,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"429","diet","JS0299","coconut oil diet bundle 1",116.6,NA,75.9,NA,19.68,NA,NA,NA,NA,NA,NA,"II"
+"430","diet","JS0299","coconut oil diet bundle 2",116.6,NA,75.9,NA,19.68,NA,NA,NA,NA,NA,NA,"II"
+"431","diet","JS0299","control diet bundle 1",160.3,NA,50.6,NA,15.85,NA,NA,NA,NA,NA,NA,NA
+"432","diet","JS0299","lard diet bundle 1",149.1,NA,64.4,NA,19.51,NA,NA,NA,NA,NA,NA,"II"
+"433","diet","JS0299","palm oil diet bundle 1",146.1,NA,65.2,NA,20.87,NA,NA,NA,NA,NA,NA,"II"
+"434","diet","JS0299","soybean oil diet bundle 1",117.1,NA,67.7,NA,20.02,NA,NA,NA,NA,NA,NA,"II"
+"435","diet","JS0299","sunflower oil diet bundle 1",119,NA,84.9,NA,20.45,NA,NA,NA,NA,NA,NA,"II"
+"436","diet","JS0301","100% ftl",57.11,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"437","diet","JS0301","25% ftl",57.49,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"438","diet","JS0301","50% ftl",57.36,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"439","diet","JS0301","75% ftl",57.23,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"440","diet","JS0301","no ftl",57.62,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"441","diet","JS0305","con maize",117,NA,NA,20.6,NA,NA,NA,NA,NA,NA,NA,NA
+"442","diet","JS0305","sugar bp 1",117,NA,NA,18.9,NA,NA,NA,NA,NA,NA,NA,NA
+"443","diet","JS0305","sugar bp 2",117,NA,NA,15.4,NA,NA,NA,NA,NA,NA,NA,NA
+"444","diet","JS0305","sugar bp 3",117,NA,NA,12.9,NA,NA,NA,NA,NA,NA,NA,NA
+"445","diet","JS0306","0% moc",138.8,285.75,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"446","diet","JS0306","10% moc",138.6,359.58,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"447","diet","JS0306","15% moc",138.4,402.975,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"448","diet","JS0306","5% moc",138.5,325.72,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"449","diet","JS0314","acacia ac15",169,400,NA,18.9,NA,NA,NA,"IV","IV","IV","IV","IV"
+"450","diet","JS0314","atriplex at15",161,407,NA,12.5,NA,NA,NA,"IV","IV","IV","IV","IV"
+"451","diet","JS0314","atriplex and acacia tc30",161,405,NA,17.6,NA,NA,NA,"IV","IV","IV","IV","IV"
+"452","diet","JS0314","con berseem",155,386,NA,17,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"453","diet","JS0343","con",92,692,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"454","diet","JS0343","pe1",110,651,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"455","diet","JS0343","pe2",129,609,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"456","diet","JS0343","pe3",144,567,NA,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"457","diet","JS0343","pe4",160,524,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"458","diet","JS0344","con",14,320,NA,37,NA,NA,NA,NA,NA,NA,NA,NA
+"459","diet","JS0344","rumen 1",14,370,NA,34,NA,NA,NA,NA,NA,NA,"IV","IV"
+"460","diet","JS0344","rumen 2",14,420,NA,32,NA,NA,NA,NA,NA,"IV","IV","IV"
+"461","diet","JS0344","rumen 3",14,450,NA,31,NA,NA,NA,NA,NA,"IV","IV","IV"
+"462","diet","JS0349","control diet",136,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"463","diet","JS0349","rosemary e. oil diet",143,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"II"
+"464","diet","JS0349","rosemary leaves diet",136,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"465","diet","JS0370","fishmeal con",357,NA,71.2,85,19.7221208,NA,NA,"II","II","II","II","II"
+"466","diet","JS0370","spirulina one",363,NA,60,80.5,19.86354,NA,NA,"II","II","II","II","II"
+"467","diet","JS0370","spirulina three",358,NA,55.6,74.5,19.8225368,NA,NA,NA,"II",NA,"II","II"
+"468","diet","JS0370","spirulina two",357,NA,59.1,77.1,19.7827888,NA,NA,NA,"II",NA,"II","II"
+"469","diet","JS0371","control",89.5,NA,18.5,49.5,NA,NA,NA,NA,NA,NA,NA,NA
+"470","diet","JS0371","jatropha 12",129.4,NA,30.9,63.4,NA,NA,NA,NA,NA,NA,NA,NA
+"471","diet","JS0371","jatropha 4",103.6,NA,22.5,54.1,NA,NA,NA,NA,NA,NA,NA,NA
+"472","diet","JS0371","jatropha 8",113.7,NA,27,50,NA,NA,NA,NA,NA,NA,NA,NA
+"473","diet","JS0418","brewers dg1 bundle1",180.4,NA,95.1,181.3,NA,NA,NA,"II","II","II","II","II"
+"474","diet","JS0418","brewers dg2 bundle1",180.1,NA,101.4,169,NA,NA,NA,"II","II","II","II","II"
+"475","diet","JS0418","brewers dg3 bundle1",180.1,NA,83.1,169.4,NA,NA,NA,"II","II","II","II","II"
+"476","diet","JS0418","brewers dg4 bundle 2",181.2,NA,94.2,161.3,NA,NA,NA,"II","II","II","II","II"
+"477","diet","JS0418","brewers dg4 bundle1",181.2,NA,94.2,161.3,NA,NA,NA,"II","II","II","II","II"
+"478","diet","JS0418","brewers dg5 bundle 3",180.5,NA,94.8,162.8,NA,NA,NA,"II","II","II","II","II"
+"479","diet","JS0418","brewers dg5 bundle1",180.5,NA,94.8,162.8,NA,NA,NA,"II","II","II","II","II"
+"480","diet","JS0418","brewers dg6 bundle2",180.6,NA,95.6,166.2,NA,NA,NA,"II","II","II","II","II"
+"481","diet","JS0418","brewers dg7 bundle 3",180.1,NA,95.8,164.8,NA,NA,NA,"II","II","II","II","II"
+"482","diet","JS0418","diet con bundle1",180.2,NA,82.3,191,NA,NA,NA,"II","II","II","II","II"
+"483","diet","JS0423","d no phosphorus",401,NA,41.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"484","diet","JS0423","d1 0.1 % phosphorus",401,NA,41.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"485","diet","JS0423","d10 1% phosphorus",402,NA,40.8,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"486","diet","JS0423","d2 0.2% phosphorus",400,NA,42.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"487","diet","JS0423","d3 0.3% phosphorus",401,NA,42.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"488","diet","JS0423","d4 0.4% phosphorus",401,NA,43.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"489","diet","JS0423","d5 0.5% phosphorus",401,NA,44.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"490","diet","JS0423","d6 0.6% phosphorus",400,NA,41.8,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"491","diet","JS0423","d7 0.7% phosphorus",400,NA,41.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"492","diet","JS0423","d8 0.8% phosphorus",403,NA,41.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"493","diet","JS0423","d9 0.9% phosphorus",400,NA,42.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"494","diet","LM0016","con diet1",194.4,NA,NA,31.4,NA,NA,NA,NA,NA,NA,NA,NA
+"495","diet","LM0016","diet2",192.5,NA,NA,46.3,NA,NA,NA,NA,NA,NA,NA,NA
+"496","diet","LM0016","diet3",191,NA,NA,51,NA,NA,NA,NA,NA,NA,NA,NA
+"497","diet","LM0016","diet4",188.4,NA,NA,57.2,NA,NA,NA,NA,NA,NA,NA,NA
+"498","diet","LM0047","csm2",218,NA,73.1,66.8,NA,NA,NA,NA,NA,NA,NA,NA
+"499","diet","LM0047","csm3",216.2,NA,68.6,70.2,NA,NA,NA,NA,NA,NA,NA,NA
+"500","diet","LM0047","csm4",226,NA,72,73.4,NA,NA,NA,NA,"II",NA,"II","II"
+"501","diet","LM0047","csm5",222.3,NA,71,82,NA,NA,NA,"II","II","II","II","II"
+"502","diet","LM0047","gnc1",222.9,NA,70.9,60.9,NA,NA,NA,NA,NA,NA,NA,NA
+"503","diet","LM0048","csb",169.3,NA,34,87.6,NA,NA,NA,"II","II","II","II","II"
+"504","diet","LM0048","rsb",169.7,NA,36.1,86.8,NA,NA,NA,"II","II","II","II","II"
+"505","diet","LM0048","sbm",165.6,NA,40.4,56.3,NA,NA,NA,NA,NA,NA,NA,NA
+"506","diet","LM0100","diet con",240.3,NA,21.9,43.6,NA,NA,NA,NA,NA,NA,NA,NA
+"507","diet","LM0100","diet ghp 1",241.1,NA,23.1,59.9,NA,NA,NA,NA,NA,NA,NA,NA
+"508","diet","LM0100","diet ghp 2",241.8,NA,25,56.2,NA,NA,NA,NA,NA,NA,NA,NA
+"509","diet","LM0100","diet ghp 3",242.5,NA,27,52.5,NA,NA,NA,NA,NA,NA,NA,NA
+"510","diet","LM0100","diet ghp 4",240.3,NA,29,68.9,NA,NA,NA,NA,NA,NA,NA,NA
+"511","diet","LM0103","1",186,557,42,46,NA,NA,NA,NA,NA,NA,"V","V"
+"512","diet","LM0103","2",165,446,110,42,NA,NA,NA,"IV","IV","IV","IV","IV"
+"513","diet","LM0103","3",136,492,52,29,NA,NA,NA,"IV","IV","IV","IV","IV"
+"514","diet","LM0103","4",129,469,71,15,NA,NA,NA,"IV","IV","IV","IV","IV"
+"515","diet","LM0103","5",114,541,72,34,NA,NA,NA,NA,"IV",NA,"V","V"
+"516","diet","LM0104","0% a. sieberiana",NA,NA,210,75,NA,NA,NA,NA,"II",NA,"II","II"
+"517","diet","LM0104","15% a. sieberiana",NA,NA,187,60,NA,NA,NA,NA,NA,NA,NA,NA
+"518","diet","LM0104","30% a. sieberiana",NA,NA,180,55,NA,NA,NA,NA,NA,NA,NA,NA
+"519","diet","LM0104","45% a. sieberiana",NA,NA,135,35,NA,NA,NA,NA,NA,NA,NA,NA
+"520","diet","LM0104","60% a. sieberiana",NA,NA,134,33,NA,NA,NA,NA,NA,NA,NA,NA
+"521","diet","LM0113.1","1",173.7,NA,55.3,41.3,NA,NA,NA,NA,NA,NA,NA,NA
+"522","diet","LM0113.1","2",174.2,NA,56.5,37.5,NA,NA,NA,NA,NA,NA,NA,NA
+"523","diet","LM0113.1","3",178.2,NA,57.5,32,NA,NA,NA,NA,NA,NA,NA,NA
+"524","diet","LM0113.1","4",181.8,NA,55.4,29.3,NA,NA,NA,NA,NA,NA,NA,NA
+"525","diet","LM0113.2","1",167.3,NA,60.8,46.6,NA,NA,NA,NA,NA,NA,NA,NA
+"526","diet","LM0113.2","2",167.3,NA,57.5,53.7,NA,NA,NA,NA,NA,NA,NA,NA
+"527","diet","LM0113.2","3",171.4,NA,57,58.5,NA,NA,NA,NA,NA,NA,NA,NA
+"528","diet","LM0113.2","4",159.7,NA,55.4,67.6,NA,NA,NA,NA,NA,NA,NA,NA
+"529","diet","LM0114","bundle 1 0 ws",189,326,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"530","diet","LM0114","bundle 1 13 ws",180,387,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"531","diet","LM0114","bundle 1 19.5 ws",172,377,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"532","diet","LM0114","bundle 1 26 ws",183,408,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"533","diet","LM0114","bundle 1 6.5 ws",185,355,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"534","diet","LM0114","bundle 2 26 aws",187,420,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"535","diet","LM0114","bundle 2 26 ws",187,420,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"536","diet","LM0115","diet 2",137,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"537","diet","LM0115","diet 3",133,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"538","diet","LM0115","diet 4",138,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"539","diet","LM0115","diet con",135,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"540","diet","LM0117.3","group 1",354,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"541","diet","LM0117.3","group 2",295,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"542","diet","LM0117.3","group 3",286,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"543","diet","LM0120","cabbage diet",116.7,NA,60.6,NA,16.09,NA,NA,NA,NA,NA,NA,NA
+"544","diet","LM0120","duckweed diet",274.2,NA,122.6,NA,16.43,NA,NA,NA,NA,NA,NA,NA
+"545","diet","LM0120","fish meal pelletes diet",344.8,NA,107.8,NA,17,NA,NA,NA,NA,NA,NA,"III"
+"546","diet","LM0120","kikuyu grass diet",264,NA,124.9,NA,17.99,NA,NA,NA,NA,NA,NA,NA
+"547","diet","LM0120","vallisneria diet",127.9,NA,138.4,NA,14.74,NA,NA,NA,NA,NA,NA,NA
+"548","diet","LM0121","diet 0",175.7,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"549","diet","LM0121","diet 20",171.1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"550","diet","LM0121","diet 40",168.7,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"551","diet","LM0121","diet 60",162.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"552","diet","LM0121","diet 80",157.2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"553","diet","LM0122","fish meal diet",358,NA,NA,NA,19.18,NA,NA,NA,NA,NA,NA,"III"
+"554","diet","LM0122","mix diet",371,NA,NA,NA,19.48,NA,NA,NA,NA,NA,NA,NA
+"555","diet","LM0122","soy-1 diet",383,NA,NA,NA,20,NA,NA,NA,NA,NA,NA,NA
+"556","diet","LM0122","soy-2 diet",364,NA,NA,NA,19.99,NA,NA,NA,NA,NA,NA,NA
+"557","diet","LM0122","tomato diet",364,NA,NA,NA,21.28,NA,NA,NA,NA,NA,NA,NA
+"558","diet","LM0122","yeast diet",342,NA,NA,NA,19.85,NA,NA,NA,NA,NA,NA,NA
+"559","diet","LM0123","1",127.8,159,84,NA,NA,NA,NA,"I","I","I","I","I"
+"560","diet","LM0123","2",127.9,241,84,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"561","diet","LM0123","3",123.8,197,88,NA,NA,NA,NA,"I","I","I","I","I"
+"562","diet","LM0123","4",123.4,228,92,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"563","diet","LM0128","h300d12",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"564","diet","LM0128","h300d6",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"565","diet","LM0129","hps con bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"566","diet","LM0129","hps bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"567","diet","LM0129","hps+fm bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"568","diet","LM0129","hps+fm bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"569","diet","LM0129","mp+fm con bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"570","diet","LM0129","mp+hps bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"571","diet","LM0129","mp+hps bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"572","diet","LM0136.1","14% crude protein",140,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"573","diet","LM0136.1","16% crude protein",160,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"574","diet","LM0136.1","18% crude protein",180,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"575","diet","LM0136.1","20% crude protein",200,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"576","diet","LM0136.2","14% crude protein",135,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"577","diet","LM0136.2","16% crude protein",156,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"578","diet","LM0136.2","18% crude protein",176,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"579","diet","LM0136.2","20% crude protein",196,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"580","diet","LM0138","fish meal con",252.3,NA,59.6,22.8,NA,NA,NA,NA,NA,NA,NA,"III"
+"581","diet","LM0138","hatchery waste meal1",245.9,NA,70.4,22.2,NA,NA,NA,NA,NA,NA,NA,NA
+"582","diet","LM0138","hatchery waste meal2",251.6,NA,69.2,25.8,NA,NA,NA,NA,NA,NA,NA,NA
+"583","diet","LM0138","hatchery waste meal3",250.9,NA,64,30.6,NA,NA,NA,NA,NA,NA,NA,NA
+"584","diet","LM0139","240g/kg of opuntia ficus-indica",177,363,NA,24,16.7,NA,NA,NA,"IV",NA,"IV","IV"
+"585","diet","LM0139","360g/kg of opuntia ficus-indica",177,313,NA,22,15.5,NA,NA,NA,NA,NA,NA,NA
+"586","diet","LM0139","no opuntia ficus-indica",171,413,NA,24,17.3,NA,NA,"IV","IV","IV","IV","IV"
+"587","diet","LM0163","mt d1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"588","diet","LM0163","mt d2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"589","diet","LM0163","mt d3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"590","diet","LM0163","mt d4",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"591","diet","LM0164","d1 napier grass alone",117,559,NA,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"592","diet","LM0164","d2 napier/desmodium",142,504,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"593","diet","LM0164","d3 napier + desmodium hay",131,534,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"594","diet","LM0164","d4 napier + lucerne hay",137,536,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"595","diet","LM0266","brevispica4",214,511,39,8,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"596","diet","LM0266","brownii5",161,375,55,36,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"597","diet","LM0266","nilotica3",135,227,35,17,NA,NA,NA,NA,NA,NA,NA,NA
+"598","diet","LM0266","tortilis2",205,382,55,10,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"599","diet","LM0280","cc diet",175,256,54,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"600","diet","LM0280","gbc diet",175,511,94,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"601","diet","LM0280","lbc diet",174,439,84,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"602","diet","LM0297","15% dm leucaena",259,403,NA,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"603","diet","LM0297","30% dm leucaena",252,413,NA,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"604","diet","LM0297","45% dm leucaena",299,388,NA,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"605","diet","LM0297","control (no leucaena)",27,391,NA,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"606","diet","LM0310","fm con",404.8,113.6,109.4,95.7,19.73,NA,NA,"I","I","II","II","II"
+"607","diet","LM0310","fs 100",401,485.4,81.1,92.1,19.59,NA,NA,"II","II","II","II","II"
+"608","diet","LM0310","fs 25",400.4,148.7,101.8,97.3,19.68,NA,NA,"I","I","II","II","II"
+"609","diet","LM0310","fs 50",398.2,185,94.5,98.8,19.62,NA,NA,"I","I","II","II","II"
+"610","diet","LM0310","fs 75",398,222.6,87.3,98,19.58,NA,NA,"II","II","II","II","II"
+"611","diet","LM0312","con",331.6,NA,75.4,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"612","diet","LM0312","mbm1",335.4,NA,69.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"613","diet","LM0312","mbm2",324.8,NA,72.7,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"614","diet","LM0312","mbm3",343.4,NA,70.4,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"615","diet","LM0315","control",349.5,NA,99.2,101.6,19.28,NA,NA,"II","II","II","II","II"
+"616","diet","LM0315","diet 1",350.2,NA,92.1,127,19.46,NA,NA,"II","II","II","II","II"
+"617","diet","LM0315","diet 2",346,NA,96.2,160.7,20.08,NA,NA,"II","II","II","II","II"
+"618","diet","LM0315","diet 3",349.6,NA,97.1,207.3,21.24,NA,NA,"II","II","II","II","II"
+"619","diet","LM0315","diet 4",349.4,NA,99,125.9,19.98,NA,NA,"II","II","II","II","II"
+"620","diet","LM0315","diet 5",349.7,NA,98.2,157.9,20.24,NA,NA,"II","II","II","II","II"
+"621","diet","LM0315","diet 6",349.9,NA,99.6,201.7,21.19,NA,NA,"II","II","II","II","II"
+"622","diet","LM0320","d 10",96.1,NA,91.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"623","diet","LM0320","d 20",94.9,NA,89.8,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"624","diet","LM0320","d 30",94.9,NA,94.7,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"625","diet","LM0320","d con",96.3,NA,87.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"626","diet","LM0322","molm0",209.2,55.6,62.1,45.6,NA,NA,NA,NA,NA,"I","I","I"
+"627","diet","LM0322","molm100",276.6,65.1,69.8,49.6,NA,NA,NA,NA,NA,"I","I","I"
+"628","diet","LM0322","molm50",255.8,43.1,58.2,38.5,NA,NA,NA,NA,NA,"I","I","I"
+"629","diet","LM0329","con",137,417,72,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"630","diet","LM0329","seca1",134,424,74,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"631","diet","LM0329","seca2",136,444,84,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"632","diet","LM0334","control",300.3,NA,NA,NA,20.21,NA,NA,NA,NA,NA,NA,NA
+"633","diet","LM0334","km100",300.7,NA,NA,NA,20.47,NA,NA,NA,NA,NA,NA,NA
+"634","diet","LM0334","km25",298.7,NA,NA,NA,20.34,NA,NA,NA,NA,NA,NA,NA
+"635","diet","LM0334","km50",299.6,NA,NA,NA,20.48,NA,NA,NA,NA,NA,NA,NA
+"636","diet","LM0334","km75",297.1,NA,NA,NA,20.53,NA,NA,NA,NA,NA,NA,NA
+"637","diet","LM0334","mm100",303.8,NA,NA,NA,20.36,NA,NA,NA,NA,NA,NA,NA
+"638","diet","LM0334","mm25",298.4,NA,NA,NA,20.58,NA,NA,NA,NA,NA,NA,NA
+"639","diet","LM0334","mm50",299.8,NA,NA,NA,20.42,NA,NA,NA,NA,NA,NA,NA
+"640","diet","LM0334","mm75",304.8,NA,NA,NA,20.26,NA,NA,NA,NA,NA,NA,NA
+"641","diet","LM0335","molm0",189,96,49,52,NA,NA,NA,NA,"I","I","I","I"
+"642","diet","LM0335","molm100",189,116,42,69,NA,NA,NA,"I","I","I","I","I"
+"643","diet","LM0335","molm25",189,100.1,47,57,NA,NA,NA,"I","I","I","I","I"
+"644","diet","LM0335","molm50",189,106,45,61,NA,NA,NA,"I","I","I","I","I"
+"645","diet","LM0336","cm0",160,215,67.1,NA,NA,NA,NA,NA,"I",NA,"I","I"
+"646","diet","LM0336","cm100",160,222,71.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"647","diet","LM0336","cm25",161,216,68.2,NA,NA,NA,NA,NA,"I",NA,"I","I"
+"648","diet","LM0336","cm50",160,219,69.1,NA,NA,NA,NA,NA,"I",NA,"I","I"
+"649","diet","LM0336","cm75",160,219,70.2,NA,NA,NA,NA,NA,"I",NA,"I","I"
+"650","diet","LM0339","20% silage",159,242,NA,32.8,NA,NA,NA,NA,NA,NA,NA,NA
+"651","diet","LM0339","50% silage",154.5,316.7,NA,31.2,NA,NA,NA,NA,NA,NA,NA,NA
+"652","diet","LM0339","70% silage",153.3,341.8,NA,36.8,NA,NA,NA,NA,NA,NA,NA,NA
+"653","diet","LM0339","control",165.2,421.7,NA,19.2,NA,NA,NA,"IV","IV","IV","IV","IV"
+"654","diet","LM0347","dbl0",162,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"655","diet","LM0347","dbl100",161,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"656","diet","LM0347","dbl150",162,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"657","diet","LM0347","dbl200",162,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"658","diet","LM0347","dbl50",159,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"659","diet","LM0349","cact-aa",NA,295,109,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"660","diet","LM0349","cact-ll",NA,339,96,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"661","diet","LM0349","cact-ma",NA,248,107,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"662","diet","LM0349","commercial sheep meal diet",140,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"663","diet","LM0354","0% bys",345,NA,91.8,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"664","diet","LM0354","100% bys",378.3,NA,98.9,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"665","diet","LM0354","25% bys",353,NA,93.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"666","diet","LM0354","50% bys",362.3,NA,95.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"667","diet","LM0354","75% bys",370.7,NA,97.4,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"668","diet","NJ0003","0 g/kg cble",402.3,NA,82.7,92.7,NA,NA,NA,"II","II","II","II","II"
+"669","diet","NJ0003","10 g/kg cble",405.3,NA,86.9,96.4,NA,NA,NA,"II","II","II","II","II"
+"670","diet","NJ0003","15 g/kg cble",401.5,NA,85.8,95,NA,NA,NA,"II","II","II","II","II"
+"671","diet","NJ0003","5 g/kg cble",399.7,NA,85.6,95,NA,NA,NA,"II","II","II","II","II"
+"672","diet","NJ0008","100% dgh",54,673,121,NA,NA,NA,NA,"V","V","V","V","V"
+"673","diet","NJ0008","100% nph",35,712,115,NA,NA,NA,NA,"V","V","V","V","V"
+"674","diet","NJ0008","25% nph +75% dgh",57,689,119,NA,NA,NA,NA,"V","V","V","V","V"
+"675","diet","NJ0008","50% nph + 50% dgh",53,677,123,NA,NA,NA,NA,"V","V","V","V","V"
+"676","diet","NJ0008","75% nph +25% dgh",45,695,117,NA,NA,NA,NA,"V","V","V","V","V"
+"677","diet","NJ0025","mixed forage meal",133,431,75,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"678","diet","NJ0025","urea-treated maize strover",157,718,97,NA,NA,NA,NA,NA,NA,"V","V","V"
+"679","diet","NJ0032","sb-0",159,232,36,46,NA,NA,NA,NA,NA,NA,NA,NA
+"680","diet","NJ0032","sb-10",158,242,64,49,NA,NA,NA,NA,NA,NA,NA,NA
+"681","diet","NJ0032","sb-15",157,252,67,48,NA,NA,NA,NA,NA,NA,NA,NA
+"682","diet","NJ0032","sb-20",164,253,73,46,NA,NA,NA,NA,NA,NA,NA,NA
+"683","diet","NJ0032","sb-5",153,212,41,48,NA,NA,NA,NA,"I",NA,"I","I"
+"684","diet","NJ0047","t1",193.8,NA,158.4,52.5,NA,NA,NA,NA,NA,NA,NA,NA
+"685","diet","NJ0047","t2",196.8,NA,187,54.5,NA,NA,NA,NA,NA,NA,NA,NA
+"686","diet","NJ0047","t3",196.8,NA,191.1,31.5,NA,NA,NA,NA,NA,NA,NA,NA
+"687","diet","NJ0047","t4",198.4,NA,195.2,39,NA,NA,NA,NA,NA,NA,NA,NA
+"688","diet","NN0005","0 m",153,272,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"689","diet","NN0005","20 m",153,231,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"690","diet","NN0005","40 m",153,189,NA,NA,NA,NA,NA,"I","I","I","I","I"
+"691","diet","NN0005","60 m",153,147,NA,NA,NA,NA,NA,"I","I","I","I","I"
+"692","diet","NN0034","unts",161,745,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"693","diet","NN0034","uts",25,747,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"694","diet","NN0085","u0",286.4,NA,67.2,NA,16.12,NA,NA,NA,NA,NA,NA,NA
+"695","diet","NN0085","u1",281.3,NA,79.8,NA,15.37,NA,NA,NA,NA,NA,NA,NA
+"696","diet","NN0085","u2",278.3,NA,114.2,NA,14.77,NA,NA,NA,NA,NA,NA,NA
+"697","diet","NN0085","u3",271.4,NA,118.8,NA,14.57,NA,NA,NA,NA,NA,NA,NA
+"698","diet","NN0098","a 0 con",364,NA,102,NA,18.96,NA,NA,NA,NA,NA,NA,NA
+"699","diet","NN0098","a 10",362.7,NA,120,NA,19.28,NA,NA,NA,NA,NA,NA,NA
+"700","diet","NN0098","a 20",356.1,NA,133,NA,19.54,NA,NA,NA,NA,NA,NA,NA
+"701","diet","NN0098","a 30",352.2,NA,154.4,NA,19.72,NA,NA,NA,NA,NA,NA,NA
+"702","diet","NN0101","b",210,245,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"703","diet","NN0101","b-peg",210,235,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"704","diet","NN0106","b0",151.5,NA,85.6,NA,13.13776,NA,NA,NA,NA,NA,NA,NA
+"705","diet","NN0106","b1",144.8,NA,93.1,NA,12.552,NA,NA,NA,NA,NA,NA,NA
+"706","diet","NN0106","b2",143,NA,96.6,NA,12.3428,NA,NA,NA,NA,NA,NA,NA
+"707","diet","NN0106","b3",141.7,NA,98,NA,12.21728,NA,NA,NA,NA,NA,NA,NA
+"708","diet","NN0106","b4",140.5,NA,104,NA,11.9244,NA,NA,NA,NA,NA,NA,NA
+"709","diet","NN0107.1","green panic",42,732,86,20,NA,NA,NA,"V","V","V","V","V"
+"710","diet","NN0107.1","tis-2532.op.1.13",221,482,200,23,NA,NA,NA,NA,NA,"IV","IV","IV"
+"711","diet","NN0107.1","tis-8164",191,458,144,21,NA,NA,NA,"IV","IV","IV","IV","IV"
+"712","diet","NN0107.1","tis-87/007",145,467,182,17,NA,NA,NA,"IV","IV","IV","IV","IV"
+"713","diet","NN0109.1","c-0",378.4,NA,29.5,NA,18.3,NA,NA,NA,NA,NA,NA,NA
+"714","diet","NN0109.1","c-15",377.6,NA,36.4,NA,18.4,NA,NA,NA,NA,NA,NA,NA
+"715","diet","NN0109.1","c-30",376.8,NA,42.3,NA,18.6,NA,NA,NA,NA,NA,NA,NA
+"716","diet","NN0109.1","c-45",374.9,NA,59.1,NA,18.7,NA,NA,NA,NA,NA,NA,NA
+"717","diet","NN0109.2","p-25",257.2,NA,58.9,NA,18.5,NA,NA,NA,NA,NA,NA,NA
+"718","diet","NN0109.2","p-30",377.6,NA,36.4,NA,18.4,NA,NA,NA,NA,NA,NA,NA
+"719","diet","NN0109.2","p-35",376.8,NA,42.3,NA,18.6,NA,NA,NA,NA,NA,NA,NA
+"720","diet","NN0109.2","p-40",374.9,NA,59.1,NA,18.7,NA,NA,NA,NA,NA,NA,NA
+"721","diet","NN0110.1","fm",398,NA,NA,NA,17.56,NA,NA,NA,NA,NA,NA,NA
+"722","diet","NN0110.1","s80",395,NA,NA,NA,17.64,NA,NA,NA,NA,NA,NA,NA
+"723","diet","NN0110.1","w20",390,NA,NA,NA,17.6,NA,NA,NA,NA,NA,NA,NA
+"724","diet","NN0110.1","w40",394,NA,NA,NA,17.61,NA,NA,NA,NA,NA,NA,NA
+"725","diet","NN0110.1","w60",392,NA,NA,NA,17.63,NA,NA,NA,NA,NA,NA,NA
+"726","diet","NN0110.1","w80",396,NA,NA,NA,17.66,NA,NA,NA,NA,NA,NA,NA
+"727","diet","NN0110.2","diet 1",407,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"728","diet","NN0110.2","diet 2",405,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"729","diet","NN0110.2","diet 3",404,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"730","diet","NN0110.2","diet 4",408,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"731","diet","NN0110.2","diet 5",407,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"732","diet","NN0112","rq 20",399.2,NA,109.3,NA,18.41,NA,NA,NA,NA,NA,NA,NA
+"733","diet","NN0112","rq 40",395.9,NA,110.9,NA,18.28,NA,NA,NA,NA,NA,NA,NA
+"734","diet","NN0112","rq 60",398.4,NA,112.6,NA,18.12,NA,NA,NA,NA,NA,NA,NA
+"735","diet","NN0112","sb 60",397.5,NA,107.5,NA,18.6,NA,NA,NA,NA,NA,NA,NA
+"736","diet","NN0113","t1",372.1,NA,34.2,NA,18.813356,NA,NA,NA,NA,NA,NA,NA
+"737","diet","NN0113","t2",369.8,NA,39.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"738","diet","NN0113","t3",368.8,NA,40.8,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"739","diet","NN0113","t4",368.4,NA,43.1,NA,18.8317656,NA,NA,NA,NA,NA,NA,NA
+"740","diet","NN0114","ctr",406,NA,93.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"741","diet","NN0114","rsf15",404.7,NA,87.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"742","diet","NN0114","rsf30",402.8,NA,88,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"743","diet","NN0114","rsf45",401.8,NA,90.4,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"744","diet","NN0114","rsm15",404.8,NA,89.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"745","diet","NN0114","rsm30",404.2,NA,88.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"746","diet","NN0114","rsm45",402.4,NA,85.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"747","diet","NN0115","fm",428.9,NA,85,NA,18.4,NA,NA,NA,NA,NA,NA,NA
+"748","diet","NN0115","sf25",429.1,NA,78.4,NA,18.3,NA,NA,NA,NA,NA,NA,NA
+"749","diet","NN0115","sf50",430.2,NA,70.3,NA,18.6,NA,NA,NA,NA,NA,NA,NA
+"750","diet","NN0115","sf75",430.7,NA,62.7,NA,18.9,NA,NA,NA,NA,NA,NA,NA
+"751","diet","NN0115","sf75 + m",431.2,NA,62.3,NA,18.7,NA,NA,NA,NA,NA,NA,NA
+"752","diet","NN0117","con 0 pom",399,NA,118,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"753","diet","NN0117","pom 30%",398,NA,119,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"754","diet","NN0117","pom 60%",402,NA,126,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"755","diet","NN0117","pom 90%",400,NA,112,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"756","diet","NN0118","0% duckweed",300.3,NA,88.1,124.8,17.7953888,NA,NA,"II","II","II","II","II"
+"757","diet","NN0118","10% duckweed",297.5,NA,95,147.5,16.9447816,NA,NA,"II","II","II","II","II"
+"758","diet","NN0118","100% duckweed",298,NA,105,123,14.9979664,NA,NA,"II","II","II","II","II"
+"759","diet","NN0118","20% duckweed",297,NA,97.5,144,16.6426968,NA,NA,"II","II","II","II","II"
+"760","diet","NN0118","30% duckweed",300.2,NA,101.7,142.5,16.089572,NA,NA,"II","II","II","II","II"
+"761","diet","NN0118","5% duckweed",299,NA,52,151,17.1728096,NA,NA,"II","II","II","II","II"
+"762","diet","NN0119.1","1",161,NA,NA,52,NA,NA,NA,NA,NA,NA,NA,NA
+"763","diet","NN0119.1","2",162,NA,NA,53,NA,NA,NA,NA,NA,NA,NA,NA
+"764","diet","NN0119.1","3",160,NA,NA,53,NA,NA,NA,NA,NA,NA,NA,NA
+"765","diet","NN0119.1","4",161,NA,NA,54,NA,NA,NA,NA,NA,NA,NA,NA
+"766","diet","NN0119.2","diet 1 without tolm",NA,NA,NA,72.1,19.33008,NA,NA,NA,"II",NA,"II","II"
+"767","diet","NN0119.2","diet 2 with 10% tolm",NA,NA,NA,64.1,19.33008,NA,NA,NA,NA,NA,NA,NA
+"768","diet","NN0119.2","diet 3 with 15% tolm",NA,NA,NA,64,19.33008,NA,NA,NA,NA,NA,NA,NA
+"769","diet","NN0119.2","diet 4 with 20% tolm",NA,NA,NA,67.1,19.33008,NA,NA,NA,NA,NA,NA,NA
+"770","diet","NN0119.2","diet 5 with 25% tolm",NA,NA,NA,70.2,19.33008,NA,NA,NA,NA,NA,NA,NA
+"771","diet","NN0119.2","diet 6 with 30% tolm",NA,NA,NA,82.4,13.43064,NA,NA,"II","II","II","II","II"
+"772","diet","NN0135","30% cassava-s",31.5,NA,14.4,3.4,NA,NA,NA,NA,NA,NA,NA,NA
+"773","diet","NN0135","30% cassava-u",173.3,NA,71.3,36.1,NA,NA,NA,NA,NA,NA,NA,NA
+"774","diet","NN0135","con 30% maize-based",182,NA,65.7,46.7,NA,NA,NA,NA,NA,NA,NA,NA
+"775","diet","NN0137.1","dgsm 0",221,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"776","diet","NN0137.3","control",221,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"777","diet","NN0137.3","dgsm 1.5 finisher",197,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"778","diet","NN0137.3","dgsm 1.5 grower",217,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"779","diet","NN0137.4","dgsm 0",212,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"780","diet","NN0137.4","dgsm 2",211,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"781","diet","NN0137.4","dgsm 4",210,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"782","diet","NN0137.4","dgsm 6",209,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"783","diet","NN0156","meal",182,NA,63,28,NA,NA,NA,NA,NA,NA,NA,NA
+"784","diet","NN0156","whole-grain",182,NA,63,28,NA,NA,NA,NA,NA,NA,NA,NA
+"785","diet","NN0180.1","pw 0",155,290,NA,38,16.5,NA,NA,NA,NA,NA,NA,NA
+"786","diet","NN0180.1","pw 100",177,351,NA,54,16.2,NA,NA,NA,NA,NA,NA,NA
+"787","diet","NN0180.1","pw 25",167,308,NA,43,16.6,NA,NA,NA,NA,NA,NA,NA
+"788","diet","NN0180.1","pw 50",169,312,NA,45,16.1,NA,NA,NA,NA,NA,NA,NA
+"789","diet","NN0180.1","pw 75",172,318,NA,49,15.9,NA,NA,NA,NA,NA,NA,NA
+"790","diet","NN0180.2","control",126,NA,NA,NA,15.71,NA,NA,NA,NA,NA,NA,NA
+"791","diet","NN0180.2","db",134,NA,NA,6.8,15.21,NA,NA,NA,NA,NA,NA,NA
+"792","diet","NN0180.2","db + phs",106,NA,NA,NA,14.79,NA,NA,NA,NA,NA,NA,NA
+"793","diet","NN0196","a. angustissima 15132",278.7,338.2,68.7,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"794","diet","NN0196","l. pallida 14203",216.2,298.2,88.8,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"795","diet","NN0196","s. sesban 1198",231.2,204.4,115.3,NA,NA,NA,NA,NA,"I",NA,"I","I"
+"796","diet","NN0196","s. sesban 15019",220.6,200.3,113.8,NA,NA,NA,NA,NA,"I",NA,"I","I"
+"797","diet","NN0196","ss 1198 + aa 15132",233.1,246.2,106,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"798","diet","NN0196","ss 1198 + lp 14203",230,244.9,103.4,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"799","diet","NN0196","ss 15019 + aa 15132",222.5,237.5,102,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"800","diet","NN0196","ss 15019 + lp 14203",218.1,236.8,102.2,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"801","diet","NN0196","wheat offal (control)",165,469,59.9,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"802","diet","NN0198","con t1",190,NA,93,65.9,NA,NA,NA,NA,NA,NA,NA,NA
+"803","diet","NN0198","mlm t2",187,NA,96,57.7,NA,NA,NA,NA,NA,NA,NA,NA
+"804","diet","NN0198","mlm t3",189,NA,102,56.3,NA,NA,NA,NA,NA,NA,NA,NA
+"805","diet","NN0198","mlm t4",185,NA,105,53.8,NA,NA,NA,NA,NA,NA,NA,NA
+"806","diet","NN0198","mlm t5",186,NA,106,51,NA,NA,NA,NA,NA,NA,NA,NA
+"807","diet","NN0200","nsm",312.6,362.7,98,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"808","diet","NN0200","rb",110.3,407.4,165,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"809","diet","NN0203","t2 atella+pl",NA,382,88,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"810","diet","NN0203","t3 atella+cp",NA,444,63,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"811","diet","NN0203","t4 atella+cp+pl",NA,414,85,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"812","diet","NN0204","treated high",NA,361,NA,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"813","diet","NN0204","treated low",NA,358,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"814","diet","NN0204","treated med",NA,359,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"815","diet","NN0204","untreated high",NA,336,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"816","diet","NN0204","untreated low",NA,359,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"817","diet","NN0204","untreated med",NA,352,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"818","diet","NN0205","t2",234,435,79,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"819","diet","NN0205","t3",255,479,83,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"820","diet","NN0205","t4",270,528,91,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"821","diet","NN0207.2","25g unchopped sorghum stover",49,730,118,NA,NA,NA,NA,"V","V","V","V","V"
+"822","diet","NN0207.2","50g unchopped sorghum stover",70,637,147,NA,NA,NA,NA,"V","V","V","V","V"
+"823","diet","NN0224","maize i hay 0",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"824","diet","NN0224","maize i hay 150",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"825","diet","NN0224","maize i hay 300",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"826","diet","NN0224","maize i hay 450",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"827","diet","NN0224","maize ii hay 0",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"828","diet","NN0224","maize ii hay 150",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"829","diet","NN0224","maize ii hay 300",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"830","diet","NN0224","maize ii hay 450",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"831","diet","NN0224","maize iii hay 0",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"832","diet","NN0224","maize iii hay 150",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"833","diet","NN0224","maize iii hay 300",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"834","diet","NN0224","maize iii hay 450",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"835","diet","NN0229","dry khat station",111,491,107,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"836","diet","NN0229","fresh khat station",115,539,115,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"837","diet","NN0229","silage khat station",113,542,138,NA,NA,NA,NA,NA,"IV",NA,"V","V"
+"838","diet","NN0276.2","banana peels t3",NA,414.1,79,45,NA,NA,NA,NA,NA,"IV","IV","IV"
+"839","diet","NN0276.2","cottonseed cake t4",NA,168.1,81.2,66.7,NA,NA,NA,"I","I","I","I","I"
+"840","diet","NN0276.2","leucana leaves t2",NA,319,91.3,14.1,NA,NA,NA,NA,NA,NA,NA,NA
+"841","diet","NN0276.2","maize offal t2",NA,189.1,50.8,82,NA,NA,NA,"I","I","II","II","II"
+"842","diet","NN0280.1","ml 1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"843","diet","NN0280.1","ml 2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"844","diet","NN0280.1","ml 3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"845","diet","NN0280.1","ml 4",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"846","diet","NN0280.1","ov 1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"847","diet","NN0280.1","ov 2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"848","diet","NN0280.1","ov 3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"849","diet","NN0280.1","ov 4",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"850","diet","NN0280.2","ml stover + lablab hay",1020,4950,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"851","diet","NN0280.2","ml stover + lablab hay 1.25",1200,5560,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"852","diet","NN0280.2","ml stover + lablab hay 2.5",1360,5830,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"853","diet","NN0280.2","ml stover + lablab hay 3.75",1480,5800,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"854","diet","NN0280.2","ov hay + lablab hay",1530,5070,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"855","diet","NN0280.2","ov hay + lablab hay 1.25",1580,5050,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"856","diet","NN0280.2","ov hay + lablab hay 2.5",1710,5230,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"857","diet","NN0280.2","ov hay + lablab hay 3.75",1930,5560,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"858","diet","NN0282","maize offal t1",179,NA,75,26,NA,NA,NA,NA,NA,NA,NA,NA
+"859","diet","NN0282","wheat offal t2",202,NA,103,12,NA,NA,NA,NA,NA,NA,NA,NA
+"860","diet","NN0282","whole maize t3",153,NA,109,54,NA,NA,NA,NA,NA,NA,NA,NA
+"861","diet","NN0299","control",178,288.6,40.5,40.8,NA,NA,NA,NA,NA,NA,NA,NA
+"862","diet","NN0299","t1",180,281.2,40.7,47.5,NA,NA,NA,NA,NA,NA,NA,NA
+"863","diet","NN0299","t2",180,281.1,40.9,58.5,NA,NA,NA,NA,NA,NA,NA,NA
+"864","diet","NN0299","t3",179,281.1,40.9,60.1,NA,NA,NA,NA,NA,NA,NA,NA
+"865","diet","NN0315","c2",142,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"866","diet","NN0315","gs2",139,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"867","diet","NN0315","l2",141,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"868","diet","NN0315","m2",138,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"869","diet","NN0315","pl2",140,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"870","diet","NN0316","hc diet",142.2,475.8,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"871","diet","NN0316","hcn diet",142.8,476.9,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"872","diet","NN0316","lc diet",110.8,556.2,NA,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"873","diet","NN0316","lcn diet",111.3,557.3,NA,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"874","diet","NN0318","control",190.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"875","diet","NN0318","high glycerol",200.1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"876","diet","NN0318","low glycerol",190.1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"877","diet","NN0325","0.5 pumpkin leaf",413,NA,53.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"878","diet","NN0325","1 pumpkin leaf",413,NA,53.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"879","diet","NN0325","1.5 pumpkin leaf",413,NA,53.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"880","diet","NN0325","2 pumpkin leaf",413,NA,53.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"881","diet","NN0325","control",413,NA,53.5,NA,19.4556,NA,NA,NA,NA,NA,NA,NA
+"882","diet","NN0326","d2",401.5,NA,80,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"883","diet","NN0326","d3",402.2,NA,80,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"884","diet","NN0326","d4",403.7,NA,80,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"885","diet","NN0326","d5",401.8,NA,80,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"886","diet","NN0331","t1 a",394.2,NA,122.9,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"887","diet","NN0331","t2 b",400.9,NA,128.9,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"888","diet","NN0331","t3 c",411.2,NA,126,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"889","diet","NN0331","t4 d",412,NA,114.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"890","diet","NN0331","t5 e",409.7,NA,110.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"891","diet","NN0339.1","nc con",406,NA,83,NA,16.8,NA,NA,NA,NA,NA,NA,NA
+"892","diet","NN0339.1","nc+silage oil",389,NA,81,NA,16.9,NA,NA,NA,NA,NA,NA,"II"
+"893","diet","NN0339.2","commercial high constant",404,NA,82,NA,18.5,NA,NA,NA,NA,NA,NA,NA
+"894","diet","NN0339.2","commercial low constant",395,NA,84,NA,18.4,NA,NA,NA,NA,NA,NA,NA
+"895","diet","NN0339.2","control",389,NA,79,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"896","diet","NN0339.2","trout silage high constant",405,NA,80,NA,18.4,NA,NA,NA,NA,NA,NA,NA
+"897","diet","NN0339.2","trout silage low constant",392,NA,79,NA,18.3,NA,NA,NA,NA,NA,NA,NA
+"898","diet","NN0341","c",462,NA,115,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"899","diet","NN0341","hch",470,NA,115,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"900","diet","NN0341","hcl",474,NA,116,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"901","diet","NN0341","hph",466,NA,116,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"902","diet","NN0341","hpl",474,NA,112,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"903","diet","NN0341","sh",472,NA,109,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"904","diet","NN0341","sl",471,NA,112,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"905","diet","NN0342","c",450,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"906","diet","NN0342","so",452,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"907","diet","NN0357","control diet",192,228,69,NA,18.63972,NA,NA,NA,NA,NA,NA,NA
+"908","diet","NN0357","diet 1",230,473,95,NA,18.648088,NA,NA,NA,NA,"IV","IV","IV"
+"909","diet","NN0357","diet 2",194,507,92,NA,18.13764,NA,NA,NA,"IV",NA,"IV","IV"
+"910","diet","NN0357","diet 3",212,359,131,NA,17.710872,NA,NA,NA,NA,NA,NA,NA
+"911","diet","NN0358","jsm con",312.3,NA,64,74.7,18.8,NA,NA,NA,"II",NA,"II","II"
+"912","diet","NN0358","lfjsm 25",308.3,NA,65.1,69.1,18.27,NA,NA,NA,NA,NA,NA,NA
+"913","diet","NN0358","lfjsm 50",304.2,NA,65.1,63.7,18.11,NA,NA,NA,NA,NA,NA,NA
+"914","diet","NN0358","lfjsm 75",300.3,NA,66.2,57.5,17.91,NA,NA,NA,NA,NA,NA,NA
+"915","diet","NN0358","pfjsm 25",308.4,NA,60.4,69.3,18.4,NA,NA,NA,NA,NA,NA,NA
+"916","diet","NN0358","pfjsm 50",304.4,NA,66,63.9,18.11,NA,NA,NA,NA,NA,NA,NA
+"917","diet","NN0358","pfjsm 75",300.4,NA,67,57.6,17.9,NA,NA,NA,NA,NA,NA,NA
+"918","diet","NN0359","cwc 10",326,NA,84,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"919","diet","NN0359","cwc 20",328,NA,87,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"920","diet","NN0359","cwc 30",323,NA,82,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"921","diet","NN0359","cwc 40",330,NA,85,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"922","diet","NN0359","control",329,NA,83,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"923","diet","NN0361","control",149,339,NA,60,NA,NA,NA,NA,NA,NA,NA,NA
+"924","diet","NN0361","fresh",152,347,NA,48,NA,NA,NA,NA,NA,NA,NA,NA
+"925","diet","NN0361","hay",153,349,NA,48,NA,NA,NA,NA,NA,NA,NA,NA
+"926","diet","NN0361","silage",147,345,NA,48,NA,NA,NA,NA,NA,NA,NA,NA
+"927","diet","NN0362","m0",146.9,337.5,NA,62,NA,NA,NA,NA,NA,NA,NA,NA
+"928","diet","NN0362","m10",145.1,343.3,NA,54.7,NA,NA,NA,NA,NA,NA,NA,NA
+"929","diet","NN0362","m15",144.2,346.2,NA,51.1,NA,NA,NA,NA,NA,NA,NA,NA
+"930","diet","NN0362","m20",143.3,349,NA,47.5,NA,NA,NA,NA,NA,NA,NA,NA
+"931","diet","NN0364","control",155,481.1,NA,49,NA,NA,NA,"IV","IV","IV","IV","IV"
+"932","diet","NN0364","srs25",149.4,453.6,NA,46.1,NA,NA,NA,"IV","IV","IV","IV","IV"
+"933","diet","NN0364","srs45",144.8,431.5,NA,43.8,NA,NA,NA,"IV","IV","IV","IV","IV"
+"934","diet","NN0367","diet1 con",320.8,NA,73.3,NA,182.1,NA,NA,NA,NA,NA,NA,NA
+"935","diet","NN0367","diet2cur50",320.8,NA,73.3,NA,182.1,NA,NA,NA,NA,NA,NA,NA
+"936","diet","NN0367","diet3cur100",320.8,NA,73.3,NA,182.1,NA,NA,NA,NA,NA,NA,NA
+"937","diet","NN0367","diet4cur150",320.8,NA,73.3,NA,182.1,NA,NA,NA,NA,NA,NA,NA
+"938","diet","NN0367","diet5cur200",320.8,NA,73.3,NA,182.1,NA,NA,NA,NA,NA,NA,NA
+"939","diet","NN0368","me10",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"940","diet","NN0368","me20",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"941","diet","NN0368","me40",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"942","diet","NN0369","d-0",298.5,NA,60.2,75,19.73,NA,NA,NA,"II",NA,"II","II"
+"943","diet","NN0369","d-100",293.9,NA,57.1,67.5,19.59,NA,NA,NA,NA,NA,NA,NA
+"944","diet","NN0369","d-25",297,NA,59.1,72.4,19.68,NA,NA,NA,"II",NA,"II","II"
+"945","diet","NN0369","d-50",296,NA,58.6,70,19.62,NA,NA,NA,NA,NA,NA,NA
+"946","diet","NN0369","d-75",295,NA,58.2,67.9,19.58,NA,NA,NA,NA,NA,NA,NA
+"947","diet","NN0370","con",156,266,NA,49,NA,NA,NA,NA,NA,NA,NA,NA
+"948","diet","NN0370","urea1",158,265,NA,43,NA,NA,NA,NA,NA,NA,NA,NA
+"949","diet","NN0370","urea2",155,266,NA,43,NA,NA,NA,NA,NA,NA,NA,NA
+"950","diet","NN0380","d2",231.2,NA,95,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"951","diet","NN0380","d3",228.5,NA,5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"952","diet","NN0380","d4",229.1,NA,115,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"953","diet","NN0380","d5",231,NA,155,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"954","diet","NN0383","0 percent",29.9,NA,6.5,NA,1734.4,NA,NA,NA,NA,NA,NA,NA
+"955","diet","NN0383","1 percent",29.9,NA,6.3,NA,1740.9,NA,NA,NA,NA,NA,NA,NA
+"956","diet","NN0383","2 percent",29.9,NA,6.4,NA,1729,NA,NA,NA,NA,NA,NA,NA
+"957","diet","NN0383","3 percent",29.9,NA,6.5,NA,1735.8,NA,NA,NA,NA,NA,NA,NA
+"958","diet","NN0384","1% inclusion",289,NA,62,NA,1731,NA,NA,NA,NA,NA,NA,NA
+"959","diet","NN0384","2% inclusion",289,NA,61,NA,1722.5,NA,NA,NA,NA,NA,NA,NA
+"960","diet","NN0384","5% inclusion",289,NA,61,NA,1721.8,NA,NA,NA,NA,NA,NA,NA
+"961","diet","NN0384","control",289,NA,62,NA,1725.9,NA,NA,NA,NA,NA,NA,NA
+"962","diet","NN0394","aa",246.9,37.05,NA,6.38,NA,NA,NA,NA,NA,"I","I","I"
+"963","diet","NN0394","as",114.6,37.23,NA,3.51,NA,NA,NA,NA,NA,"I","I","I"
+"964","diet","NN0394","do",144.8,47.89,NA,3.75,NA,NA,NA,NA,NA,"I","I","I"
+"965","diet","NN0394","pe",184.2,52.86,NA,4.73,NA,NA,NA,NA,NA,"I","I","I"
+"966","diet","NN0394","pt",147.5,58.94,NA,3.89,NA,NA,NA,NA,NA,"I","I","I"
+"967","diet","NN0399","napier grass",85,NA,147,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"968","diet","NN0400","100% bsg",266,NA,39.5,14.5,NA,NA,NA,NA,NA,NA,NA,NA
+"969","diet","NN0400","25% bsg",168,NA,65,30.6,NA,NA,NA,NA,NA,NA,NA,NA
+"970","diet","NN0400","50% bsg",200,NA,57.9,25.3,NA,NA,NA,NA,NA,NA,NA,NA
+"971","diet","NN0400","75% bsg",234,NA,48.7,19.9,NA,NA,NA,NA,NA,NA,NA,NA
+"972","diet","NN0400","control diet",134,NA,76.2,36,NA,NA,NA,NA,NA,NA,NA,NA
+"973","diet","BO1009","diet 1",153.6,624.4,54.4,21.5,3.94,NA,NA,NA,NA,"V","V","V"
+"974","diet","BO1009","diet 2",148.7,420.8,55.9,32.6,3.89,NA,NA,"IV","IV","IV","IV","IV"
+"975","diet","BO1009","diet 3",136.4,357.5,49.1,33.8,4.07,NA,NA,NA,NA,NA,NA,NA
+"976","diet","BO1009","diet 4",130,339.3,45,29,4.04,NA,NA,NA,NA,NA,NA,NA
+"977","diet","BO1016","inhay +cal",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"978","diet","BO1016","inhay +cal +peg",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"979","diet","BO1017","brt1",45.2,722,84.3,7.8,NA,NA,NA,"V","V","V","V","V"
+"980","diet","BO1017","brt2",77.3,716,82.8,11.5,NA,NA,NA,"V","V","V","V","V"
+"981","diet","BO1017","brt3",94.8,711,75.7,4612,NA,NA,NA,NA,NA,"II","II","II"
+"982","diet","BO1017","brt4",115,708,76.5,65,NA,NA,NA,NA,NA,"V","V","V"
+"983","diet","BO1017","bt1",58.3,713,67.2,8.5,NA,NA,NA,"V","V","V","V","V"
+"984","diet","BO1017","bt2",87.5,708,60.7,10.5,NA,NA,NA,NA,"V","V","V","V"
+"985","diet","BO1017","bt3",112,703,67.2,45.8,NA,NA,NA,NA,NA,"V","V","V"
+"986","diet","BO1017","bt4",126,698,74.5,65.4,NA,NA,NA,NA,NA,"V","V","V"
+"987","diet","BO1017","rt1",42.4,724,84.8,9.2,NA,NA,NA,"V","V","V","V","V"
+"988","diet","BO1017","rt2",70,721,85.3,11.8,NA,NA,NA,"V","V","V","V","V"
+"989","diet","BO1017","rt3",81.7,714,96,50.1,NA,NA,NA,NA,"V","V","V","V"
+"990","diet","BO1017","rt4",99.8,710,97.7,72.1,NA,NA,NA,NA,"II","V","II","II"
+"991","diet","BO1019","glm0",130.4,NA,44.9,48.8,4150,NA,NA,NA,NA,NA,NA,NA
+"992","diet","BO1019","glm12",134.3,NA,45.4,36.7,4060,NA,NA,NA,NA,NA,NA,NA
+"993","diet","BO1019","glm24",137.5,NA,46.7,30.6,4050,NA,NA,NA,NA,NA,NA,NA
+"994","diet","BO1019","glm36",146.4,NA,46.9,23.3,4020,NA,NA,NA,NA,NA,NA,NA
+"995","diet","BO1024","diet 0%",245,546,74.7,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"996","diet","BO1024","diet 15%",212,520,82.8,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"997","diet","BO1024","diet 30%",208,465,92.4,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"998","diet","BO1024","diet 45%",216,488,92.6,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"999","diet","BO1025","100% (dvlm + dmlm)",158,283,105,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1000","diet","BO1025","100% concentrate mix",198,235,58,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1001","diet","BO1025","25% nsc + 75% (dvlm + dmlm)",167,273,97,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1002","diet","BO1025","50% nsc + 50% (dvlm + dmlm)",179,262,94,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1003","diet","BO1025","75% nsc + 25% (dvlm + dmlm)",189,249,78,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1004","diet","BO1026","diet 1",220,442.6,69.4,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1005","diet","BO1026","diet 2",220,486.6,101.6,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1006","diet","BO1026","diet 3",220,388.6,90.7,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1007","diet","BO1026","diet 4",220,470,113.3,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1008","diet","BO1026","diet 5",220.9,461.5,102,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"1009","diet","BO1032","nsm0",168,223,NA,35,17.19624,NA,NA,NA,NA,NA,NA,NA
+"1010","diet","BO1032","nsm100",165,243,NA,46,17.40544,NA,NA,NA,NA,NA,NA,NA
+"1011","diet","BO1032","nsm50",166,233,NA,41,17.27992,NA,NA,NA,NA,NA,NA,NA
+"1012","diet","BO1032","nsm75",166,238,NA,43,17.27992,NA,NA,NA,NA,NA,NA,NA
+"1013","diet","CJ1009","commercial fed",152.8,459.8,86.8,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1014","diet","CJ1009","dc20",173,415.1,107,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1015","diet","CJ1009","dc40",161.5,454.8,83.1,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1016","diet","CJ1009","dc60",174.1,401.7,87.8,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1017","diet","CJ1009","ve20",176,494.1,99.5,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1018","diet","CJ1009","ve40",156.4,425.1,83.7,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1019","diet","CJ1009","ve60",166.5,420.7,84.6,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1020","diet","CJ1019","t1",131,NA,65.2,46,NA,NA,NA,NA,NA,NA,NA,NA
+"1021","diet","CJ1019","t2",138.1,NA,73.4,52.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1022","diet","CJ1019","t3",123.1,NA,64.3,44.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1023","diet","CJ1019","t4",113.8,NA,68.2,14.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1024","diet","EM1011","t1 cm",188,318.2,43.9,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1025","diet","EM1011","t2 cm+ml",209.1,315,65.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1026","diet","EM1011","t3 cm+ml",230.3,318.6,87.1,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1027","diet","EM1011","t4 cm+ml",251.4,308.6,108.7,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1028","diet","EM1011","t5 ml",272.5,305.4,130.4,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1029","diet","EM1014","t1a.b+peg",188.1,188,NA,33.2,NA,NA,NA,"I","I","I","I","I"
+"1030","diet","EM1014","t2a.b+bc",185.6,164.8,NA,55.6,NA,NA,NA,"I","I","I","I","I"
+"1031","diet","EM1014","t3a.b",184,148.5,NA,48.1,NA,NA,NA,"I","I","I","I","I"
+"1032","diet","EM1014","t4b.d+peg",194,151,NA,29.6,NA,NA,NA,"I","I","I","I","I"
+"1033","diet","EM1014","t5b.d+bc",193.3,125.9,NA,25.1,NA,NA,NA,"I","I","I","I","I"
+"1034","diet","EM1014","t6b.d",189.7,134.9,NA,18.9,NA,NA,NA,"I","I","I","I","I"
+"1035","diet","EM1017","10mol",139,NA,81.2,38.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1036","diet","EM1017","20mol",138.8,NA,80.8,40.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1037","diet","EM1017","30mol",140.6,NA,78.7,46.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1038","diet","EM1017","control",137,NA,76.5,37.1,NA,NA,NA,NA,NA,NA,NA,NA
+"1039","diet","JO1013","pds0",181.3,443.68,75.2,60.9,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1040","diet","JO1013","pds25",180.5,431.4,51.9,53.7,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1041","diet","JO1013","pds50",181.2,426.2,44,50.3,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1042","diet","JO1013","pds75",181.1,413.1,39,37.5,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1043","diet","JO1019","feed 1",97.7,524.9,60,48,NA,NA,NA,NA,NA,NA,"IV","IV"
+"1044","diet","JO1019","feed 2",118.2,486.3,65,23.3,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1045","diet","JO1019","feed 3",132.5,502.4,46.7,46.7,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1046","diet","JO1019","feed 4",182.4,506.6,30,23.3,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1047","diet","JO1020","ration 1",128.4,524.7,86.5,22.7,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1048","diet","JO1020","ration 2",140.8,531.7,95.5,24.8,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1049","diet","JO1020","ration 3",138,539.8,99.7,25.6,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1050","diet","JO1020","ration 4",147.3,535.7,95,26,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1051","diet","JO1026","t2 ph100% 300cm",48,714,76,NA,NA,NA,NA,"V","V","V","V","V"
+"1052","diet","JO1026","t3 ph100% 1hb",54,667,74.4,NA,NA,NA,NA,"V","V","V","V","V"
+"1053","diet","JO1026","t4 ph100% 948ho",50,888,96.7,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1054","diet","JO1026","t5 ph100% 250hb 237ho 150cm",60,714,96.7,NA,NA,NA,NA,"V","V","V","V","V"
+"1055","diet","JO1028","t1 feed",202.5,339.3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1056","diet","JO1028","t2 feed",206.6,324.3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1057","diet","JO1028","t3 feed",208.4,283.5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1058","diet","JO1029","feed 1",13,26.3,NA,NA,NA,NA,NA,NA,NA,"I","I","I"
+"1059","diet","JO1029","feed 2",17.7,31.3,NA,NA,NA,NA,NA,NA,NA,"I","I","I"
+"1060","diet","JO1029","feed 3",11.2,24.8,NA,NA,NA,NA,NA,NA,NA,"I","I","I"
+"1061","diet","JO1029","feed 4",21.2,32.2,NA,NA,NA,NA,NA,NA,NA,"I","I","I"
+"1062","diet","JO1030","diet a",137.7,332.1,NA,66.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1063","diet","JO1030","diet b",130.7,286,NA,76,NA,NA,NA,NA,"II",NA,"II","II"
+"1064","diet","JO1030","diet c",128.4,321.1,NA,74.3,NA,NA,NA,NA,"II",NA,"II","II"
+"1065","diet","JO1031","gf",NA,232.3,64.9,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1066","diet","JO1031","lc 10%",NA,197.3,49.9,NA,NA,NA,NA,"I","I","I","I","I"
+"1067","diet","JO1031","lc 15%",NA,200.4,49.9,NA,NA,NA,NA,NA,"I",NA,"I","I"
+"1068","diet","JO1031","lc 20%",NA,174.6,63,NA,NA,NA,NA,"I","I","I","I","I"
+"1069","diet","JO1031","lc 25%",NA,164.9,81.9,NA,NA,NA,NA,"I","I","I","I","I"
+"1070","diet","JO1031","lc 5%",NA,119.7,46,NA,NA,NA,NA,"I","I","I","I","I"
+"1071","diet","JO1032","diet ws40",120.8,559.5,89.4,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"1072","diet","JO1032","diet ws60",113.9,667.9,79.2,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1073","diet","JO1032","diet ws80",92.9,642.4,78.2,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1074","diet","JO1034","control feed",165.8,472.3,66.9,172,NA,NA,NA,"II","II","II","II","II"
+"1075","diet","JO1034","pbb 15 feed",149.7,434.5,70.7,215.5,NA,NA,NA,"II","II","II","II","II"
+"1076","diet","JO1034","wbb 15 feed",154.3,423.7,82.5,176.7,NA,NA,NA,"II","II","II","II","II"
+"1077","diet","JO1036","feed 2",210,362,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1078","diet","JO1036","feed 3",200,430,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1079","diet","JO1036","feed 4",161,520,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1080","diet","JO1036","feed 5",144,590,NA,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"1081","diet","JO1038","feed 2",156,619,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1082","diet","JO1038","feed 3",178,527,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1083","diet","JO1038","feed 4",200,436,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1084","diet","JO1039.2","iqr feed",76,NA,70,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1085","diet","JO1039.2","prq feed",20,NA,89,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1086","diet","JO1039.2","sirq feed",48,NA,83,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1087","diet","JO1039.3","100%lh feed",185,NA,84,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1088","diet","JO1039.3","100%prq feed",46,NA,60,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1089","diet","JO1039.3","25%prq 75%lh feed",150,NA,78,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1090","diet","JO1039.3","50%prq 50%lh feed",116,NA,72,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1091","diet","JO1039.3","75%prq 25%lh feed",81,NA,66,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1092","diet","JO1039.5a","tth 16%fm cfm",111,366,59,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1093","diet","JO1039.5a","tth 20%fm cfm",134,365,68,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1094","diet","JO1039.5a","tth 24%fm cfm",162,382,72,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1095","diet","JO1039.5a","tth 28%fm cfm",183,383,76,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1096","diet","JO1039.5b","tth 16%fm sfm",112,401,52,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1097","diet","JO1039.5b","tth 20%fm sfm",134,422,60,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1098","diet","JO1039.5b","tth 24%fm sfm",157,447,66,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1099","diet","JO1039.5b","tth 28%fm sfm",179,471,67,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1100","diet","JO1041","feed 3",120,635,141,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1101","diet","JO1041","feed 4",127,611,127,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1102","diet","BO1011","diet 1",93.6,669.5,198.9,20.7,NA,NA,NA,NA,NA,"V","V","V"
+"1103","diet","BO1011","diet 2",99.1,689.7,101.9,20.9,NA,NA,NA,NA,NA,"V","V","V"
+"1104","diet","BO1011","diet 3",98.6,650.7,155.7,20.2,NA,NA,NA,NA,NA,"V","V","V"
+"1105","diet","BO1002","control",114,411,NA,33,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1106","diet","BO1002","ma20",132,418,NA,34,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1107","diet","BO1002","ma40",146,427,NA,34,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1108","diet","BO1003","c25",71,NA,107,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1109","diet","BO1003","c50",101,NA,112,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1110","diet","BO1003","c75",99,NA,144,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1111","diet","BO1004","treatment 2",194.5,423.1,64.7,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1112","diet","BO1004","treatment 3",193.1,428.6,68.7,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1113","diet","BO1005","oscm",120,510,60,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1114","diet","BO1005","tmrl",119,465,73,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1115","diet","BO1006","ration 1",134.8,431.3,57.8,24.2,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1116","diet","BO1006","ration 2",132.5,404.2,62.8,24,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1117","diet","BO1006","ration 3",130.2,377.2,118.3,23.8,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1118","diet","BO1021","0% nigella sativa",145,NA,30,31,NA,NA,NA,NA,NA,NA,NA,NA
+"1119","diet","BO1021","100% nigella sativa",149,NA,45,52,NA,NA,NA,NA,NA,NA,NA,NA
+"1120","diet","BO1021","50% nigella sativa",150,NA,40,40,NA,NA,NA,NA,NA,NA,NA,NA
+"1121","diet","BO1023","cgs diet",120.4,377.4,NA,23.2,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1122","diet","BO1023","hsb diet",122.7,384.8,NA,22,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1123","diet","BO1023","lsb diet",119.9,384.8,NA,22.6,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1124","diet","BO1027","em treated rh",138,457,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1125","diet","BO1027","em treated scb",119,576,NA,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"1126","diet","BO1027","tv treated rh",156,437,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1127","diet","BO1027","tv treated scb",132,557,NA,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"1128","diet","BO1027","untreated rh",137,503,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1129","diet","BO1027","untreated scb",114,602,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1130","diet","BO1029","t0 (100 ch)",131.8,453.5,102,31.8,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1131","diet","BO1029","t1 (50ch:50dbv)",132,457,111,31.5,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1132","diet","BO1029","t2 (25ch:75dbv)",132.5,459,108.6,31,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1133","diet","BO1029","t3 (100dbv)",131.6,461,100.9,31.8,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1134","diet","BO1030","(r + spvs)",88,691,NA,NA,NA,NA,NA,NA,"V","V","V","V"
+"1135","diet","BO1030","(r + umb)",82,715,NA,NA,NA,NA,NA,NA,"V","V","V","V"
+"1136","diet","BO1033","melon seed husk 10",179,526.6,126.1,41.9,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1137","diet","BO1033","melon seed husk 20",171.5,568.6,89.8,36.4,NA,NA,NA,NA,NA,NA,"V","V"
+"1138","diet","BO1033","melon seed husk 5",182.1,519.8,130.2,46.9,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1139","diet","BO1033","melon seek husk 0",184.4,498.8,139.4,50.6,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1140","diet","BO1034","diet 1 (0 kenaf)",147.3,652.1,74.8,28.4,NA,NA,NA,NA,NA,"V","V","V"
+"1141","diet","BO1034","diet 2 (15 kenaf)",149.3,640.7,73.3,29.5,NA,NA,NA,NA,NA,"V","V","V"
+"1142","diet","BO1034","diet 3 (20 kenaf)",162.2,621.5,71.5,30.8,NA,NA,NA,NA,NA,"V","V","V"
+"1143","diet","BO1034","diet 4 (25 kenaf)",157.3,616.3,72.7,31.4,NA,NA,NA,NA,NA,"V","V","V"
+"1144","diet","BO1036","100% (mlm +vlm)",105,283,158,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1145","diet","BO1036","100% concentrate mix",58,235,198,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1146","diet","BO1036","25% nsc + 75% (mlm +vlm)",97,273,167,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1147","diet","BO1036","50% nsc+ 50% (mlm +vlm)",94,262,179,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1148","diet","BO1036","75% nsc+25% (mlm +vlm)",78,249,189,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1149","diet","BO1037","0% cabbage carrot waste",152.9,542.5,53.8,39.5,NA,NA,NA,NA,"IV",NA,"V","V"
+"1150","diet","BO1037","10% cabbage waste",155.7,523.6,57.4,37.3,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1151","diet","BO1037","10% carrot waste",150.2,505.8,55.2,38.9,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1152","diet","BO1037","5% carrot 5% cabbage waste",153,514.7,56.3,38.1,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1153","diet","BO1038","0% treated rice offal",131.3,464.7,116,58.5,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1154","diet","BO1038","10% treated rice offal",179.4,414.2,117,47.2,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1155","diet","BO1038","15% treated rice ofall",179.4,396.6,112.1,53.2,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1156","diet","BO1038","5% treated rice offal",171.5,428.1,111.2,49.9,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1157","diet","BO1040","control group",120.95,386.4,NA,16.3,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1158","diet","BO1040","r-saf",125.05,394,NA,24.6,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1159","diet","BO1040","r-sun",124.75,396,NA,24.75,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1160","diet","BO1041","t1g (forage)",110,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1161","diet","BO1041","t2g (concentrate)",140,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1162","diet","BO1042","0% cashew nut shell",188.9,305.1,96.2,50.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1163","diet","BO1042","10% cashew nut shell",184.4,302.9,83,87.5,NA,NA,NA,"II","II","II","II","II"
+"1164","diet","BO1042","15% cashew nut shell",183.9,293.6,74,106.4,NA,NA,NA,"II","II","II","II","II"
+"1165","diet","BO1042","20% cashew nut shell",182,296.7,67.1,123.3,NA,NA,NA,"II","II","II","II","II"
+"1166","diet","BO1044","t1 (gg100%)",41.8,220,110,40,NA,NA,NA,NA,"I",NA,"I","I"
+"1167","diet","BO1044","t2 (gg80% + csp10% + sbcw10%)",60.1,250,110,50,NA,NA,NA,NA,NA,NA,NA,NA
+"1168","diet","BO1044","t3 (gg60% + csp30% + sbcw10%)",76,260,90,40,NA,NA,NA,NA,NA,NA,NA,NA
+"1169","diet","BO1044","t4 (gg40% + csp50% + sbcw10%)",77,180,80,60,NA,NA,NA,"I","I","I","I","I"
+"1170","diet","BO1046","basal diet + cowpea residues (ama)",102,NA,124,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1171","diet","BO1046","basal diet + cowpea residues (ate)",115,NA,88,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1172","diet","BO1046","basal diet + groundnut residues (ama)",103,NA,115,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1173","diet","BO1046","basal diet + groundnut residues (ate)",116,NA,88.8,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1174","diet","BO1048","60:40 ratio",117.5,404.2,57.4,80.4,NA,NA,NA,"II","II","II","II","II"
+"1175","diet","BO1048","80:20 ratio",78.8,488.5,68.7,72.6,NA,NA,NA,NA,"II","IV","II","II"
+"1176","diet","BO1049","cfm + bh",126.3,NA,102.1,23.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1177","diet","BO1049","cfm + cellulase & fibrolytic treated dpl + bh",141,NA,81.8,27.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1178","diet","BO1049","cfm + cellulase treated dpl +bh",129.8,NA,83.8,23,NA,NA,NA,NA,NA,NA,NA,NA
+"1179","diet","BO1049","cfm + fibrolytic treated dpl + bh",138.2,NA,81.2,26.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1180","diet","BO1049","cfm + untreated dpl + bh",92.2,NA,92.2,21,NA,NA,NA,NA,NA,NA,NA,NA
+"1181","diet","BO1051","citrus pulp treated",51.1,710.5,98.4,14.4,NA,NA,NA,"V","V","V","V","V"
+"1182","diet","BO1051","grape seeds treated",51.6,728.5,123.6,18.5,NA,NA,NA,"V","V","V","V","V"
+"1183","diet","BO1051","jojoba meal treated",74,722.6,115.6,15.4,NA,NA,NA,"V","V","V","V","V"
+"1184","diet","BO1051","olive cake treated",51.9,745.2,118.7,20.6,NA,NA,NA,"V","V","V","V","V"
+"1185","diet","BO1051","sugar beet pulp treated",59.2,743.5,101.2,13.3,NA,NA,NA,"V","V","V","V","V"
+"1186","diet","BO1052","0% untreated wmv",133,331.2,98,29.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1187","diet","BO1052","100% treated wmv",124,356,98.3,29,NA,NA,NA,NA,NA,NA,NA,NA
+"1188","diet","BO1052","25% treated wmv",131,337.5,97.9,29.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1189","diet","BO1052","50% treated wmv",127,344.4,99.7,29.1,NA,NA,NA,NA,NA,NA,NA,NA
+"1190","diet","BO1052","75% treated wmv",126,351,98.3,29.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1191","diet","BO1053","inoculated silage buffalo",251.5,NA,59.8,4.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1192","diet","BO1053","inoculated silage cattle",251.5,NA,59.8,4.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1193","diet","BO1053","non-inoculated silage buffalo",82.1,NA,48.4,19.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1194","diet","BO1053","non-inoculated silage cattle",82.1,NA,48.4,19.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1195","diet","BO1054","0 pck",156.3,263.8,113.8,100.1,15.26,NA,NA,"II","II","II","II","II"
+"1196","diet","BO1054","10 pck",161.3,326.3,104.2,95.7,15.64,NA,NA,"II","II","II","II","II"
+"1197","diet","BO1054","20 pck",203.1,273.2,111.5,118.7,13.81,NA,NA,"II","II","II","II","II"
+"1198","diet","BO1054","30 pck",195.6,390.3,110.5,108.5,15.64,NA,NA,"II","II","II","II","II"
+"1199","diet","BO1054","40 pck",171.3,423.7,109.9,95,15.6,NA,NA,"II","II","II","II","II"
+"1200","diet","BO1055","cassava meal d3",130.2,NA,182.7,73.5,NA,NA,NA,NA,"II",NA,"II","II"
+"1201","diet","BO1055","control d1",141.7,NA,173,124.3,NA,NA,NA,"II","II","II","II","II"
+"1202","diet","BO1055","rice d2",155,NA,112.5,107.1,NA,NA,NA,"II","II","II","II","II"
+"1203","diet","BO1056","cs",80.2,611.2,130.7,9.8,NA,NA,NA,NA,"V","V","V","V"
+"1204","diet","BO1056","rsphigh",79.8,617.7,127.3,13.3,NA,NA,NA,"V","V","V","V","V"
+"1205","diet","BO1056","rsplow",73.4,677.3,120.9,6,NA,NA,NA,"V","V","V","V","V"
+"1206","diet","BO1056","rspmed",77.1,635.3,123.7,8.2,NA,NA,NA,"V","V","V","V","V"
+"1207","diet","BO1059","control diet",115,NA,111.9,23.1,1.71,NA,NA,NA,NA,NA,NA,NA
+"1208","diet","BO1059","sbls with 0.3% urea",144.5,NA,152.4,23.6,1.65,NA,NA,NA,NA,NA,NA,NA
+"1209","diet","BO1059","sbls with 0.6% urea",146.5,NA,151.9,22.8,1.65,NA,NA,NA,NA,NA,NA,NA
+"1210","diet","BO1061","mucuna meal 16% (rfm)",214,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1211","diet","BO1061","protein isolate meal 5% (rim)",217,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1212","diet","BO1061","soybean meal 7% (rts)",212,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1213","diet","BO1062","control diet",187.2,NA,4.66,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1214","diet","BO1062","enz0",187.7,NA,4.34,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1215","diet","BO1062","enz100",188.8,NA,4.16,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1216","diet","BO1062","enz25",188.6,NA,4.58,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1217","diet","BO1062","enz50",188.4,NA,4.53,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1218","diet","BO1062","enz75",187.7,NA,4.63,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1219","diet","BO1065","molm0",209.2,55.6,62.1,45.6,NA,NA,NA,NA,NA,"I","I","I"
+"1220","diet","BO1065","molm100",276.6,65.1,69.8,49.6,NA,NA,NA,NA,NA,"I","I","I"
+"1221","diet","BO1065","molm50",255.8,43.1,58.2,38.5,NA,NA,NA,NA,NA,"I","I","I"
+"1222","diet","BO1068","10% flaxseed (t3)",184,410.3,97.4,72.1,NA,NA,NA,"IV","II","IV","II","II"
+"1223","diet","BO1068","10% full fat soya (t1)",203.7,393.3,101.2,46.1,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1224","diet","BO1068","5% flaxseed + 5% full fat soya (t2)",193.8,401.8,99.3,59.1,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1225","diet","BO1069","bg diet",73,533,67,15,NA,NA,NA,NA,NA,NA,"IV","IV"
+"1226","diet","BO1069","cg diet",66,553,61,17,NA,NA,NA,NA,"V",NA,"V","V"
+"1227","diet","BO1069","mrg diet",183,342,115,85,NA,NA,NA,"II","II","II","II","II"
+"1228","diet","BO1074","25% corn cobs",134.9,NA,61.3,30.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1229","diet","BO1074","50% corn cobs",119.2,NA,36,27.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1230","diet","BO1076","0 gbvh",162.8,NA,108,45.5,18.6,NA,NA,NA,NA,NA,NA,NA
+"1231","diet","BO1076","100 gbvh",164,NA,129.6,38.1,18.1,NA,NA,NA,NA,NA,NA,NA
+"1232","diet","BO1076","25 gbvh",163.2,NA,114.8,43.2,18.5,NA,NA,NA,NA,NA,NA,NA
+"1233","diet","BO1076","50 gbvh",163.5,NA,118.7,41.8,18.4,NA,NA,NA,NA,NA,NA,NA
+"1234","diet","BO1076","75 gbvh",163.7,NA,122.9,40.4,18.3,NA,NA,NA,NA,NA,NA,NA
+"1235","diet","BO1077","0 groundnut haulms",146.5,414.8,72.8,118.9,NA,NA,NA,"II","II","II","II","II"
+"1236","diet","BO1077","25 groundnut haulms",144.8,455.8,92.8,101,NA,NA,NA,"II","II","II","II","II"
+"1237","diet","BO1077","50 groundnut haulms",146.3,470.9,111.6,67,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1238","diet","BO1077","75 groundnut haulms",144.5,480.1,168.2,117.8,NA,NA,NA,"II","II","II","II","II"
+"1239","diet","BO1079","csl 0%",123.1,NA,199.1,34,1.573,NA,NA,NA,NA,NA,NA,NA
+"1240","diet","BO1079","csl 10%",128.5,NA,195.9,30.1,1.574,NA,NA,NA,NA,NA,NA,NA
+"1241","diet","BO1079","csl 20%",132.5,NA,194.5,23,1.565,NA,NA,NA,NA,NA,NA,NA
+"1242","diet","BO1079","csl 30%",137,NA,151.2,29,1.659,NA,NA,NA,NA,NA,NA,NA
+"1243","diet","BO1083","0 cplm",121.1,NA,90.1,48.3,0.0163176,NA,NA,NA,NA,NA,NA,NA
+"1244","diet","BO1083","10 cplm",127.8,NA,96.3,51.1,0.01640128,NA,NA,NA,NA,NA,NA,NA
+"1245","diet","BO1083","20 cplm",134.1,NA,101.7,59.7,0.01635944,NA,NA,NA,NA,NA,NA,NA
+"1246","diet","BO1083","30 cplm",143.2,NA,101.9,59.9,0.0165268,NA,NA,NA,NA,NA,NA,NA
+"1247","diet","BO1084","elephant grass ensiled alone",87.5,721.4,108.6,NA,NA,NA,NA,NA,"V","V","V","V"
+"1248","diet","BO1084","elephant grass ensiled with 10% dolichos lablab",101.9,630,86.4,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1249","diet","BO1084","elephant grass ensiled with 20% dolichos lablab",110.6,611.1,82.1,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1250","diet","BO1084","elephant grass ensiled with 30% dolichos lablab",123.8,612.1,78.3,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1251","diet","BO1085","control diet",158.5,322.1,76.6,32.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1252","diet","BO1085","diet 1",158.5,331.7,78.7,30,NA,NA,NA,NA,NA,NA,NA,NA
+"1253","diet","BO1085","diet 2",155.6,320.4,81.5,27.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1254","diet","BO1085","diet 3",155.1,354.1,79.6,32.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1255","diet","BO1085","diet 4",155.7,368.4,83.1,31.9,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1256","diet","BO1085","diet 5",154.7,345.2,80.5,29.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1257","diet","BO1085","diet 6",153.3,357.7,84.1,26.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1258","diet","BO1087","t1 (100% nsc)",365,447.1,239.9,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"1259","diet","BO1087","t2 (75 nsc:25 csh %)",290,472.6,188.8,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"1260","diet","BO1087","t3 (50 nsc:50 csh %)",261.9,460.1,196.9,NA,NA,NA,NA,NA,NA,"IV","IV","IV"
+"1261","diet","BO1087","t4 (25 nsc:75 csh %)",207.5,474,166.6,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1262","diet","BO1087","t5 (100% csh)",183.1,430.2,195.2,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1263","diet","BO1088","t1 (cassava peel untreated)",110.2,744.2,40.8,26.9,NA,NA,NA,NA,NA,"V","V","V"
+"1264","diet","BO1088","t2 (corn cob untreated)",118.7,785.4,57,25.9,NA,NA,NA,NA,NA,"V","V","V"
+"1265","diet","BO1088","t3 (treated cassava peel)",114,757,48,29.7,NA,NA,NA,NA,NA,"V","V","V"
+"1266","diet","BO1088","t4 (treated corn cob)",117.5,731.1,51.4,28.4,NA,NA,NA,NA,NA,"V","V","V"
+"1267","diet","BO1089","a. africana",91.4,NA,38.3,39.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1268","diet","BO1089","a. occidentale diet",94.1,NA,25,30.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1269","diet","BO1089","a.barteri diet",80.6,NA,31.2,21,NA,NA,NA,NA,NA,NA,NA,NA
+"1270","diet","BO1089","m.indica diet",112.6,NA,97.8,18,NA,NA,NA,NA,NA,NA,NA,NA
+"1271","diet","BO1092","0 rcns",71.6,526.9,73.4,39.4,NA,NA,NA,NA,NA,NA,"IV","IV"
+"1272","diet","BO1092","10 rcns",78.4,570.3,72.5,37.5,NA,NA,NA,NA,"V",NA,"V","V"
+"1273","diet","BO1092","15 rcns",78.9,570.3,70.1,37,NA,NA,NA,NA,"V",NA,"V","V"
+"1274","diet","BO1092","5 rcns",73.5,471.6,72.8,37.9,NA,NA,NA,NA,NA,"IV","IV","IV"
+"1275","diet","BO1093","0cpm",178.5,NA,191.2,64.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1276","diet","BO1093","100 cpm",148,NA,174.4,52.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1277","diet","BO1093","60 cpm",157.5,NA,176.2,56.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1278","diet","BO1093","80 cpm",147,NA,175.3,52.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1279","diet","0","cfm (10)",157.5,341.3,80.7,45.1,NA,NA,NA,NA,NA,NA,NA,NA
+"1280","diet","0","cfm (20)",157.4,342.3,82.4,51.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1281","diet","0","cfm (5)",157.7,342.9,81.5,43.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1282","diet","0","cfm without msk",157.4,340.8,81.2,38.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1283","diet","BO1096","0% sweet potato peels",170,NA,120,45,NA,NA,NA,NA,NA,NA,NA,NA
+"1284","diet","BO1096","10% sweet potato peels",171,NA,110,40,NA,NA,NA,NA,NA,NA,NA,NA
+"1285","diet","BO1096","20% sweet potato peels",168,NA,120,35,NA,NA,NA,NA,NA,NA,NA,NA
+"1286","diet","BO1096","30% sweet potato peels",166,NA,115,45,NA,NA,NA,NA,NA,NA,NA,NA
+"1287","diet","BO1098","0 crsclm",153.6,624.4,54.4,21.5,3.94,NA,NA,NA,NA,"V","V","V"
+"1288","diet","BO1098","20 crsclm",148.7,420.8,55.9,32.6,3.89,NA,NA,"IV","IV","IV","IV","IV"
+"1289","diet","BO1098","40 crsclm",136.4,357.5,49.1,33.8,4.07,NA,NA,NA,NA,NA,NA,NA
+"1290","diet","BO1098","60 crsclm",130,339.3,45,29,4.04,NA,NA,NA,NA,NA,NA,NA
+"1291","diet","BO1099","0 cashew nut shell",176.9,NA,34.3,44.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1292","diet","BO1099","10 cashew nut shell",175.6,NA,32.8,108.4,NA,NA,NA,"II","II","II","II","II"
+"1293","diet","BO1099","15 cashew nut shell",171.7,NA,32.9,120.4,NA,NA,NA,"II","II","II","II","II"
+"1294","diet","BO1099","20 cashew nut shell",173.2,NA,31,149.9,NA,NA,NA,"II","II","II","II","II"
+"1295","diet","CJ1002","leucaena hay",13.6,51.8,7.2,NA,NA,NA,NA,NA,NA,"I","I","I"
+"1296","diet","CJ1002","oscm",13.5,50.4,6,NA,NA,NA,NA,NA,NA,"I","I","I"
+"1297","diet","CJ1003","baobab",155,417,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1298","diet","CJ1003","soybean",396,132,NA,NA,NA,"Crop Product",NA,"I","I","III","III","III"
+"1299","diet","CJ1003","vachellia",152,462,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1300","diet","CJ1004","feed blocks",390.1,125.8,367,NA,NA,NA,NA,"I","I","III","III","III"
+"1301","diet","CJ1004","maize off",148.4,495,224.3,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1302","diet","CJ1004","poult manure",184.5,368.4,312.8,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1303","diet","CJ1005","0amf",81,607.4,56.5,25.8,NA,NA,NA,NA,"V","V","V","V"
+"1304","diet","CJ1005","15amf",75.4,615.1,49.4,24.4,NA,NA,NA,"V","V","V","V","V"
+"1305","diet","CJ1005","5amf",67.2,476.8,201,20.1,NA,NA,NA,NA,NA,"IV","IV","IV"
+"1306","diet","CJ1006","r1",118.6,NA,92.8,24.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1307","diet","CJ1006","r2",120.7,NA,94.4,23.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1308","diet","CJ1006","r3",122.8,NA,96,23.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1309","diet","CJ1014","daniellia oliveri leaf meal 0",171,NA,70.8,144,NA,NA,NA,"II","II","II","II","II"
+"1310","diet","CJ1014","daniellia oliveri leaf meal 20",172.9,NA,91.3,130.3,NA,NA,NA,"II","II","II","II","II"
+"1311","diet","CJ1014","daniellia oliveri leaf meal 30",174.4,NA,89.6,120.1,NA,NA,NA,"II","II","II","II","II"
+"1312","diet","CJ1014","daniellia oliveri leaf meal 40",173.6,NA,99.5,103.4,NA,NA,NA,"II","II","II","II","II"
+"1313","diet","CJ1015","20%alh",126.4,572.1,112.6,36.3,NA,NA,NA,NA,NA,NA,"V","V"
+"1314","diet","CJ1015","40%alh",115,530.3,98.3,34.6,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1315","diet","CJ1015","60%alh",113.9,532.9,94,34.9,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1316","diet","CJ1015","control",129,525.3,134.1,28.4,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1317","diet","EM1005","control ration1",122.5,NA,79.7,21.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1318","diet","EM1005","ration 2",125.8,NA,87,34.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1319","diet","EM1005","ration3",128.9,NA,70.1,39.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1320","diet","EM1025","d1 katambora /vigna (1:4)",139.3,354.1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1321","diet","EM1025","d2 pellets",134.9,323.9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1322","diet","EM1025","d3 katambora/lablab (1:4)",137.7,375.1,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1323","diet","EM1034","t1 hay + conc daily",127.2,478.8,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1324","diet","EM1034","t2 silage + conc daily",121.6,382.7,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1325","diet","EM1034","t3 silage + conc skip-a-day",121.6,382.7,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1326","diet","EM1034","t4 silage + conc skip-2-days",121.6,382.7,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1327","diet","EM1037","t2 wb+nc",200.6,454.4,NA,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1328","diet","EM1037","t3 wb+nc",206.1,463.2,NA,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1329","diet","EM1037","t4 wb+nc",211,471.1,NA,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1330","diet","EM1042","ration 1 cfm1",136.2,NA,95.1,26,NA,NA,NA,NA,NA,NA,NA,NA
+"1331","diet","EM1042","ration2 cfm2",147,NA,96.2,34.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1332","diet","EM1042","ration3 cfm3",138.9,NA,100,40.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1333","diet","EM1044","control",103.2,506,106.3,22.8,NA,NA,NA,NA,NA,NA,"IV","IV"
+"1334","diet","EM1044","exp 1",112.2,497.4,104.6,22.3,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1335","diet","EM1044","exp 2",115,498.8,105.3,20.9,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1336","diet","EM1044","exp 3",118.5,495.2,105.6,20.2,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1337","diet","EM1045","treatment t1",149,NA,45,17,NA,NA,NA,NA,NA,NA,NA,NA
+"1338","diet","EM1045","treatment t2",131,NA,46,16,NA,NA,NA,NA,NA,NA,NA,NA
+"1339","diet","EM1045","treatment t3",156,NA,58,18,NA,NA,NA,NA,NA,NA,NA,NA
+"1340","diet","EM1045","treatment t4",175,NA,59,19,NA,NA,NA,NA,NA,NA,NA,NA
+"1341","diet","EM1045","treatment t5",181,NA,48,18,NA,NA,NA,NA,NA,NA,NA,NA
+"1342","diet","EM1046","treatment t1",90.4,NA,89.4,25.7,NA,NA,NA,NA,NA,NA,NA,NA
+"1343","diet","EM1046","treatment t2",135,NA,97.9,22.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1344","diet","EM1046","treatment t3",159,NA,94.4,22.1,NA,NA,NA,NA,NA,NA,NA,NA
+"1345","diet","EM1047","gh0",146.5,414.8,72.8,118.9,NA,NA,NA,"II","II","II","II","II"
+"1346","diet","EM1047","gh25",144.8,455.8,92.8,101,NA,NA,NA,"II","II","II","II","II"
+"1347","diet","EM1047","gh50",146.3,480.1,111.6,67,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1348","diet","EM1047","gh75",144.5,470.9,168.2,117.8,NA,NA,NA,"II","II","II","II","II"
+"1349","diet","EM1048","t1 control",216.9,429.4,55.5,NA,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1350","diet","EM1048","t2 35fph",214.4,548.1,48.2,NA,NA,NA,NA,NA,"IV",NA,"V","V"
+"1351","diet","EM1048","t3 50fph",213.1,593.9,40,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"1352","diet","EM1050","treatment t1",163.8,400.4,118.4,81.7,NA,NA,NA,"II","II","II","II","II"
+"1353","diet","EM1050","treatment t2",164.1,364.6,52.2,107.1,NA,NA,NA,"II","II","II","II","II"
+"1354","diet","EM1050","treatment t3",164.3,310.8,50.1,111.5,NA,NA,NA,"II","II","II","II","II"
+"1355","diet","EM1050","treatment t4",162.5,322.1,41.9,121.5,NA,NA,NA,"II","II","II","II","II"
+"1356","diet","EM1052","diet 1",89.4,NA,92.5,41.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1357","diet","EM1052","diet 2",99.9,NA,92.9,48.9,NA,NA,NA,NA,NA,NA,NA,NA
+"1358","diet","EM1052","diet 3",113.2,NA,93.3,53,NA,NA,NA,NA,NA,NA,NA,NA
+"1359","diet","EM1052","diet 4",86.7,NA,95.4,53.7,NA,NA,NA,NA,NA,NA,NA,NA
+"1360","diet","EM1052","diet 5",79.8,NA,98.4,56.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1361","diet","EM1053","diet a",108.2,NA,71.5,81.5,NA,NA,NA,"II","II","II","II","II"
+"1362","diet","EM1053","diet b",138.7,NA,74.3,50.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1363","diet","EM1053","diet c",170.1,NA,73,65.9,NA,NA,NA,NA,NA,NA,NA,NA
+"1364","diet","EM1053","diet d",117.5,NA,78.3,88,NA,NA,NA,"II","II","II","II","II"
+"1365","diet","EM1054","m0",170,NA,69.1,30.9,NA,NA,NA,NA,NA,NA,NA,NA
+"1366","diet","EM1054","m15",170,NA,81.3,31.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1367","diet","EM1054","m20",170,NA,85.7,33.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1368","diet","EM1056","treatment t1",175,276,61.5,40,0.1306,NA,NA,NA,NA,NA,NA,NA
+"1369","diet","EM1056","treatment t2",169.1,354,53.4,41.7,0.1316,NA,NA,NA,NA,NA,NA,NA
+"1370","diet","EM1056","treatment t3",168.8,366.6,52.6,39.1,0.1317,NA,NA,NA,"IV",NA,"IV","IV"
+"1371","diet","EM1056","treatment t4",168.1,371.1,57.1,40.8,0.1313,NA,NA,NA,"IV",NA,"IV","IV"
+"1372","diet","EM1057","diet r1",208.5,NA,56.4,68.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1373","diet","EM1057","diet r2",208,NA,50.1,68.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1374","diet","EM1057","diet r3",209.8,NA,53.7,69.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1375","diet","EM1057","diet r4",209.6,NA,57.2,68.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1376","diet","EM1059","diet 1",199.9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1377","diet","EM1059","diet 2",198.9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1378","diet","EM1059","diet 3",197.9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1379","diet","EM1059","diet 4",196.9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1380","diet","EM1065","treatment t1",168.5,NA,60,34.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1381","diet","EM1065","treatment t2",173,NA,53.7,54.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1382","diet","EM1065","treatment t3",184,NA,60.8,64.7,NA,NA,NA,NA,NA,NA,NA,NA
+"1383","diet","EM1067","control (a)",173,NA,105,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1384","diet","EM1067","treatment 1(b)",178,NA,128,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1385","diet","EM1067","treatment 2 (c)",184,NA,134,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1386","diet","EM1067","treatment 3 (d)",189,NA,137,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1387","diet","EM1068","rfm",214,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1388","diet","EM1068","rim",217,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1389","diet","EM1068","rts",212,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1390","diet","EM1072","control ca",186,682,73,30,NA,NA,NA,NA,NA,"V","V","V"
+"1391","diet","EM1072","gb",187,678,71,36,NA,NA,NA,NA,NA,"V","V","V"
+"1392","diet","EM1072","gc",188,676,71,43,NA,NA,NA,NA,NA,"V","V","V"
+"1393","diet","EM1072","gd",189,675,70,51,NA,NA,NA,NA,NA,"V","V","V"
+"1394","diet","EM1072","ge",190,675,70,56,NA,NA,NA,NA,NA,"V","V","V"
+"1395","diet","EM1073","gka",128.9,477.4,60.3,56.4,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1396","diet","EM1073","gkb",131.1,529.3,64.2,59.3,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1397","diet","EM1073","gkc",134.5,543.4,70.5,60.1,NA,NA,NA,NA,"IV",NA,"V","V"
+"1398","diet","EM1073","gkd",139.8,552.8,73.5,62.3,NA,NA,NA,NA,NA,NA,"V","V"
+"1399","diet","EM1074","rsm2",141,767,81,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1400","diet","EM1074","rsm3",145,730,84,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1401","diet","EM1075","control",169.8,339,66.6,29.9,NA,NA,NA,NA,NA,NA,NA,NA
+"1402","diet","EM1075","mso",171.2,349.8,66,41,NA,NA,NA,NA,NA,NA,NA,NA
+"1403","diet","EM1076","cfm t1",157.4,340.8,81.2,38.5,17.786184,NA,NA,NA,NA,NA,NA,NA
+"1404","diet","EM1076","cfm t2",157.7,342.9,81.5,43.5,17.894968,NA,NA,NA,NA,NA,NA,NA
+"1405","diet","EM1076","cfm t3",157.5,341.3,80.7,45.1,17.940992,NA,NA,NA,NA,NA,NA,NA
+"1406","diet","EM1076","cfm t4",157.4,342.3,82.4,51.4,18.045592,NA,NA,NA,NA,NA,NA,NA
+"1407","diet","EM1077","ration1",134.1,NA,112.2,27.7,NA,NA,NA,NA,NA,NA,NA,NA
+"1408","diet","EM1077","ration2",134,NA,115,28.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1409","diet","EM1077","ration3",133.9,NA,117.9,28.9,NA,NA,NA,NA,NA,NA,NA,NA
+"1410","diet","EM1079","t1",147.5,427.7,80.7,20.2,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1411","diet","EM1079","t2",158.9,478.1,91.7,22,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1412","diet","EM1079","t3",156.1,388.3,85.3,20.4,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1413","diet","EM1079","t4",154.5,432.8,74.3,19.9,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1414","diet","EM1079","t5",147.9,403.8,78.6,15.3,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1415","diet","EM1084","diet a",128,NA,94.8,37.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1416","diet","EM1084","diet b",128.5,NA,90.5,41.9,NA,NA,NA,NA,NA,NA,NA,NA
+"1417","diet","EM1084","diet c",130.1,NA,1.4,47.7,NA,NA,NA,NA,NA,NA,NA,NA
+"1418","diet","EM1084","diet d",128.6,NA,98.4,45.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1419","diet","EM1087","eragrostis teff hay",154,265,94,32,NA,NA,NA,NA,NA,NA,NA,NA
+"1420","diet","EM1087","lucerne hay",153,245,78,37,NA,NA,NA,NA,NA,NA,NA,NA
+"1421","diet","EM1087","maize s",151,240,92,31,NA,NA,NA,NA,NA,NA,NA,NA
+"1422","diet","EM1087","soybean hulls",156,232,84,35,NA,NA,NA,NA,NA,NA,NA,NA
+"1423","diet","EM1096","rcns a",71.6,NA,73.4,39.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1424","diet","EM1096","rcns b",73.5,NA,72.8,37.9,NA,NA,NA,NA,NA,NA,NA,NA
+"1425","diet","EM1096","rcns c",78.4,NA,72.5,37.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1426","diet","EM1096","rcns d",78.9,NA,70.1,37,NA,NA,NA,NA,NA,NA,NA,NA
+"1427","diet","EM1100","control pkc",165.8,472.3,66.9,172,NA,NA,NA,"II","II","II","II","II"
+"1428","diet","EM1100","pfbsm",149.7,434.5,70.7,215.5,NA,NA,NA,"II","II","II","II","II"
+"1429","diet","EM1100","wfbsm",154.3,423.7,82.5,176.7,NA,NA,NA,"II","II","II","II","II"
+"1430","diet","EM1101","dsbp 1",169.3,303.9,91.2,36.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1431","diet","EM1101","dsbp 2",170.1,328.8,93.4,34.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1432","diet","EM1101","ycg",168.6,279.1,89.1,39.1,NA,NA,NA,NA,NA,NA,NA,NA
+"1433","diet","EM1102","treatment control",140.2,299,NA,29,NA,NA,NA,NA,NA,NA,NA,NA
+"1434","diet","EM1102","treatment t1",145,292.2,NA,34.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1435","diet","EM1102","treatment t2",149.4,285,NA,39.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1436","diet","EM1106","bcd",140,635.2,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1437","diet","EM1106","ed",135,280,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1438","diet","EM1106","fpd",132.9,561.4,NA,NA,NA,NA,NA,NA,NA,NA,"V","V"
+"1439","diet","EM1107","treatment t1",153.6,624.4,54.4,21.5,3.94,NA,NA,NA,NA,"V","V","V"
+"1440","diet","EM1107","treatment t2",148.7,420.8,55.9,32.6,3.89,NA,NA,"IV","IV","IV","IV","IV"
+"1441","diet","EM1107","treatment t3",136.4,357.5,49.1,33.8,4.07,NA,NA,NA,NA,NA,NA,NA
+"1442","diet","EM1107","treatment t4",130,339.3,45,29,4.04,NA,NA,NA,NA,NA,NA,NA
+"1443","diet","JO1000","msc0%",155.4,256.4,129.5,39.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1444","diet","JO1000","msc100%",152.1,260.4,120,52.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1445","diet","JO1000","msc25%",153.8,258.4,124.7,46,NA,NA,NA,NA,NA,NA,NA,NA
+"1446","diet","JO1000","msc50%",154.7,257.3,127.1,42.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1447","diet","JO1003","cg as",90,462.9,47.6,31.9,NA,NA,NA,NA,NA,"IV","IV","IV"
+"1448","diet","JO1003","cg asg",129.08,482.9,58,34.3,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1449","diet","JO1003","cg at",111.4,476.6,49.4,31.4,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1450","diet","JO1003","cg mf",111.3,483.2,57.9,32.4,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1451","diet","JO1003","cg va",113.3,483.2,62.9,30.8,NA,NA,NA,NA,"IV","IV","IV","IV"
+"1452","diet","JO1010","control",41,570,68,NA,NA,NA,NA,NA,"V",NA,"V","V"
+"1453","diet","JO1010","lpbb",132,277,191,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1454","diet","JO1010","scbb",126,253,193,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1455","diet","JO1010","ubb",262,285,165,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1456","diet","JO1022","feed 1",67,600,NA,NA,NA,NA,NA,"V","V","V","V","V"
+"1457","diet","JO1022","feed 2",57,637,NA,NA,NA,NA,NA,"V","V","V","V","V"
+"1458","diet","JO1022","feed 3",65,658,NA,NA,NA,NA,NA,"V","V","V","V","V"
+"1459","diet","JO1022","feed 4",59,687,NA,NA,NA,NA,NA,"V","V","V","V","V"
+"1460","diet","JO1022","feed 5",54,702,NA,NA,NA,NA,NA,"V","V","V","V","V"
+"1461","diet","JO1042","154mbh 156cm t3",247.2,284.2,95.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1462","diet","JO1042","226cm t1",273.1,284.2,101.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1463","diet","JO1042","231mbh 120cm t4",245.2,295,95.6,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1464","diet","JO1042","308mbh 87cm t5",244.9,263.7,78.5,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1465","diet","JO1042","77mbh 192cm t2",276.2,302.7,105.8,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1466","diet","JO1044","feed 1",188.9,305.1,96.2,50.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1467","diet","JO1044","feed 2",184.4,302.9,83,87.5,NA,NA,NA,"II","II","II","II","II"
+"1468","diet","JO1044","feed 3",183.9,293.6,74,106.4,NA,NA,NA,"II","II","II","II","II"
+"1469","diet","JO1044","feed 4",182,296.7,67.1,123.3,NA,NA,NA,"II","II","II","II","II"
+"1470","diet","JO1045","trs feed",72.6,NA,268.3,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1471","diet","JO1045","urs feed",54.2,NA,216,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1472","diet","JO1046","treated barley straw",49.5,579.7,NA,NA,NA,NA,NA,NA,"V",NA,"V","V"
+"1473","diet","JO1047","emws t4",27.6,534.3,113,NA,NA,NA,NA,NA,NA,NA,"IV","IV"
+"1474","diet","JO1047","ultws t3",48.8,721.4,116,NA,NA,NA,NA,"V","V","V","V","V"
+"1475","diet","JO1047","umtws t2",63.1,749.8,119,NA,NA,NA,NA,"V","V","V","V","V"
+"1476","diet","JO1047","uws t1",29.4,764.8,105,NA,NA,NA,NA,NA,"V","V","V","V"
+"1477","diet","JO1048","f1 control",138.8,574,103.8,46.7,16.138,NA,NA,NA,NA,NA,"V","V"
+"1478","diet","JO1048","f2 25",139.6,543,126.6,43.3,15.895,NA,NA,NA,"IV",NA,"V","V"
+"1479","diet","JO1048","f3 50",136.5,525,139.6,41.3,15.285,NA,NA,NA,"IV",NA,"IV","IV"
+"1480","diet","JO1048","f4 75",135.6,502,142.1,38.4,14.87,NA,NA,NA,"IV",NA,"IV","IV"
+"1481","diet","JO1048","f5 100",137.6,474,153.8,32.5,14.51,NA,NA,"IV","IV","IV","IV","IV"
+"1482","diet","JO1050","csc33 wb66 salt1",190.6,389,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1483","diet","JO1050","nsc33 wb66 salt1",196.2,392.7,NA,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1484","diet","JO1050","sole wb",173.1,486.4,NA,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1485","diet","JO1050","wb umfb",274.6,194.3,NA,NA,NA,NA,NA,"I","I","I","I","I"
+"1486","diet","JO1051","feed a",175,460,70,98.9,NA,NA,NA,"II","II","II","II","II"
+"1487","diet","JO1051","feed b",182,700,85.6,109.2,NA,NA,NA,"II","II","II","II","II"
+"1488","diet","JO1051","feed c",183.2,680,106.2,96.2,NA,NA,NA,"II","II","II","II","II"
+"1489","diet","JO1051","feed d",187.5,640,100.8,95,NA,NA,NA,"II","II","II","II","II"
+"1490","diet","JO1052","faba bean",145,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1491","diet","JO1052","field pea",139,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1492","diet","JO1052","soybean meal",143,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1493","diet","JO1054","t1 cfm60 bh15 drs25",133.3,NA,147.8,30.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1494","diet","JO1054","t2 cfm60 bh15 csl25",134.3,NA,134.2,25.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1495","diet","JO1054","t3 cfm60 bh15 ur25",134,NA,133.3,25.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1496","diet","JO1055","feed 1 bsc10",159.3,140.5,NA,56,NA,NA,NA,"I","I","I","I","I"
+"1497","diet","JO1055","feed 2 bsc15",158.9,147.5,NA,56.9,NA,NA,NA,"I","I","I","I","I"
+"1498","diet","JO1055","feed 3 moc10",159.3,145.2,NA,52.6,NA,NA,NA,"I","I","I","I","I"
+"1499","diet","JO1055","feed 4 moc15",158.9,144.5,NA,51.8,NA,NA,NA,"I","I","I","I","I"
+"1500","diet","JO1056","g1 cfm50 bs25",154.7,NA,122.9,20.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1501","diet","JO1056","g2 cfm50 pms25",149.6,NA,110.5,26.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1502","diet","JO1056","g3 cfm50 pms50",146.9,NA,97.4,30.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1503","diet","JO1057","t2 cf",47,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1504","diet","JO1057","t3 lf",123.1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1505","diet","JO1058","diet 1",100,NA,80,102.6,NA,NA,NA,"II","II","II","II","II"
+"1506","diet","JO1058","diet 2",93,NA,76.5,101.2,NA,NA,NA,"II","II","II","II","II"
+"1507","diet","JO1058","diet 3",90,NA,74,96.5,NA,NA,NA,"II","II","II","II","II"
+"1508","diet","JO1058","diet 4",81,NA,70,97.2,NA,NA,NA,"II","II","II","II","II"
+"1509","diet","JO1058","diet 5",74,NA,66.9,94.7,NA,NA,NA,"II","II","II","II","II"
+"1510","diet","JO1059","scm 10",70,NA,46,220,NA,NA,NA,"II","II","II","II","II"
+"1511","diet","JO1059","scm 15",87.5,NA,50.5,215,NA,NA,NA,"II","II","II","II","II"
+"1512","diet","JO1060","diet 1",145,NA,53,75,NA,NA,NA,NA,"II",NA,"II","II"
+"1513","diet","JO1060","diet 2",140,NA,54.5,66,NA,NA,NA,NA,NA,NA,NA,NA
+"1514","diet","JO1060","diet 3",154,NA,64,41,NA,NA,NA,NA,NA,NA,NA,NA
+"1515","diet","JO1060","diet 4",157,NA,67.5,42,NA,NA,NA,NA,NA,NA,NA,NA
+"1516","diet","JO1060","diet 5",140,NA,92,70,NA,NA,NA,NA,NA,NA,NA,NA
+"1517","diet","JO1062","intervention diet",132,545.5,NA,NA,NA,NA,NA,NA,"IV",NA,"V","V"
+"1518","diet","JO1062","traditional diet",91.8,624.1,NA,NA,NA,NA,NA,NA,NA,"V","V","V"
+"1519","diet","JO1064","cfm bh",118.6,NA,110.7,26.1,NA,NA,NA,NA,NA,NA,NA,NA
+"1520","diet","JO1064","cfm sbhtv bh",145.4,NA,95.6,24.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1521","diet","JO1064","cfm sbp bh",101.2,NA,84.4,20.7,NA,NA,NA,NA,NA,NA,NA,NA
+"1522","diet","JO1064","cfm sbpcc bh",144.8,NA,95.1,24.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1523","diet","JO1064","cfm sbpsc bh",147.8,NA,95.2,24.9,NA,NA,NA,NA,NA,NA,NA,NA
+"1524","diet","JO1067","diet 1",210.3,NA,NA,37.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1525","diet","JO1067","diet 2",207,NA,NA,37.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1526","diet","JO1067","diet 3",205.4,NA,NA,36.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1527","diet","JO1067","diet 4",203.8,NA,NA,36.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1528","diet","JO1067","diet 5",200.2,NA,NA,36.8,NA,NA,NA,NA,NA,NA,NA,NA
+"1529","diet","JO1068","control",160.7,NA,54.1,56,NA,NA,NA,NA,NA,NA,NA,NA
+"1530","diet","JO1069","0 inclusion",192.3,NA,62,77.5,NA,NA,NA,NA,"II",NA,"II","II"
+"1531","diet","JO1069","5 inclusion",194,NA,65.5,115.5,NA,NA,NA,"II","II","II","II","II"
+"1532","diet","JO1070","molm 0",189,96,49,52,NA,NA,NA,NA,"I","I","I","I"
+"1533","diet","JO1070","molm 70",189,106,45,61,NA,NA,NA,"I","I","I","I","I"
+"1534","diet","JO1071","treatment 1",271.3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1535","diet","JO1071","treatment 2",276.4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1536","diet","JO1071","treatment 3",281.6,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1537","diet","JO1071","treatment 4",286.7,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1538","diet","JO1078","control",164.7,NA,NA,33.4,NA,NA,NA,NA,NA,NA,NA,NA
+"1539","diet","JO1078","mistletoe",179.4,NA,NA,37.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1540","diet","JO1078","moringa",165.8,NA,NA,30.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1541","diet","JO1078","phyllanthus",176.67,NA,NA,24.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1542","diet","JO1079","block a",80.5,570.4,81.2,68.4,8.05,NA,NA,NA,"V",NA,"V","V"
+"1543","diet","JO1079","block b",179.4,442,95.1,45.3,14.85,NA,NA,"IV","IV","IV","IV","IV"
+"1544","diet","JO1079","block c",229.3,439.3,72.1,30.2,13.08,NA,NA,NA,NA,"IV","IV","IV"
+"1545","diet","JO1079","block d",297.9,437.4,79.1,40.7,11.94,NA,NA,NA,NA,"IV","IV","IV"
+"1546","diet","JO1080","diet 1",114,701.7,121.6,16.1,NA,NA,NA,NA,NA,"V","V","V"
+"1547","diet","JO1080","diet 2",137.2,664.1,110.6,21.4,NA,NA,NA,NA,NA,"V","V","V"
+"1548","diet","JO1080","diet 3",163.9,512,106.3,16.6,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1549","diet","JO1080","diet 4",182.8,458,98.1,15.1,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1550","diet","JO1080","diet 5",210.5,388.8,79.4,17.1,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1551","diet","JO1081","diet 1",NA,NA,105.5,45,22.8028,NA,NA,NA,NA,NA,NA,NA
+"1552","diet","JO1081","diet 2",NA,NA,91.2,46.1,22.67728,NA,NA,NA,NA,NA,NA,NA
+"1553","diet","JO1081","diet 3",NA,NA,86.2,48,23.05384,NA,NA,NA,NA,NA,NA,NA
+"1554","diet","JO1081","diet 4",NA,NA,84.9,49.4,22.09152,NA,NA,NA,NA,NA,NA,NA
+"1555","diet","JO1082","control",106,506,NA,64,NA,NA,NA,NA,NA,NA,"IV","IV"
+"1556","diet","JO1082","doc",114,538,NA,65,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1557","diet","JO1082","esoc",116,526,NA,68,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1558","diet","JO1082","soc",103,514,NA,74,NA,NA,NA,NA,"II",NA,"II","II"
+"1559","diet","JO1085","cd",141,335,73,48,8.4,NA,NA,NA,NA,NA,NA,NA
+"1560","diet","JO1085","mkcd",159,417,70,94,8.3,NA,NA,"II","II","II","II","II"
+"1561","diet","JO1085","scd",141,394,73,29,8.8,NA,NA,NA,"IV",NA,"IV","IV"
+"1562","diet","JO1086","g1",167,NA,62,45.1,NA,NA,NA,NA,NA,NA,NA,NA
+"1563","diet","JO1086","g2",172.4,NA,68.8,42.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1564","diet","JO1086","g3",174,NA,64.6,43.9,NA,NA,NA,NA,NA,NA,NA,NA
+"1565","diet","JO1087","diet 1",99.5,292.2,55.5,31.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1566","diet","JO1087","diet 2",118.9,399.5,52.5,32.5,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1567","diet","JO1087","diet 3",110.9,500.1,57.7,32.5,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1568","diet","JO1087","diet 4",107,290,51.5,32,NA,NA,NA,NA,NA,NA,NA,NA
+"1569","diet","JO1089","ration 1",167.4,394.4,84.6,29.4,17.589536,NA,"IV",NA,"IV",NA,"IV","IV"
+"1570","diet","JO1089","ration 2",165,407.9,92.2,32.5,17.51004,NA,"IV","IV","IV","IV","IV","IV"
+"1571","diet","JO1089","ration 3",162.5,421.3,99.7,35.6,17.434728,NA,NA,"IV","IV","IV","IV","IV"
+"1572","diet","JO1091","cdc",153.6,227.9,69.4,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1573","diet","JO1091","spvswb",137.3,402,93.4,NA,NA,NA,NA,"IV","IV","IV","IV","IV"
+"1574","diet","JO1093","msk0",145.2,400.9,101.5,40.7,17.40544,NA,NA,"IV","IV","IV","IV","IV"
+"1575","diet","JO1093","msk25",145.2,401.2,102.1,44.3,17.476568,NA,NA,"IV","IV","IV","IV","IV"
+"1576","diet","JO1093","msk50",145.2,401.4,102.7,47.9,17.543512,NA,NA,"IV","IV","IV","IV","IV"
+"1577","diet","JO1094","diet 1",202.5,339.3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1578","diet","JO1094","diet 2",206.6,324.3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1579","diet","JO1094","diet 3",208.4,283.5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1580","diet","JO1095","diet 1",153.9,361,65.6,NA,NA,NA,NA,NA,"IV",NA,"IV","IV"
+"1581","diet","JO1095","diet 2",171.7,359,62,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1582","diet","JO1095","diet 3",181.8,354,58,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1583","diet","JO1095","diet 4",199.2,351.4,44,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1584","diet","JO1095","diet 5",211.3,348.8,35.9,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1585","diet","JO1097","diet 1",115.5,467.2,116.1,20.2,0.0169452,NA,NA,NA,"IV","IV","IV","IV"
+"1586","diet","JO1097","diet 2",115.2,467.2,116.1,19.9,0.01693683,NA,NA,NA,"IV","IV","IV","IV"
+"1587","diet","JO1097","diet 3",114.9,467.2,116.2,19.8,0.01693265,NA,NA,NA,"IV","IV","IV","IV"
+"1588","diet","JO1097","diet 4",114.6,467.2,116.4,19.6,0.01692428,NA,NA,NA,"IV","IV","IV","IV"
+"1589","diet","JO1098","ration 1",111.3,355.6,104.5,2350,NA,NA,NA,NA,NA,"II","II","II"
+"1590","diet","JO1098","ration 2",110.4,352.3,110.5,24.5,NA,NA,NA,NA,NA,NA,NA,NA
+"1591","diet","JO1098","ration 3",109.5,349,116.3,25.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1592","diet","JO1099","ration 0",105.2,739,54.7,23.3,NA,NA,NA,NA,NA,"V","V","V"
+"1593","diet","JO1099","ration 10",108.7,726.2,53.3,26.7,NA,NA,NA,NA,NA,"V","V","V"
+"1594","diet","JO1099","ration 15",113.5,719.1,51.9,30.7,NA,NA,NA,NA,NA,"V","V","V"
+"1595","diet","JO1099","ration 20",125.3,706.8,51.1,31.4,NA,NA,NA,NA,NA,"V","V","V"
+"1596","diet","JO1099","ration 25",126.7,705,50.2,31.6,NA,NA,NA,NA,NA,"V","V","V"
+"1597","diet","JO1099","ration 30",128.4,691.3,50.1,31.7,NA,NA,NA,NA,NA,"V","V","V"
+"1598","diet","JO1100","diet 1",133,NA,56.3,13.3,NA,NA,NA,NA,NA,NA,NA,NA
+"1599","diet","JO1100","diet 2",148.8,NA,75.8,23.2,NA,NA,NA,NA,NA,NA,NA,NA
+"1600","diet","JO1100","diet 3",180.1,NA,88.6,28,NA,NA,NA,NA,NA,NA,NA,NA
+"1601","diet","JO1100","diet 4",205.3,NA,89.2,30.6,NA,NA,NA,NA,NA,NA,NA,NA
+"1602","diet","AN0020","control t1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1603","diet","AN0020","t2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1604","diet","AN0020","t3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1605","diet","DK0001","commercial feed",NA,NA,NA,NA,NA,"Other Feed",NA,NA,NA,NA,NA,NA
+"1606","diet","DK0007","con",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1607","diet","DK0007","t2 ess",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1608","diet","DK0007","t3 eas",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1609","diet","DK0007","t4 sss",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1610","diet","DK0007","t5 sas",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1611","diet","DK0037","mcc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"VI"
+"1612","diet","DK0037","mcm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1613","diet","EO0032","100% concentrate",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1614","diet","EO0032","25%concentrate+75% leaf meal",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1615","diet","EO0032","50%concentrate+50% leaf meal",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1616","diet","EO0032","75% concentrate+25% leaf meal",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1617","diet","EO0041","pl22",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1618","diet","EO0041","pl35",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1619","diet","EO0041","pl45",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1620","diet","EO0041","plo",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1621","diet","HK0005","fss con",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1622","diet","HK0005","fss1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1623","diet","HK0005","fss2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1624","diet","HK0005","fss3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1625","diet","HK0045","con",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1626","diet","HK0045","ob2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1627","diet","HK0045","ob3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1628","diet","HK0045","ob4",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1629","diet","HK0045","ob5",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1630","diet","HK0045","wl6",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1631","diet","HK0045","wl7",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1632","diet","HK0045","wl8",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1633","diet","HK0045","wl9",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1634","diet","HK0082","chm1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1635","diet","HK0082","chm2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1636","diet","HK0082","chm3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1637","diet","HK0082","chm4",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1638","diet","HK0082","diet con",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1639","diet","HK0143","concentrate grass diet",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1640","diet","HK0154","0% leucaena",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1641","diet","HK0154","10% leucaena",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1642","diet","HK0154","20% leucaena",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1643","diet","HK0154","30% leucaena",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1644","diet","HK0154","40% leucaena",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1645","diet","HK0177","120ml fple",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1646","diet","HK0182","con",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1647","diet","HK0182","dcl1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1648","diet","HK0182","dcl2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1649","diet","HK0182","dcl3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1650","diet","HK0210","chicken m1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1651","diet","HK0210","chicken m2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1652","diet","HK0210","chicken m3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1653","diet","HK0210","diet con",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1654","diet","HK0263","diet con grazing",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1655","diet","HK0263","rotational1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1656","diet","HK0263","rotational2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1657","diet","HK0337","t66 concentrate",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1658","diet","JS0047","scb bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1659","diet","JS0047","scb con bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1660","diet","JS0047","sfm bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1661","diet","JS0047","so con bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1662","diet","JS0060","base",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1663","diet","JS0094.1","con experiment1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1664","diet","JS0094.1","shc1 experiment1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1665","diet","JS0094.1","shc2 experiment1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1666","diet","JS0094.1","shc3 experiment1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1667","diet","JS0094.1","shc4 experiment1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1668","diet","JS0094.2","shc2 experiment2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1669","diet","JS0115","berseem",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1670","diet","JS0167","broiler litter3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1671","diet","JS0172","concentrate + cc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1672","diet","JS0193","trt 1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1673","diet","JS0193","trt 2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1674","diet","JS0193","trt 3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1675","diet","JS0197","r1 0dll",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1676","diet","JS0197","r2 15dll",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1677","diet","JS0197","r3 30dll",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1678","diet","JS0197","r4 45dll",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1679","diet","JS0201.1","mum",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1680","diet","JS0201.1","nmmb",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1681","diet","JS0201.2","nmmb",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1682","diet","JS0205","leucaena llm 3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1683","diet","JS0208","ws treated ts bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1684","diet","JS0208","ws treated+hay tsh bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1685","diet","JS0208","ws treated+hay tsh bundle3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1686","diet","JS0210.1","15% marejea hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1687","diet","JS0210.1","30% marejea hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1688","diet","JS0210.1","45% marejea hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1689","diet","JS0210.1","no marejea hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1690","diet","JS0210.2","15% marejea hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1691","diet","JS0210.2","30% marejea hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1692","diet","JS0210.2","no marejea hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1693","diet","JS0226","cenchrus ciliaris diet",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1694","diet","JS0226","millet forage diet",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1695","diet","JS0226","sorghum forage diet",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1696","diet","JS0226","veldt grass diet",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1697","diet","JS0230","d con lucerne",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1698","diet","JS0230","terminalia serecia",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1699","diet","JS0231","before rain s",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1700","diet","JS0231","continuous s",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1701","diet","JS0249","200 g cm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1702","diet","JS0249","300 g cm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1703","diet","JS0249","400 g cm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1704","diet","JS0261","hay with 400g suppliment",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1705","diet","JS0269.1","d1 access to native hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1706","diet","JS0269.1","d2 native hay and 345g alfafa hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1707","diet","JS0269.1","d3 native hay and 387g cowpea hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1708","diet","JS0269.1","d4 native hay and 302 g a. brevispica leaves",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1709","diet","JS0269.1","d5 native hay and 365 g a. tortilis fruits",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1710","diet","JS0271","mixture c",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"VI"
+"1711","diet","JS0285","high conc.",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1712","diet","JS0285","low conc.",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1713","diet","JS0285","medium conc.",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1714","diet","JS0299","lard diet bundle 2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"II"
+"1715","diet","JS0299","palm oil diet bundle 2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"II"
+"1716","diet","JS0299","soybean oil diet bundle 2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"II"
+"1717","diet","JS0299","sunflower oil diet bundle 2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"II"
+"1718","diet","JS0306","20% moc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1719","diet","JS0316","con hay bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1720","diet","JS0316","con mix bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1721","diet","JS0316","mixture bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"VI"
+"1722","diet","JS0316","sesban bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1723","diet","JS0316","sesbania 1 bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1724","diet","JS0316","sesbania 2 bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1725","diet","JS0316","sesbania 3 bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1726","diet","JS0324.1","acacia tortilis 3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1727","diet","JS0324.2","con bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1728","diet","JS0340","msp100 yeast",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1729","diet","JS0341","deep litter system + lp",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1730","diet","JS0342","0% bsc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1731","diet","JS0342","100% bsc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1732","diet","JS0342","25% bsc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1733","diet","JS0342","75% bsc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1734","diet","JS0345","natural (np)",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1735","diet","JS0345","pasture + supplementation(ps)",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1736","diet","JS0350","diet con bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1737","diet","JS0350","diet con bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1738","diet","JS0350","t2 rosemay oil bundle1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"II"
+"1739","diet","JS0350","t2 rosemay oil bundle2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"II"
+"1740","diet","JS0393","protein supp. dorper",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1741","diet","JS0393","salt/phosphate supp. dorper",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1742","diet","JS0393","salt/phosphate supp. merino",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1743","diet","JS0419","t4 ca bundle5",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1744","diet","LM0018","cpv diet",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1745","diet","LM0019","0.5kg csm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1746","diet","LM0101","t2 poultry l b3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1747","diet","LM0124","control",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1748","diet","LM0124","low fish meal",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"III"
+"1749","diet","LM0125","diet con",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1750","diet","LM0125","diet low fm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1751","diet","LM0127","lc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1752","diet","LM0127","mc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1753","diet","LM0227.1","mng + plbc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1754","diet","LM0227.1","mng + sfbc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1755","diet","LM0227.1","ong +plbc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1756","diet","LM0227.1","onp + sfbc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1757","diet","LM0227.2","mng + 3.65 plbc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1758","diet","LM0227.2","mng + 6.35 plbc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1759","diet","LM0227.2","mng +0.91 plbc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1760","diet","LM0248","hb",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1761","diet","LM0248","hb2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1762","diet","LM0248","hg",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1763","diet","LM0248","hg1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1764","diet","LM0248","hgb",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1765","diet","LM0248","hgb1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1766","diet","LM0248","hgb2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1767","diet","LM0277.1","0% poultry waste",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1768","diet","LM0277.1","05% odpw",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1769","diet","LM0277.1","05% sdpw",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1770","diet","LM0277.1","10% odpw",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1771","diet","LM0277.1","10% sdpw",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1772","diet","LM0277.1","15% odpw",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1773","diet","LM0277.1","15% sdpw",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1774","diet","LM0277.1","20% odpw",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1775","diet","LM0277.1","20% sdpw",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1776","diet","LM0311","mrb 50",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1777","diet","LM0351","diet caas",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1778","diet","LM0351","diet cccs",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1779","diet","LM0351","diet clls",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1780","diet","LM0351","diet cmas",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1781","diet","NJ0016","mixed forage meal y1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1782","diet","NJ0016","mixed forage meal y2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1783","diet","NJ0016","mixed forage meal y3",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1784","diet","NJ0025","leucaena leucocephala",233,409,85,40,19,NA,NA,NA,NA,"IV","IV","IV"
+"1785","diet","NJ0027","cm",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1786","diet","NJ0027","cmenz",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1787","diet","NJ0027","cmenzph",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1788","diet","NJ0027","cmph",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1789","diet","NJ0027","control",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1790","diet","NJ0052","hmc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1791","diet","NN0083","barley concentrate con",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1792","diet","NN0083","cactus concentrate",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1793","diet","NN0137.1","dgcm 0.05",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1794","diet","NN0137.1","dgsm 0.1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1795","diet","NN0137.1","dgsm 0.15",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1796","diet","NN0137.1","dgsm 0.2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1797","diet","NN0137.2","dgsm 0",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1798","diet","NN0137.2","dgsm 2",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1799","diet","NN0137.2","dgsm 4",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1800","diet","NN0137.2","dgsm 6",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1801","diet","NN0155","con 0% t 100% maize",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1802","diet","NN0155","diet 2 67% maize 33% t",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1803","diet","NN0155","diet 3 33% maize 67% t",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1804","diet","NN0189","300g cc",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1805","diet","NN0223","goats diet",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1806","diet","NN0223","sheeps diet",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1807","diet","NN0227","t4 ov hay, ml + ch, ts + ch",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1808","diet","NN0236","t1",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1809","diet","NN0253","control",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1810","diet","NN0272.1","control",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1811","diet","NN0272.1","sep + spv",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1812","diet","NN0272.1","sepd",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1813","diet","NN0272.1","spvd",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1814","diet","NN0272.1.2","control",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1815","diet","NN0272.1.2","sep + spv",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1816","diet","NN0272.1.2","sepd",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1817","diet","NN0272.1.2","spvd",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1818","diet","NN0272.2","con",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1819","diet","NN0272.2","t2 mixed",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1820","diet","NN0272.2","t3 spv",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1821","diet","NN0272.2","t4 solanum",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1822","diet","NN0322","con maize",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1823","diet","NN0322","crm and pkc (1:1)",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1824","diet","NN0322","fcp mix 100",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1825","diet","NN0322","fcp mix 25",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1826","diet","NN0322","fcp mix 50",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1827","diet","NN0322","fcp mix 75",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1828","diet","NN0345","t1 pasture hay",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1829","diet","NN0345","t2 ag",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1830","diet","NN0345","t3 peg",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1831","diet","NN0366","flaxsoy treatment diet",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1832","diet","NN0375","t3 feed addition",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1833","diet","NN0375","t3 feed substitution",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1834","diet","NN0375","t4 feed addition",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1835","diet","NN0375","t4 feed substitution",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1836","diet","NN0375","t5 feed addition",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1837","diet","NN0375","t5 feed substitution",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1838","diet","NN0384","8% inclusion",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1839","diet","NN0396","0% sorghum",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1840","diet","NN0396","100% sorghum",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1841","diet","NN0396","25% sorghum",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1842","diet","NN0396","50% sorghum",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"1843","diet","NN0396","75% sorghum",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
