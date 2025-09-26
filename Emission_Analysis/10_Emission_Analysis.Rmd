@@ -8,7 +8,22 @@ date: "2025-09-26"
 here we will have the same issue as with feed intake data since the Alevel in the data tab dont always latch the ones in the diet tab 
 
 ```{r}
-GE_combined      <- read.csv("data/GE_combined.csv")           # or readRDS("ge_combined.rds")
+library(dplyr)
+library(ERAg)
+library(stringr)
+library(knitr)
+library(dplyr)
+library(DT)
+library(readxl)
+library(tidyr)
+library(arrow)
+library(ggplot2)
+library(data.table)
+library(purrr)
+library(janitor)
+library(ggalt)
+
+GE_combined      <- read.csv("data/GE_combined.csv")          
 yield_data       <- read.csv("data/yield_data.csv")
 weights_unique   <- read.csv("data/weights_unique.csv")
 practice_tbl     <- read.csv("data/practice_tbl.csv")
