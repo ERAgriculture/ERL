@@ -45,14 +45,14 @@ pacman::p_load(
   s3fs, arrow, devtools, gh, htmlwidgets,remotes,gridExtra, DT
 )
 
-if(!require(ERAgON)){
-  remotes::install_github(repo="https://github.com/EiA2030/ERAgON",build_vignettes = T)
-  library(ERAgON)
+if(!require(eragri)){
+  remotes::install_github(repo="https://github.com/ERAgriculture/eragri")
+  library(eragri)
 }
 
-if(!require(ERAg)){
-  remotes::install_github(repo="https://github.com/EiA2030/ERAg",build_vignettes = T)
-  library(ERAg)
+if(!require(eragri)){
+  remotes::install_github(repo="https://github.com/ERAgriculture/eragri")
+  library(eragri)
 }
 # Set a directory for downloaded data
 dl_dir <- "downloaded_data"
@@ -255,7 +255,7 @@ livestock_data<-livestock_data[Product.Type %in% c("Animal")]
 Practice codes 
 ```{r ERA Practice descriptions, echo=T, message=F}
 # Filter the data
-filtered_data_prac <- ERAg::PracticeCodes %>%
+filtered_data_prac <- eragri::PracticeCodes %>%
   filter(Theme == "Animals")
 
 # Display the filtered data in a scrollable table
@@ -273,7 +273,7 @@ DT::datatable(
 Outcome Codes
 ```{r ERA Outcome descriptions, echo=T, message=F}
 DT::datatable(
-  head(ERAg::OutcomeCodes),  # Display the first few rows of PracticeCodes
+  head(eragri::OutcomeCodes),  # Display the first few rows of PracticeCodes
   options = list(
     scrollY = "400px",    # Set vertical scroll height
     scrollX = TRUE,       # Enable horizontal scrolling
@@ -286,7 +286,7 @@ DT::datatable(
 Products
 ```{r ERA EU descriptions, echo=T, message=F}
 # Filter the data
-filtered_data_eu <- ERAg::EUCodes %>%
+filtered_data_eu <- eragri::EUCodes %>%
   filter(Product.Type == "Animal")
 
 # Display the filtered data in a scrollable table

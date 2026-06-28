@@ -9,7 +9,7 @@ This section installs and loads required packages, connects to the S3 bucket con
 ```{r,message=FALSE,warning=FALSE}
 # Install and load 'pacman' package manager if not already installed
 
-library(ERAg)
+library(eragri)
 library(stringr)
 library(knitr)
 library(dplyr)

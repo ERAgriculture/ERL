@@ -19,14 +19,14 @@ pacman::p_load(
   s3fs, arrow, devtools, gh, htmlwidgets,remotes,gridExtra, DT
 )
 
-if(!require(ERAgON)){
-  remotes::install_github(repo="https://github.com/EiA2030/ERAgON",build_vignettes = T)
-  library(ERAgON)
+if(!require(eragri)){
+  remotes::install_github(repo="https://github.com/ERAgriculture/eragri")
+  library(eragri)
 }
 
-if(!require(ERAg)){
-  remotes::install_github(repo="https://github.com/EiA2030/ERAg",build_vignettes = T)
-  library(ERAg)
+if(!require(eragri)){
+  remotes::install_github(repo="https://github.com/ERAgriculture/eragri")
+  library(eragri)
 }
 # Set a directory for downloaded data
 dl_dir <- "downloaded_data"
