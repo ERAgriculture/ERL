@@ -44,7 +44,7 @@ if (!requireNamespace("pacman", quietly = TRUE)) {
   install.packages("pacman")
 }
 pacman::p_load(
-  ERAg, ERAgON, shiny, dplyr, treemap, treemapify, plotly, data.table, s3fs, arrow, devtools, gh, htmlwidgets,
+  eragri, shiny, dplyr, treemap, treemapify, plotly, data.table, s3fs, arrow, devtools, gh, htmlwidgets,
   readxl, tm, textstem, caret, xgboost, e1071, ggplot2, scales, tokenizers, Matrix, openalexR, pbapply, httr
 )
 

@@ -9,7 +9,7 @@ here we will have the same issue as with feed intake data since the Alevel in th
 
 ```{r}
 library(dplyr)
-library(ERAg)
+library(eragri)
 library(stringr)
 library(knitr)
 library(dplyr)

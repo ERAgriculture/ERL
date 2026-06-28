@@ -5,7 +5,7 @@ date: "2025-09-26"
 ---
 
 ```{r}
-library(ERAg)
+library(eragri)
 library(stringr)
 library(knitr)
 library(dplyr)
